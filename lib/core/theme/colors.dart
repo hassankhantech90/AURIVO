@@ -9,6 +9,7 @@ class AppColors {
   static const deepGold = Color(0xFF9F7A16);
   static const antiqueGold = Color(0xFFB08D2D);
   static const creamBackground = Color(0xFFFFFAF0);
+  static const softCream = Color(0xFFFAF7F2);
   static const ivory = Color(0xFFFFFCF7);
   static const porcelain = Color(0xFFF8F5EF);
   static const pureWhite = Color(0xFFFFFFFF);
