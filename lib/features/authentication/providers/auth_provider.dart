@@ -2,11 +2,15 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../data/repositories/fake_auth_repository.dart';
+import '../../../core/supabase/supabase_auth_service.dart';
+import '../../../core/supabase/supabase_service.dart';
+import '../data/repositories/supabase_auth_repository.dart';
 import '../domain/auth_repository.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  return const FakeAuthRepository();
+  return SupabaseAuthRepository(
+    authService: const SupabaseAuthService(supabaseService: SupabaseService()),
+  );
 });
 
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {

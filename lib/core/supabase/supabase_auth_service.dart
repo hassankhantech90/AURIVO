@@ -60,4 +60,41 @@ class SupabaseAuthService {
       throw SupabaseExceptionMapper.auth(error);
     }
   }
+
+  Future<supabase.AuthResponse> verifyOtp({
+    required String email,
+    required String token,
+    required supabase.OtpType type,
+  }) async {
+    try {
+      return await _supabaseService.client.auth.verifyOTP(
+        email: email,
+        token: token,
+        type: type,
+      );
+    } catch (error) {
+      throw SupabaseExceptionMapper.auth(error);
+    }
+  }
+
+  Future<void> resendSignupOtp({required String email}) async {
+    try {
+      await _supabaseService.client.auth.resend(
+        email: email,
+        type: supabase.OtpType.signup,
+      );
+    } catch (error) {
+      throw SupabaseExceptionMapper.auth(error);
+    }
+  }
+
+  Future<void> updatePassword({required String password}) async {
+    try {
+      await _supabaseService.client.auth.updateUser(
+        supabase.UserAttributes(password: password),
+      );
+    } catch (error) {
+      throw SupabaseExceptionMapper.auth(error);
+    }
+  }
 }
