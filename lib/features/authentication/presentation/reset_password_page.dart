@@ -8,20 +8,22 @@ import '../domain/validators/auth_validators.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/authentication_widgets.dart';
 
-class ForgotPasswordPage extends ConsumerStatefulWidget {
-  const ForgotPasswordPage({super.key});
+class ResetPasswordPage extends ConsumerStatefulWidget {
+  const ResetPasswordPage({super.key});
 
   @override
-  ConsumerState<ForgotPasswordPage> createState() => _ForgotPasswordPageState();
+  ConsumerState<ResetPasswordPage> createState() => _ResetPasswordPageState();
 }
 
-class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
+class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage> {
   final _formKey = GlobalKey<FormState>();
-  final _identifierController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
 
   @override
   void dispose() {
-    _identifierController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -31,25 +33,31 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
     final authState = ref.watch(authProvider);
 
     return AuthScaffold(
-      title: 'Forgot Password',
-      subtitle:
-          'Enter your email or phone and we will send a verification code.',
+      title: 'Create New Password',
+      subtitle: 'Choose a strong password to protect your AURIVO account.',
       child: Form(
         key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            CustomTextField(
-              controller: _identifierController,
-              labelText: 'Email or Phone',
-              prefixIcon: Icons.contact_mail_outlined,
-              keyboardType: TextInputType.emailAddress,
-              validator: AuthValidators.emailOrPakistanPhone,
+            PasswordTextField(
+              controller: _passwordController,
+              labelText: 'New Password',
+              validator: AuthValidators.password,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            PasswordTextField(
+              controller: _confirmPasswordController,
+              labelText: 'Confirm Password',
+              validator: (value) => AuthValidators.confirmPassword(
+                value,
+                _passwordController.text,
+              ),
             ),
             const SizedBox(height: AppSpacing.lg),
             PrimaryButton(
-              label: 'Send Code',
-              icon: Icons.send_outlined,
+              label: 'Update Password',
+              icon: Icons.lock_reset,
               isLoading: authState.isLoading,
               onPressed: authState.isLoading ? null : _submit,
             ),
@@ -66,14 +74,13 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
 
     await ref
         .read(authProvider.notifier)
-        .sendPasswordResetCode(_identifierController.text.trim());
+        .resetPassword(_passwordController.text);
   }
 
   void _handleAuthState(AuthState? previous, AuthState next) {
     if (next.status == AuthStatus.success && next.message != null) {
       LuxurySnackBars.success(context, next.message!);
-      ref.read(authProvider.notifier).startOtpCountdown();
-      context.go('${AppRoutes.otp}?flow=forgotPassword');
+      context.go(AppRoutes.passwordUpdated);
       ref.read(authProvider.notifier).clearStatus();
     }
 

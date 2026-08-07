@@ -1,10 +1,14 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/authentication/domain/entities/auth_flow.dart';
 import '../../features/authentication/presentation/forgot_password_page.dart';
 import '../../features/authentication/presentation/login_page.dart';
 import '../../features/authentication/presentation/onboarding_page.dart';
 import '../../features/authentication/presentation/otp_page.dart';
+import '../../features/authentication/presentation/password_updated_page.dart';
+import '../../features/authentication/presentation/reset_password_page.dart';
 import '../../features/authentication/presentation/signup_page.dart';
 import '../../features/authentication/presentation/splash_page.dart';
 import '../../features/cart/presentation/cart_page.dart';
@@ -18,93 +22,109 @@ import '../../features/profile/presentation/profile_page.dart';
 import '../../features/seller/presentation/seller_page.dart';
 import '../../features/settings/presentation/settings_page.dart';
 import '../../features/wholesale/presentation/wholesale_page.dart';
+import '../theme/theme_exports.dart';
 import 'app_routes.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: AppRoutes.splash,
     routes: [
-      GoRoute(
+      _fadeRoute(
         path: AppRoutes.splash,
         name: 'splash',
         builder: (context, state) => const SplashPage(),
       ),
-      GoRoute(
+      _fadeRoute(
         path: AppRoutes.onboarding,
         name: 'onboarding',
         builder: (context, state) => const OnboardingPage(),
       ),
-      GoRoute(
+      _fadeRoute(
         path: AppRoutes.login,
         name: 'login',
         builder: (context, state) => const LoginPage(),
       ),
-      GoRoute(
+      _fadeRoute(
         path: AppRoutes.signup,
         name: 'signup',
         builder: (context, state) => const SignupPage(),
       ),
-      GoRoute(
+      _fadeRoute(
         path: AppRoutes.forgotPassword,
         name: 'forgotPassword',
         builder: (context, state) => const ForgotPasswordPage(),
       ),
-      GoRoute(
+      _fadeRoute(
         path: AppRoutes.otp,
         name: 'otp',
-        builder: (context, state) => const OtpPage(),
+        builder: (context, state) {
+          final flow = state.uri.queryParameters['flow'] == 'forgotPassword'
+              ? AuthFlow.forgotPassword
+              : AuthFlow.signup;
+          return OtpPage(flow: flow);
+        },
       ),
-      GoRoute(
+      _fadeRoute(
+        path: AppRoutes.resetPassword,
+        name: 'resetPassword',
+        builder: (context, state) => const ResetPasswordPage(),
+      ),
+      _fadeRoute(
+        path: AppRoutes.passwordUpdated,
+        name: 'passwordUpdated',
+        builder: (context, state) => const PasswordUpdatedPage(),
+      ),
+      _fadeRoute(
         path: AppRoutes.home,
         name: 'home',
         builder: (context, state) => const HomePage(),
       ),
-      GoRoute(
+      _fadeRoute(
         path: AppRoutes.explore,
         name: 'explore',
         builder: (context, state) => const ExplorePage(),
       ),
-      GoRoute(
+      _fadeRoute(
         path: AppRoutes.product,
         name: 'product',
         builder: (context, state) => const ProductPage(),
       ),
-      GoRoute(
+      _fadeRoute(
         path: AppRoutes.cart,
         name: 'cart',
         builder: (context, state) => const CartPage(),
       ),
-      GoRoute(
+      _fadeRoute(
         path: AppRoutes.checkout,
         name: 'checkout',
         builder: (context, state) => const CheckoutPage(),
       ),
-      GoRoute(
+      _fadeRoute(
         path: AppRoutes.orders,
         name: 'orders',
         builder: (context, state) => const OrdersPage(),
       ),
-      GoRoute(
+      _fadeRoute(
         path: AppRoutes.profile,
         name: 'profile',
         builder: (context, state) => const ProfilePage(),
       ),
-      GoRoute(
+      _fadeRoute(
         path: AppRoutes.seller,
         name: 'seller',
         builder: (context, state) => const SellerPage(),
       ),
-      GoRoute(
+      _fadeRoute(
         path: AppRoutes.wholesale,
         name: 'wholesale',
         builder: (context, state) => const WholesalePage(),
       ),
-      GoRoute(
+      _fadeRoute(
         path: AppRoutes.settings,
         name: 'settings',
         builder: (context, state) => const SettingsPage(),
       ),
-      GoRoute(
+      _fadeRoute(
         path: AppRoutes.notifications,
         name: 'notifications',
         builder: (context, state) => const NotificationsPage(),
@@ -112,3 +132,38 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
+
+GoRoute _fadeRoute({
+  required String path,
+  required String name,
+  required Widget Function(BuildContext context, GoRouterState state) builder,
+}) {
+  return GoRoute(
+    path: path,
+    name: name,
+    pageBuilder: (context, state) {
+      return CustomTransitionPage<void>(
+        key: state.pageKey,
+        transitionDuration: AppDurations.normal,
+        reverseTransitionDuration: AppDurations.fast,
+        child: builder(context, state),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          final curved = CurvedAnimation(
+            parent: animation,
+            curve: AppAnimations.standard,
+          );
+          return FadeTransition(
+            opacity: curved,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, 0.03),
+                end: Offset.zero,
+              ).animate(curved),
+              child: child,
+            ),
+          );
+        },
+      );
+    },
+  );
+}

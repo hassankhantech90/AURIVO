@@ -7,6 +7,8 @@ class AppRoutes {
   static const signup = '/signup';
   static const forgotPassword = '/forgot-password';
   static const otp = '/otp';
+  static const resetPassword = '/reset-password';
+  static const passwordUpdated = '/password-updated';
   static const home = '/home';
   static const explore = '/explore';
   static const product = '/product';
