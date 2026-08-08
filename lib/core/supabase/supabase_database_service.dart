@@ -25,6 +25,44 @@ class SupabaseDatabaseService {
     }
   }
 
+  /// Read helper for list/detail queries that need ordering, pagination, or
+  /// `IN` filters (the plain [select] only supports equality filters).
+  ///
+  /// [columns] may include PostgREST embeds. [filters] are equality filters,
+  /// [whereIn] are `IN` filters. When [limit] is provided, results are ranged
+  /// starting at [offset] (defaults to 0). RLS still applies to every read.
+  Future<List<Map<String, dynamic>>> list({
+    required String table,
+    String columns = '*',
+    Map<String, Object?> filters = const {},
+    Map<String, List<Object>> whereIn = const {},
+    String? orderBy,
+    bool ascending = true,
+    int? limit,
+    int? offset,
+  }) async {
+    try {
+      dynamic query = _supabaseService.client.from(table).select(columns);
+      for (final filter in filters.entries) {
+        query = query.eq(filter.key, filter.value as Object);
+      }
+      for (final entry in whereIn.entries) {
+        query = query.inFilter(entry.key, entry.value);
+      }
+      if (orderBy != null) {
+        query = query.order(orderBy, ascending: ascending);
+      }
+      if (limit != null) {
+        final start = offset ?? 0;
+        query = query.range(start, start + limit - 1);
+      }
+      final response = await query;
+      return List<Map<String, dynamic>>.from(response as List<dynamic>);
+    } catch (error) {
+      throw SupabaseExceptionMapper.database(error);
+    }
+  }
+
   Future<Map<String, dynamic>> insert({
     required String table,
     required Map<String, dynamic> values,

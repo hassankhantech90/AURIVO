@@ -11,7 +11,10 @@ class AppRoutes {
   static const passwordUpdated = '/password-updated';
   static const home = '/home';
   static const explore = '/explore';
-  static const product = '/product';
+  static const product = '/product/:id';
+
+  /// Builds a concrete product-detail location for [id].
+  static String productPath(String id) => '/product/$id';
   static const cart = '/cart';
   static const checkout = '/checkout';
   static const orders = '/orders';

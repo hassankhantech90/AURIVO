@@ -87,7 +87,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       _fadeRoute(
         path: AppRoutes.product,
         name: 'product',
-        builder: (context, state) => const ProductPage(),
+        builder: (context, state) =>
+            ProductPage(productId: state.pathParameters['id'] ?? ''),
       ),
       _fadeRoute(
         path: AppRoutes.cart,

@@ -1,2 +1,51 @@
-/// Contract for product catalogue data backed by Supabase later.
-abstract class ProductRepository {}
+import '../entities/attribute.dart';
+import '../entities/brand.dart';
+import '../entities/product.dart';
+import '../entities/product_detail.dart';
+import '../entities/product_image.dart';
+import '../entities/product_sort.dart';
+import '../entities/product_variant.dart';
+
+/// Read-only contract for the public product catalogue. Implementations rely
+/// entirely on the existing RLS (only approved, non-deleted products and their
+/// active variants/images are returned) and must throw the shared `Failure`
+/// type rather than raw Supabase exceptions.
+abstract class ProductRepository {
+  Future<List<Product>> getProducts({
+    int limit = 20,
+    int offset = 0,
+    String? brandId,
+    String? categoryId,
+    bool? featured,
+    ProductSort sort = ProductSort.newest,
+  });
+
+  Future<Product?> getProductById(String id);
+
+  /// Product with its images and variants for the detail screen.
+  Future<ProductDetail?> getProductDetail(String id);
+
+  Future<List<Product>> getProductsByCategory(
+    String categoryId, {
+    int limit = 20,
+    int offset = 0,
+  });
+
+  Future<List<Product>> getProductsByBrand(
+    String brandId, {
+    int limit = 20,
+    int offset = 0,
+  });
+
+  Future<List<ProductImage>> getProductImages(String productId);
+
+  Future<List<ProductVariant>> getProductVariants(String productId);
+
+  Future<List<Brand>> getBrands();
+
+  Future<Brand?> getBrandById(String id);
+
+  Future<List<Attribute>> getAttributes({bool filterableOnly = false});
+
+  Future<List<AttributeValue>> getAttributeValues(String attributeId);
+}
