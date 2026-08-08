@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/design_system.dart';
+import '../../cart/providers/cart_providers.dart';
 import '../domain/entities/product.dart';
 import '../domain/entities/product_detail.dart';
 import '../domain/entities/product_variant.dart';
@@ -29,6 +30,20 @@ class _ProductPageState extends ConsumerState<ProductPage> {
     ref.read(productDetailProvider.notifier).load(widget.productId);
   }
 
+  Future<void> _addToCart(String variantId) async {
+    await ref.read(cartProvider.notifier).addItem(variantId);
+    if (!mounted) return;
+    final cartState = ref.read(cartProvider);
+    if (cartState.status == CartStatus.failure) {
+      LuxurySnackBars.error(
+        context,
+        cartState.message ?? 'Could not add to cart.',
+      );
+    } else {
+      LuxurySnackBars.success(context, 'Added to cart');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(productDetailProvider);
@@ -44,16 +59,20 @@ class _ProductPageState extends ConsumerState<ProductPage> {
           message: state.message ?? 'Could not load this product.',
           onRetry: _load,
         ),
-        CatalogViewStatus.success => _ProductDetailView(detail: state.data!),
+        CatalogViewStatus.success => _ProductDetailView(
+          detail: state.data!,
+          onAddToCart: _addToCart,
+        ),
       },
     );
   }
 }
 
 class _ProductDetailView extends StatelessWidget {
-  const _ProductDetailView({required this.detail});
+  const _ProductDetailView({required this.detail, required this.onAddToCart});
 
   final ProductDetail detail;
+  final void Function(String variantId) onAddToCart;
 
   @override
   Widget build(BuildContext context) {
@@ -108,7 +127,12 @@ class _ProductDetailView extends StatelessWidget {
           const SizedBox(height: AppSpacing.lg),
           Text('Options', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: AppSpacing.sm),
-          ...detail.variants.map((variant) => _VariantRow(variant: variant)),
+          ...detail.variants.map(
+            (variant) => _VariantRow(
+              variant: variant,
+              onAdd: () => onAddToCart(variant.id),
+            ),
+          ),
         ],
       ],
     );
@@ -116,27 +140,35 @@ class _ProductDetailView extends StatelessWidget {
 }
 
 class _VariantRow extends StatelessWidget {
-  const _VariantRow({required this.variant});
+  const _VariantRow({required this.variant, required this.onAdd});
 
   final ProductVariant variant;
+  final VoidCallback onAdd;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            variant.weightGrams != null
-                ? '${variant.weightGrams!.toStringAsFixed(2)} g'
-                : 'Variant',
-            style: Theme.of(context).textTheme.bodyMedium,
+          Expanded(
+            child: Text(
+              variant.weightGrams != null
+                  ? '${variant.weightGrams!.toStringAsFixed(2)} g'
+                  : 'Variant',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
           ),
           PriceWidget(
             price: variant.price,
             originalPrice: variant.comparePrice,
             currency: variant.currency,
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          IconButton.filledTonal(
+            onPressed: onAdd,
+            icon: const Icon(Icons.add_shopping_cart),
+            tooltip: 'Add to cart',
           ),
         ],
       ),
