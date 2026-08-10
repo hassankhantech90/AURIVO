@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../core/router/app_routes.dart';
 import '../../../shared/design_system.dart';
 import '../domain/entities/cart_item.dart';
 import '../domain/entities/cart_view.dart';
@@ -134,26 +136,47 @@ class _CartSummary extends StatelessWidget {
     return Material(
       elevation: 8,
       color: AppColors.pureWhite,
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${cart.itemCount} item(s)',
-                  style: Theme.of(context).textTheme.bodySmall,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${cart.itemCount} item(s)',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      Text(
+                        'Total',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ],
+                  ),
+                  PriceWidget(
+                    price: cart.cart.grandTotal,
+                    currency: cart.cart.currency,
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+              SizedBox(
+                width: double.infinity,
+                child: PrimaryButton(
+                  label: 'Proceed to checkout',
+                  // The checkout route redirects guests to login; authenticated
+                  // buyers land on the checkout screen.
+                  onPressed: () => context.push(AppRoutes.checkout),
                 ),
-                Text('Total', style: Theme.of(context).textTheme.titleMedium),
-              ],
-            ),
-            PriceWidget(
-              price: cart.cart.grandTotal,
-              currency: cart.cart.currency,
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );

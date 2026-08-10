@@ -13,9 +13,11 @@ import '../../features/authentication/presentation/signup_page.dart';
 import '../../features/authentication/presentation/splash_page.dart';
 import '../../features/cart/presentation/cart_page.dart';
 import '../../features/checkout/presentation/checkout_page.dart';
+import '../../features/checkout/providers/checkout_providers.dart';
 import '../../features/explore/presentation/explore_page.dart';
 import '../../features/home/presentation/home_page.dart';
 import '../../features/notifications/presentation/notifications_page.dart';
+import '../../features/orders/presentation/order_detail_page.dart';
 import '../../features/orders/presentation/orders_page.dart';
 import '../../features/products/presentation/product_page.dart';
 import '../../features/profile/presentation/profile_page.dart';
@@ -99,11 +101,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.checkout,
         name: 'checkout',
         builder: (context, state) => const CheckoutPage(),
+        // Guests may keep a cart but cannot check out — hard-redirect to login.
+        redirect: (context, state) =>
+            ref.read(checkoutRepositoryProvider).isAuthenticated
+            ? null
+            : AppRoutes.login,
       ),
       _fadeRoute(
         path: AppRoutes.orders,
         name: 'orders',
         builder: (context, state) => const OrdersPage(),
+      ),
+      _fadeRoute(
+        path: AppRoutes.orderDetail,
+        name: 'orderDetail',
+        builder: (context, state) =>
+            OrderDetailPage(orderId: state.pathParameters['id'] ?? ''),
       ),
       _fadeRoute(
         path: AppRoutes.profile,
@@ -138,10 +151,12 @@ GoRoute _fadeRoute({
   required String path,
   required String name,
   required Widget Function(BuildContext context, GoRouterState state) builder,
+  GoRouterRedirect? redirect,
 }) {
   return GoRoute(
     path: path,
     name: name,
+    redirect: redirect,
     pageBuilder: (context, state) {
       return CustomTransitionPage<void>(
         key: state.pageKey,

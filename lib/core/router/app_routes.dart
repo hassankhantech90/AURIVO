@@ -18,6 +18,10 @@ class AppRoutes {
   static const cart = '/cart';
   static const checkout = '/checkout';
   static const orders = '/orders';
+  static const orderDetail = '/orders/:id';
+
+  /// Builds a concrete order-detail location for [id].
+  static String orderDetailPath(String id) => '/orders/$id';
   static const profile = '/profile';
   static const seller = '/seller';
   static const wholesale = '/wholesale';
