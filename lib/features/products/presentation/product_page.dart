@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/design_system.dart';
 import '../../cart/providers/cart_providers.dart';
+import '../../reviews/presentation/widgets/product_reviews_section.dart';
 import '../domain/entities/product.dart';
 import '../domain/entities/product_detail.dart';
 import '../domain/entities/product_variant.dart';
@@ -134,6 +135,8 @@ class _ProductDetailView extends StatelessWidget {
             ),
           ),
         ],
+        const SizedBox(height: AppSpacing.xl),
+        ProductReviewsSection(productId: product.id),
       ],
     );
   }

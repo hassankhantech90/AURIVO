@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/design_system.dart';
+import '../../reviews/presentation/widgets/review_form_sheet.dart';
+import '../../reviews/providers/review_providers.dart';
 import '../domain/entities/order.dart';
 import '../domain/entities/order_detail.dart';
 import '../domain/entities/order_item.dart';
@@ -109,6 +111,11 @@ class _OrderDetailBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final order = detail.order;
+    // A buyer may review a purchased item once the order has been fulfilled;
+    // passing the order_item_id lets the DB trigger set `verified_purchase`.
+    final reviewable =
+        order.status == OrderStatus.delivered ||
+        order.status == OrderStatus.completed;
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.lg),
       children: [
@@ -118,7 +125,8 @@ class _OrderDetailBody extends StatelessWidget {
           title: 'Items',
           child: Column(
             children: [
-              for (final item in detail.items) _OrderItemRow(item: item),
+              for (final item in detail.items)
+                _OrderItemRow(item: item, reviewable: reviewable),
             ],
           ),
         ),
@@ -229,51 +237,83 @@ class _HeaderCard extends StatelessWidget {
   }
 }
 
-class _OrderItemRow extends StatelessWidget {
-  const _OrderItemRow({required this.item});
+class _OrderItemRow extends ConsumerWidget {
+  const _OrderItemRow({required this.item, this.reviewable = false});
 
   final OrderItem item;
+  final bool reviewable;
+
+  Future<void> _openReview(BuildContext context, WidgetRef ref) async {
+    final existing = ref
+        .read(myProductReviewProvider(item.productId))
+        .valueOrNull;
+    final saved = await ReviewFormSheet.show(
+      context,
+      productId: item.productId,
+      orderItemId: item.id,
+      initialReview: existing,
+    );
+    if (saved == true) {
+      ref.invalidate(myProductReviewProvider(item.productId));
+    }
+  }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final subtitleParts = <String>[
       if (item.variantTitleSnapshot != null &&
           item.variantTitleSnapshot!.isNotEmpty)
         item.variantTitleSnapshot!,
       'SKU ${item.skuSnapshot}',
     ];
+    final hasReview =
+        reviewable &&
+        ref.watch(myProductReviewProvider(item.productId)).valueOrNull != null;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.productTitleSnapshot,
-                  style: Theme.of(context).textTheme.titleSmall,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.productTitleSnapshot,
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      subtitleParts.join(' · '),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      '${item.quantity} × ${item.currency} '
+                      '${item.unitPrice.toStringAsFixed(2)}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
                 ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  subtitleParts.join(' · '),
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  '${item.quantity} × ${item.currency} '
-                  '${item.unitPrice.toStringAsFixed(2)}',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Text(
+                '${item.currency} ${item.lineTotal.toStringAsFixed(2)}',
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+            ],
+          ),
+          if (reviewable)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: LuxuryTextButton(
+                label: hasReview ? 'Edit review' : 'Write a review',
+                onPressed: () => _openReview(context, ref),
+              ),
             ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Text(
-            '${item.currency} ${item.lineTotal.toStringAsFixed(2)}',
-            style: Theme.of(context).textTheme.titleSmall,
-          ),
         ],
       ),
     );
