@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../../core/router/app_routes.dart';
 import '../../../shared/design_system.dart';
 import '../../cart/providers/cart_providers.dart';
+import '../../coupons/presentation/widgets/coupon_field.dart';
+import '../../coupons/providers/coupon_providers.dart';
 import '../../orders/domain/entities/order_status.dart';
 import '../../profile/domain/entities/address.dart';
 import '../../profile/providers/profile_providers.dart';
@@ -24,6 +26,7 @@ class CheckoutPage extends ConsumerStatefulWidget {
 
 class _CheckoutPageState extends ConsumerState<CheckoutPage> {
   final TextEditingController _notesController = TextEditingController();
+  final TextEditingController _couponController = TextEditingController();
   String? _selectedAddressId;
 
   @override
@@ -36,6 +39,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
         context.go(AppRoutes.login);
         return;
       }
+      ref.read(couponProvider.notifier).reset();
       ref.read(cartProvider.notifier).load();
       ref.read(addressesProvider.notifier).load();
     });
@@ -44,6 +48,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
   @override
   void dispose() {
     _notesController.dispose();
+    _couponController.dispose();
     super.dispose();
   }
 
@@ -68,18 +73,39 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
           notes: _notesController.text,
         );
     if (!mounted) return;
-    if (orderId != null) {
-      // Cart is now converted server-side; refresh the local view.
-      await ref.read(cartProvider.notifier).load();
-      if (!mounted) return;
-      LuxurySnackBars.success(context, 'Order placed successfully.');
-      context.pushReplacement(AppRoutes.orderDetailPath(orderId));
-    } else {
+    if (orderId == null) {
       final message =
           ref.read(checkoutProvider).message ??
           'Could not place your order. Please try again.';
       LuxurySnackBars.error(context, message);
+      return;
     }
+
+    // Cart is now converted server-side; refresh the local view.
+    await ref.read(cartProvider.notifier).load();
+    if (!mounted) return;
+
+    // Optional coupon: applied AFTER the order exists, via the redeem_coupon
+    // RPC (server computes the discount and updates the order totals). A failed
+    // coupon must never undo the already-placed order — surface a warning and
+    // continue to the order, which shows the authoritative totals.
+    final code = _couponController.text.trim();
+    if (code.isNotEmpty) {
+      final couponError = await ref
+          .read(couponProvider.notifier)
+          .apply(code: code, orderId: orderId);
+      if (!mounted) return;
+      if (couponError != null) {
+        LuxurySnackBars.warning(context, 'Order placed. $couponError');
+      } else {
+        LuxurySnackBars.success(context, 'Order placed and coupon applied.');
+      }
+    } else {
+      LuxurySnackBars.success(context, 'Order placed successfully.');
+    }
+
+    if (!mounted) return;
+    context.pushReplacement(AppRoutes.orderDetailPath(orderId));
   }
 
   @override
@@ -124,6 +150,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                   onReloadAddresses: () =>
                       ref.read(addressesProvider.notifier).load(),
                   notesController: _notesController,
+                  couponController: _couponController,
                   itemCount: cart.itemCount,
                   total: cart.cart.grandTotal,
                   currency: cart.cart.currency,
@@ -156,6 +183,7 @@ class _CheckoutBody extends StatelessWidget {
     required this.onSelectAddress,
     required this.onReloadAddresses,
     required this.notesController,
+    required this.couponController,
     required this.itemCount,
     required this.total,
     required this.currency,
@@ -170,6 +198,7 @@ class _CheckoutBody extends StatelessWidget {
   final ValueChanged<String> onSelectAddress;
   final VoidCallback onReloadAddresses;
   final TextEditingController notesController;
+  final TextEditingController couponController;
   final int itemCount;
   final double total;
   final String currency;
@@ -217,6 +246,16 @@ class _CheckoutBody extends StatelessWidget {
                 hintText: 'Delivery instructions, landmarks, etc.',
                 minLines: 2,
                 maxLines: 5,
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              Text('Coupon', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: AppSpacing.sm),
+              CouponField(controller: couponController, enabled: !isSubmitting),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                'Applied after your order is placed; the final total updates '
+                'on the order screen.',
+                style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
           ),
