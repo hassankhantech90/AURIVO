@@ -4,9 +4,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_routes.dart';
 import '../../../shared/design_system.dart';
+import '../../authentication/providers/session_provider.dart';
 import '../../cart/providers/cart_providers.dart';
 import '../../reviews/presentation/widgets/product_reviews_section.dart';
 import '../../seller/providers/seller_providers.dart';
+import '../../wholesale/presentation/widgets/rfq_form_sheet.dart';
 import '../domain/entities/product.dart';
 import '../domain/entities/product_detail.dart';
 import '../domain/entities/product_variant.dart';
@@ -139,9 +141,43 @@ class _ProductDetailView extends StatelessWidget {
             ),
           ),
         ],
+        const SizedBox(height: AppSpacing.lg),
+        _RequestQuoteButton(product: product),
         const SizedBox(height: AppSpacing.xl),
         ProductReviewsSection(productId: product.id),
       ],
+    );
+  }
+}
+
+/// "Request a Quote" CTA for wholesale/custom enquiries. Pre-fills the product
+/// and seller context; guests are routed to login. The buyer identity is
+/// resolved server-side on submit — never supplied by this screen.
+class _RequestQuoteButton extends ConsumerWidget {
+  const _RequestQuoteButton({required this.product});
+
+  final Product product;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isAuthenticated = ref.watch(sessionProvider).isAuthenticated;
+    return SizedBox(
+      width: double.infinity,
+      child: LuxuryOutlinedButton(
+        label: 'Request a Quote',
+        onPressed: () {
+          if (!isAuthenticated) {
+            context.push(AppRoutes.login);
+            return;
+          }
+          RfqFormSheet.show(
+            context,
+            productId: product.id,
+            sellerProfileId: product.sellerId,
+            contextLabel: product.title,
+          );
+        },
+      ),
     );
   }
 }

@@ -24,6 +24,7 @@ import '../../features/profile/presentation/profile_page.dart';
 import '../../features/seller/presentation/seller_detail_page.dart';
 import '../../features/seller/presentation/seller_page.dart';
 import '../../features/settings/presentation/settings_page.dart';
+import '../../features/wholesale/presentation/rfq_detail_page.dart';
 import '../../features/wholesale/presentation/wholesale_page.dart';
 import '../theme/theme_exports.dart';
 import 'app_routes.dart';
@@ -139,6 +140,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.wholesale,
         name: 'wholesale',
         builder: (context, state) => const WholesalePage(),
+      ),
+      _fadeRoute(
+        path: AppRoutes.rfqDetail,
+        name: 'rfqDetail',
+        builder: (context, state) =>
+            RfqDetailPage(rfqId: state.pathParameters['id'] ?? ''),
       ),
       _fadeRoute(
         path: AppRoutes.settings,

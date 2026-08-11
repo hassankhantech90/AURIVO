@@ -29,6 +29,10 @@ class AppRoutes {
   /// Builds a concrete seller-storefront location for [slug].
   static String sellerDetailPath(String slug) => '/seller/$slug';
   static const wholesale = '/wholesale';
+  static const rfqDetail = '/wholesale/:id';
+
+  /// Builds a concrete RFQ-detail location for [id].
+  static String rfqDetailPath(String id) => '/wholesale/$id';
   static const settings = '/settings';
   static const notifications = '/notifications';
 }
