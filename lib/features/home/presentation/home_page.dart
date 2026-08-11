@@ -39,7 +39,17 @@ class _HomePageState extends ConsumerState<HomePage> {
     final products = ref.watch(productListProvider);
 
     return Scaffold(
-      appBar: const LuxuryAppBar(title: 'AURIVO', largeTitle: true),
+      appBar: LuxuryAppBar(
+        title: 'AURIVO',
+        largeTitle: true,
+        actions: [
+          IconButton(
+            tooltip: 'Settings',
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => context.push(AppRoutes.settings),
+          ),
+        ],
+      ),
       body: RefreshIndicator(
         onRefresh: _load,
         child: ListView(
