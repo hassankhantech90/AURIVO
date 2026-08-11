@@ -28,6 +28,15 @@ class AppRoutes {
 
   /// Builds a concrete seller-storefront location for [slug].
   static String sellerDetailPath(String slug) => '/seller/$slug';
+  // Seller Studio (seller-side management). A distinct prefix so it never
+  // collides with the buyer storefront route `/seller/:slug`.
+  static const sellerDashboard = '/seller-studio';
+  static const sellerProductNew = '/seller-studio/new';
+  static const sellerProductEdit = '/seller-studio/edit/:id';
+
+  /// Builds a concrete seller product-edit location for [id].
+  static String sellerProductEditPath(String id) => '/seller-studio/edit/$id';
+
   static const wholesale = '/wholesale';
   static const rfqDetail = '/wholesale/:id';
 

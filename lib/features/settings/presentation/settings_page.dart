@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/router/app_routes.dart';
 import '../../../shared/design_system.dart';
 import '../../authentication/providers/session_provider.dart';
+import '../../seller/providers/seller_product_providers.dart';
 import '../domain/entities/app_settings.dart';
 import '../providers/settings_providers.dart';
 
@@ -62,13 +63,22 @@ class SettingsPage extends ConsumerWidget {
               session.isAuthenticated ? 'Signed in' : 'Not signed in',
             ),
           ),
-          if (session.isAuthenticated)
+          if (session.isAuthenticated) ...[
+            // Seller Studio entry — shown only when the user has a seller store.
+            if (ref.watch(mySellerProfileIdProvider).valueOrNull != null)
+              ListTile(
+                leading: const Icon(Icons.storefront_outlined),
+                title: const Text('Seller Studio'),
+                subtitle: const Text('Manage your products'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push(AppRoutes.sellerDashboard),
+              ),
             ListTile(
               leading: const Icon(Icons.logout, color: AppColors.error),
               title: const Text('Sign out'),
               onTap: () => _signOut(context, ref),
-            )
-          else
+            ),
+          ] else
             ListTile(
               leading: const Icon(Icons.login),
               title: const Text('Sign in'),

@@ -1,0 +1,329 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../shared/design_system.dart';
+import '../domain/entities/product_draft.dart';
+import '../providers/seller_product_providers.dart';
+
+/// Create/edit form for a seller product. `productId == null` → create mode.
+/// The buyer/ownership fields are never entered here: `seller_id` is server-set
+/// and publish status is managed separately on the dashboard.
+class SellerProductEditPage extends ConsumerStatefulWidget {
+  const SellerProductEditPage({super.key, this.productId});
+
+  final String? productId;
+
+  bool get isEditing => productId != null;
+
+  @override
+  ConsumerState<SellerProductEditPage> createState() =>
+      _SellerProductEditPageState();
+}
+
+class _SellerProductEditPageState extends ConsumerState<SellerProductEditPage> {
+  final _title = TextEditingController();
+  final _slug = TextEditingController();
+  final _jewelleryType = TextEditingController();
+  final _basePrice = TextEditingController();
+  final _comparePrice = TextEditingController();
+  final _description = TextEditingController();
+  final _minOrderQuantity = TextEditingController();
+
+  String _currency = 'PKR';
+  String? _gender;
+  String? _brandId;
+  final Set<String> _categoryIds = {};
+
+  bool _loading = false;
+  bool _submitting = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.isEditing) {
+      _loading = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _prefill());
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final c in [
+      _title,
+      _slug,
+      _jewelleryType,
+      _basePrice,
+      _comparePrice,
+      _description,
+      _minOrderQuantity,
+    ]) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  Future<void> _prefill() async {
+    try {
+      final detail = await ref
+          .read(sellerProductRepositoryProvider)
+          .getProduct(widget.productId!);
+      final p = detail.product;
+      _title.text = p.title;
+      _slug.text = p.slug;
+      _jewelleryType.text = p.jewelleryType;
+      _basePrice.text = p.basePrice.toString();
+      _comparePrice.text = p.comparePrice?.toString() ?? '';
+      _description.text = p.description ?? '';
+      _minOrderQuantity.text = p.minOrderQuantity?.toString() ?? '';
+      _currency = p.currency;
+      _gender = p.gender;
+      _brandId = p.brandId;
+      _categoryIds
+        ..clear()
+        ..addAll(detail.categoryIds);
+    } catch (error) {
+      _error = error.toString();
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  String _slugify(String value) {
+    final s = value
+        .toLowerCase()
+        .trim()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+        .replaceAll(RegExp(r'^-+|-+$'), '');
+    return s;
+  }
+
+  Future<void> _submit() async {
+    final title = _title.text.trim();
+    final jewelleryType = _jewelleryType.text.trim();
+    final basePrice = double.tryParse(_basePrice.text.trim());
+    final slug = _slug.text.trim().isEmpty
+        ? _slugify(title)
+        : _slugify(_slug.text);
+
+    if (title.isEmpty || jewelleryType.isEmpty || basePrice == null) {
+      setState(
+        () => _error =
+            'Title, jewellery type and a valid base price are '
+            'required.',
+      );
+      return;
+    }
+    if (slug.isEmpty) {
+      setState(() => _error = 'Please provide a valid product URL (slug).');
+      return;
+    }
+
+    final draft = ProductDraft(
+      title: title,
+      slug: slug,
+      jewelleryType: jewelleryType,
+      basePrice: basePrice,
+      currency: _currency,
+      comparePrice: double.tryParse(_comparePrice.text.trim()),
+      description: _description.text,
+      gender: _gender,
+      brandId: _brandId,
+      minOrderQuantity: int.tryParse(_minOrderQuantity.text.trim()),
+      categoryIds: _categoryIds.toList(),
+    );
+
+    setState(() {
+      _submitting = true;
+      _error = null;
+    });
+
+    final notifier = ref.read(myProductsProvider.notifier);
+    final error = widget.isEditing
+        ? await notifier.update(widget.productId!, draft)
+        : await notifier.create(draft);
+
+    if (!mounted) return;
+    if (error == null) {
+      LuxurySnackBars.success(
+        context,
+        widget.isEditing ? 'Product updated.' : 'Product created.',
+      );
+      context.pop();
+    } else {
+      setState(() {
+        _submitting = false;
+        _error = error;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final brands = ref.watch(sellerBrandsProvider);
+    final categories = ref.watch(sellerCategoriesProvider);
+
+    return Scaffold(
+      appBar: LuxuryAppBar(
+        title: widget.isEditing ? 'Edit product' : 'New product',
+        showBackButton: true,
+      ),
+      body: _loading
+          ? const Center(child: LoadingIndicator())
+          : ListView(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              children: [
+                CustomTextField(
+                  controller: _title,
+                  labelText: 'Title',
+                  hintText: 'e.g. Emerald Solitaire Ring',
+                ),
+                const SizedBox(height: AppSpacing.md),
+                CustomTextField(
+                  controller: _slug,
+                  labelText: 'Product URL (optional — auto from title)',
+                  hintText: 'emerald-solitaire-ring',
+                ),
+                const SizedBox(height: AppSpacing.md),
+                CustomTextField(
+                  controller: _jewelleryType,
+                  labelText: 'Jewellery type',
+                  hintText: 'ring, necklace, bracelet…',
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Row(
+                  children: [
+                    Expanded(
+                      child: CustomTextField(
+                        controller: _basePrice,
+                        labelText: 'Base price',
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    SizedBox(
+                      width: 110,
+                      child: DropdownButtonFormField<String>(
+                        initialValue: _currency,
+                        decoration: const InputDecoration(
+                          labelText: 'Currency',
+                        ),
+                        items: const [
+                          DropdownMenuItem(value: 'PKR', child: Text('PKR')),
+                          DropdownMenuItem(value: 'USD', child: Text('USD')),
+                        ],
+                        onChanged: (v) =>
+                            setState(() => _currency = v ?? 'PKR'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.md),
+                CustomTextField(
+                  controller: _comparePrice,
+                  labelText: 'Compare-at price (optional)',
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                DropdownButtonFormField<String?>(
+                  initialValue: _gender,
+                  decoration: const InputDecoration(
+                    labelText: 'Gender (optional)',
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: null, child: Text('Any')),
+                    DropdownMenuItem(value: 'women', child: Text('Women')),
+                    DropdownMenuItem(value: 'men', child: Text('Men')),
+                    DropdownMenuItem(value: 'unisex', child: Text('Unisex')),
+                    DropdownMenuItem(value: 'kids', child: Text('Kids')),
+                  ],
+                  onChanged: (v) => setState(() => _gender = v),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                brands.when(
+                  loading: () => const LinearProgressIndicator(),
+                  error: (_, _) => const SizedBox.shrink(),
+                  data: (list) => DropdownButtonFormField<String?>(
+                    initialValue: _brandId,
+                    decoration: const InputDecoration(
+                      labelText: 'Brand (optional)',
+                    ),
+                    items: [
+                      const DropdownMenuItem(value: null, child: Text('None')),
+                      for (final b in list)
+                        DropdownMenuItem(value: b.id, child: Text(b.name)),
+                    ],
+                    onChanged: (v) => setState(() => _brandId = v),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                CustomTextField(
+                  controller: _minOrderQuantity,
+                  labelText: 'Minimum order quantity (optional)',
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                MultilineTextField(
+                  controller: _description,
+                  labelText: 'Description (optional)',
+                  minLines: 3,
+                  maxLines: 8,
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                Text(
+                  'Categories',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                categories.when(
+                  loading: () => const LinearProgressIndicator(),
+                  error: (_, _) => const Text('Could not load categories.'),
+                  data: (list) => Wrap(
+                    spacing: AppSpacing.sm,
+                    runSpacing: AppSpacing.sm,
+                    children: [
+                      for (final c in list)
+                        FilterChip(
+                          label: Text(c.name),
+                          selected: _categoryIds.contains(c.id),
+                          onSelected: (sel) => setState(() {
+                            if (sel) {
+                              _categoryIds.add(c.id);
+                            } else {
+                              _categoryIds.remove(c.id);
+                            }
+                          }),
+                        ),
+                    ],
+                  ),
+                ),
+                if (_error != null) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  Text(
+                    _error!,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: AppColors.error),
+                  ),
+                ],
+                const SizedBox(height: AppSpacing.xl),
+                LoadingButton(
+                  label: widget.isEditing ? 'Save changes' : 'Create product',
+                  isLoading: _submitting,
+                  onPressed: _submitting ? null : _submit,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Text(
+                  'New products start as Draft. Publish them from Seller Studio.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
+    );
+  }
+}
