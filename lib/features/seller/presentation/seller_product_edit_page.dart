@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/router/app_routes.dart';
 import '../../../shared/design_system.dart';
 import '../domain/entities/product_draft.dart';
 import '../providers/seller_product_providers.dart';
@@ -317,6 +318,18 @@ class _SellerProductEditPageState extends ConsumerState<SellerProductEditPage> {
                   isLoading: _submitting,
                   onPressed: _submitting ? null : _submit,
                 ),
+                if (widget.isEditing) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  SizedBox(
+                    width: double.infinity,
+                    child: LuxuryOutlinedButton(
+                      label: 'Manage variants',
+                      onPressed: () => context.push(
+                        AppRoutes.sellerProductVariantsPath(widget.productId!),
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: AppSpacing.md),
                 Text(
                   'New products start as Draft. Publish them from Seller Studio.',

@@ -25,6 +25,7 @@ import '../../features/seller/presentation/seller_dashboard_page.dart';
 import '../../features/seller/presentation/seller_detail_page.dart';
 import '../../features/seller/presentation/seller_page.dart';
 import '../../features/seller/presentation/seller_product_edit_page.dart';
+import '../../features/seller/presentation/seller_variants_page.dart';
 import '../../features/settings/presentation/settings_page.dart';
 import '../../features/wholesale/presentation/rfq_detail_page.dart';
 import '../../features/wholesale/presentation/wholesale_page.dart';
@@ -153,6 +154,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: 'sellerProductEdit',
         builder: (context, state) =>
             SellerProductEditPage(productId: state.pathParameters['id']),
+      ),
+      _fadeRoute(
+        path: AppRoutes.sellerProductVariants,
+        name: 'sellerProductVariants',
+        builder: (context, state) =>
+            SellerVariantsPage(productId: state.pathParameters['id'] ?? ''),
       ),
       _fadeRoute(
         path: AppRoutes.wholesale,
