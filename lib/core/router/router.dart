@@ -21,6 +21,7 @@ import '../../features/orders/presentation/order_detail_page.dart';
 import '../../features/orders/presentation/orders_page.dart';
 import '../../features/products/presentation/product_page.dart';
 import '../../features/profile/presentation/profile_page.dart';
+import '../../features/seller/presentation/seller_detail_page.dart';
 import '../../features/seller/presentation/seller_page.dart';
 import '../../features/settings/presentation/settings_page.dart';
 import '../../features/wholesale/presentation/wholesale_page.dart';
@@ -127,6 +128,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.seller,
         name: 'seller',
         builder: (context, state) => const SellerPage(),
+      ),
+      _fadeRoute(
+        path: AppRoutes.sellerDetail,
+        name: 'sellerDetail',
+        builder: (context, state) =>
+            SellerDetailPage(slug: state.pathParameters['slug'] ?? ''),
       ),
       _fadeRoute(
         path: AppRoutes.wholesale,

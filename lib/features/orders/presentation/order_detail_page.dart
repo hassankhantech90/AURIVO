@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../core/router/app_routes.dart';
 import '../../../shared/design_system.dart';
 import '../../reviews/presentation/widgets/review_form_sheet.dart';
 import '../../reviews/providers/review_providers.dart';
+import '../../seller/providers/seller_providers.dart';
 import '../domain/entities/order.dart';
 import '../domain/entities/order_detail.dart';
 import '../domain/entities/order_item.dart';
@@ -130,6 +133,18 @@ class _OrderDetailBody extends StatelessWidget {
             ],
           ),
         ),
+        if (reviewable && _sellerIds(detail).isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.md),
+          _SectionCard(
+            title: 'Rate the sellers',
+            child: Column(
+              children: [
+                for (final sellerId in _sellerIds(detail))
+                  _SellerReviewEntry(sellerId: sellerId),
+              ],
+            ),
+          ),
+        ],
         const SizedBox(height: AppSpacing.md),
         _SummaryCard(order: order),
         const SizedBox(height: AppSpacing.md),
@@ -233,6 +248,42 @@ class _HeaderCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Distinct seller ids across the order's items, preserving first-seen order.
+List<String> _sellerIds(OrderDetail detail) {
+  final seen = <String>{};
+  final ids = <String>[];
+  for (final item in detail.items) {
+    if (seen.add(item.sellerId)) ids.add(item.sellerId);
+  }
+  return ids;
+}
+
+/// Entry point to review a seller from a fulfilled order. Shown only when the
+/// seller is a publicly visible (verified) storefront; navigates to the
+/// storefront, where the buyer writes the review (server sets verified_purchase
+/// from their delivered/completed orders with that seller).
+class _SellerReviewEntry extends ConsumerWidget {
+  const _SellerReviewEntry({required this.sellerId});
+
+  final String sellerId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final seller = ref.watch(sellerByIdProvider(sellerId)).valueOrNull;
+    if (seller == null) return const SizedBox.shrink();
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: const Icon(
+        Icons.storefront_outlined,
+        color: AppColors.primaryGold,
+      ),
+      title: Text(seller.storeName),
+      trailing: const Icon(Icons.chevron_right, color: AppColors.softGrey),
+      onTap: () => context.push(AppRoutes.sellerDetailPath(seller.slug)),
     );
   }
 }

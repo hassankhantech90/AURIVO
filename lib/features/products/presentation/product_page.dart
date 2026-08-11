@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../core/router/app_routes.dart';
 import '../../../shared/design_system.dart';
 import '../../cart/providers/cart_providers.dart';
 import '../../reviews/presentation/widgets/product_reviews_section.dart';
+import '../../seller/providers/seller_providers.dart';
 import '../domain/entities/product.dart';
 import '../domain/entities/product_detail.dart';
 import '../domain/entities/product_variant.dart';
@@ -106,6 +109,7 @@ class _ProductDetailView extends StatelessWidget {
           ),
         ],
         const SizedBox(height: AppSpacing.md),
+        _SellerLink(sellerId: product.sellerId),
         Wrap(
           spacing: AppSpacing.sm,
           runSpacing: AppSpacing.sm,
@@ -138,6 +142,49 @@ class _ProductDetailView extends StatelessWidget {
         const SizedBox(height: AppSpacing.xl),
         ProductReviewsSection(productId: product.id),
       ],
+    );
+  }
+}
+
+/// Tappable "Sold by ..." store link, shown only when the product's seller is a
+/// publicly visible (verified) storefront. Navigates to the seller detail page
+/// by slug.
+class _SellerLink extends ConsumerWidget {
+  const _SellerLink({required this.sellerId});
+
+  final String sellerId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sellerAsync = ref.watch(sellerByIdProvider(sellerId));
+    final seller = sellerAsync.valueOrNull;
+    if (seller == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: InkWell(
+        onTap: () => context.push(AppRoutes.sellerDetailPath(seller.slug)),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.storefront_outlined,
+                size: 18,
+                color: AppColors.primaryGold,
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              Expanded(
+                child: Text(
+                  'Sold by ${seller.storeName}',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ),
+              const Icon(Icons.chevron_right, color: AppColors.softGrey),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

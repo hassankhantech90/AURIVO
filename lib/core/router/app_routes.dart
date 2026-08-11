@@ -24,6 +24,10 @@ class AppRoutes {
   static String orderDetailPath(String id) => '/orders/$id';
   static const profile = '/profile';
   static const seller = '/seller';
+  static const sellerDetail = '/seller/:slug';
+
+  /// Builds a concrete seller-storefront location for [slug].
+  static String sellerDetailPath(String slug) => '/seller/$slug';
   static const wholesale = '/wholesale';
   static const settings = '/settings';
   static const notifications = '/notifications';
