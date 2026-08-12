@@ -329,6 +329,16 @@ class _SellerProductEditPageState extends ConsumerState<SellerProductEditPage> {
                       ),
                     ),
                   ),
+                  const SizedBox(height: AppSpacing.sm),
+                  SizedBox(
+                    width: double.infinity,
+                    child: LuxuryOutlinedButton(
+                      label: 'Manage images',
+                      onPressed: () => context.push(
+                        AppRoutes.sellerProductImagesPath(widget.productId!),
+                      ),
+                    ),
+                  ),
                 ],
                 const SizedBox(height: AppSpacing.md),
                 Text(
