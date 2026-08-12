@@ -17,7 +17,17 @@ class SellerDashboardPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final sellerAsync = ref.watch(mySellerProfileIdProvider);
     return Scaffold(
-      appBar: const LuxuryAppBar(title: 'Seller Studio', showBackButton: true),
+      appBar: LuxuryAppBar(
+        title: 'Seller Studio',
+        showBackButton: true,
+        actions: [
+          IconButton(
+            tooltip: 'Quote requests',
+            icon: const Icon(Icons.request_quote_outlined),
+            onPressed: () => context.push(AppRoutes.sellerRfqInbox),
+          ),
+        ],
+      ),
       body: sellerAsync.when(
         loading: () => const Center(child: LoadingIndicator()),
         error: (_, _) => ErrorStateWidget(

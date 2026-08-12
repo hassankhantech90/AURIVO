@@ -26,6 +26,8 @@ import '../../features/seller/presentation/seller_detail_page.dart';
 import '../../features/seller/presentation/seller_page.dart';
 import '../../features/seller/presentation/seller_images_page.dart';
 import '../../features/seller/presentation/seller_product_edit_page.dart';
+import '../../features/seller/presentation/seller_rfq_detail_page.dart';
+import '../../features/seller/presentation/seller_rfq_inbox_page.dart';
 import '../../features/seller/presentation/seller_variants_page.dart';
 import '../../features/settings/presentation/settings_page.dart';
 import '../../features/wholesale/presentation/rfq_detail_page.dart';
@@ -167,6 +169,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: 'sellerProductImages',
         builder: (context, state) =>
             SellerImagesPage(productId: state.pathParameters['id'] ?? ''),
+      ),
+      _fadeRoute(
+        path: AppRoutes.sellerRfqInbox,
+        name: 'sellerRfqInbox',
+        builder: (context, state) => const SellerRfqInboxPage(),
+      ),
+      _fadeRoute(
+        path: AppRoutes.sellerRfqDetail,
+        name: 'sellerRfqDetail',
+        builder: (context, state) =>
+            SellerRfqDetailPage(rfqId: state.pathParameters['id'] ?? ''),
       ),
       _fadeRoute(
         path: AppRoutes.wholesale,
