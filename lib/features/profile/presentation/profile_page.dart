@@ -8,6 +8,8 @@ import '../../../core/supabase/supabase_service.dart';
 import '../../../core/supabase/supabase_storage_service.dart';
 import '../../../shared/design_system.dart';
 import '../../authentication/providers/session_provider.dart';
+import '../../seller/providers/seller_product_providers.dart'
+    show mySellerProfileIdProvider;
 import '../data/repositories/supabase_profile_repository.dart';
 import '../domain/entities/profile.dart';
 import '../providers/profile_providers.dart';
@@ -207,7 +209,48 @@ class _ProfileBody extends StatelessWidget {
             onTap: onAddresses,
           ),
         ),
+        const SizedBox(height: AppSpacing.md),
+        const _SellerTile(),
       ],
+    );
+  }
+}
+
+/// Seller entry point. Discoverable as "Sell on AURIVO" until a store exists,
+/// then flips to "Store settings". Gated on [mySellerProfileIdProvider] so
+/// Seller Studio only surfaces once the user actually has a seller profile.
+class _SellerTile extends ConsumerWidget {
+  const _SellerTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sellerId = ref.watch(mySellerProfileIdProvider);
+    return sellerId.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
+      data: (id) {
+        final hasStore = id != null;
+        return LuxuryCard(
+          padding: EdgeInsets.zero,
+          child: ListTile(
+            leading: Icon(
+              hasStore ? Icons.storefront_outlined : Icons.store_outlined,
+            ),
+            title: Text(hasStore ? 'Store settings' : 'Sell on AURIVO'),
+            subtitle: Text(
+              hasStore
+                  ? 'Manage your store details'
+                  : 'Open a store to sell jewellery',
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(
+              hasStore
+                  ? AppRoutes.sellerStoreSettings
+                  : AppRoutes.sellerOnboarding,
+            ),
+          ),
+        );
+      },
     );
   }
 }

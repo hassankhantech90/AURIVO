@@ -29,9 +29,12 @@ class AppRoutes {
 
   /// Builds a concrete seller-storefront location for [slug].
   static String sellerDetailPath(String slug) => '/seller/$slug';
+  // "Sell on AURIVO" onboarding — creates the current user's seller store.
+  static const sellerOnboarding = '/sell';
   // Seller Studio (seller-side management). A distinct prefix so it never
   // collides with the buyer storefront route `/seller/:slug`.
   static const sellerDashboard = '/seller-studio';
+  static const sellerStoreSettings = '/seller-studio/settings';
   static const sellerProductNew = '/seller-studio/new';
   static const sellerProductEdit = '/seller-studio/edit/:id';
 

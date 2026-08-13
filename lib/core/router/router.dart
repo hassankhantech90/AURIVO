@@ -27,9 +27,11 @@ import '../../features/seller/presentation/seller_detail_page.dart';
 import '../../features/seller/presentation/seller_page.dart';
 import '../../features/seller/presentation/seller_images_page.dart';
 import '../../features/seller/presentation/seller_product_edit_page.dart';
+import '../../features/seller/presentation/seller_onboarding_page.dart';
 import '../../features/seller/presentation/seller_rfq_detail_page.dart';
 import '../../features/seller/presentation/seller_rfq_inbox_page.dart';
 import '../../features/seller/presentation/seller_variants_page.dart';
+import '../../features/seller/presentation/store_settings_page.dart';
 import '../../features/settings/presentation/settings_page.dart';
 import '../../features/wholesale/presentation/rfq_detail_page.dart';
 import '../../features/wholesale/presentation/wholesale_page.dart';
@@ -147,6 +149,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: 'sellerDetail',
         builder: (context, state) =>
             SellerDetailPage(slug: state.pathParameters['slug'] ?? ''),
+      ),
+      _fadeRoute(
+        path: AppRoutes.sellerOnboarding,
+        name: 'sellerOnboarding',
+        builder: (context, state) => const SellerOnboardingPage(),
+      ),
+      _fadeRoute(
+        path: AppRoutes.sellerStoreSettings,
+        name: 'sellerStoreSettings',
+        builder: (context, state) => const StoreSettingsPage(),
       ),
       _fadeRoute(
         path: AppRoutes.sellerDashboard,
