@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../../core/router/app_routes.dart';
 import '../../../shared/design_system.dart';
+import '../../authentication/providers/session_provider.dart';
 import '../../products/domain/entities/product.dart';
 import '../../products/providers/catalog_state.dart';
 import '../../products/providers/product_providers.dart';
+import '../../wishlist/presentation/widgets/wishlist_product_card.dart';
+import '../../wishlist/providers/wishlist_providers.dart';
 
 /// Explore surface: the full public product catalogue grid, wired to
 /// [productListProvider].
@@ -24,7 +25,12 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _load());
   }
 
-  Future<void> _load() => ref.read(productListProvider.notifier).load();
+  Future<void> _load() {
+    if (ref.read(sessionProvider).isAuthenticated) {
+      ref.read(wishlistProvider.notifier).load();
+    }
+    return ref.read(productListProvider.notifier).load();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,18 +73,8 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
             crossAxisSpacing: AppSpacing.md,
             childAspectRatio: 0.62,
           ),
-          itemBuilder: (context, index) {
-            final product = products[index];
-            return ProductCard(
-              name: product.title,
-              price: product.basePrice,
-              originalPrice: product.comparePrice,
-              currency: product.currency,
-              imageUrl: '',
-              rating: product.ratingCount > 0 ? product.ratingAverage : null,
-              onTap: () => context.push(AppRoutes.productPath(product.id)),
-            );
-          },
+          itemBuilder: (context, index) =>
+              WishlistProductCard(product: products[index]),
         );
     }
   }

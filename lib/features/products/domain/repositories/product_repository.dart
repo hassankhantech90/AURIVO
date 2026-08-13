@@ -22,6 +22,11 @@ abstract class ProductRepository {
 
   Future<Product?> getProductById(String id);
 
+  /// Products for the given [ids] (order not guaranteed). Returns an empty list
+  /// for empty input. Only ids visible under the catalogue RLS are returned, so
+  /// unavailable/removed products are simply omitted.
+  Future<List<Product>> getProductsByIds(List<String> ids);
+
   /// Product with its images and variants for the detail screen.
   Future<ProductDetail?> getProductDetail(String id);
 

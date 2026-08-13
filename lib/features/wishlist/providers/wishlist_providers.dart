@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/supabase/supabase_database_service.dart';
 import '../../../core/supabase/supabase_service.dart';
+import '../../products/domain/entities/product.dart';
+import '../../products/providers/product_providers.dart';
 import '../data/repositories/supabase_wishlist_repository.dart';
 import '../domain/repositories/wishlist_repository.dart';
 
@@ -102,3 +104,13 @@ class WishlistNotifier extends StateNotifier<WishlistState> {
     }
   }
 }
+
+/// Hydrates the wishlisted product ids into full [Product]s for the wishlist
+/// screen. Re-runs whenever the wishlist set changes (e.g. after a removal),
+/// so the grid stays in sync. Products no longer visible under the catalogue
+/// RLS are simply omitted.
+final wishlistProductsProvider = FutureProvider<List<Product>>((ref) async {
+  final ids = ref.watch(wishlistProvider.select((s) => s.productIds));
+  if (ids.isEmpty) return const [];
+  return ref.watch(productRepositoryProvider).getProductsByIds(ids.toList());
+});

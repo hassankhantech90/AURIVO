@@ -48,6 +48,12 @@ class _FakeProductRepository implements ProductRepository {
   }
 
   @override
+  Future<List<Product>> getProductsByIds(List<String> ids) async {
+    if (error != null) throw error!;
+    return products.where((p) => ids.contains(p.id)).toList();
+  }
+
+  @override
   Future<ProductDetail?> getProductDetail(String id) async {
     if (error != null) throw error!;
     return detail;

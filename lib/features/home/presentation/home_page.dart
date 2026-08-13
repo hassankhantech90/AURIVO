@@ -4,11 +4,14 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_routes.dart';
 import '../../../shared/design_system.dart';
+import '../../authentication/providers/session_provider.dart';
 import '../../categories/domain/entities/category.dart';
 import '../../categories/providers/category_providers.dart';
 import '../../products/domain/entities/product.dart';
 import '../../products/providers/catalog_state.dart';
 import '../../products/providers/product_providers.dart';
+import '../../wishlist/presentation/widgets/wishlist_product_card.dart';
+import '../../wishlist/providers/wishlist_providers.dart';
 
 /// Home surface: root categories and a featured products rail, wired to the
 /// catalog providers.
@@ -27,6 +30,9 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   Future<void> _load() async {
+    if (ref.read(sessionProvider).isAuthenticated) {
+      ref.read(wishlistProvider.notifier).load();
+    }
     await Future.wait([
       ref.read(categoriesProvider.notifier).loadRoots(),
       ref.read(productListProvider.notifier).loadFeatured(),
@@ -142,15 +148,5 @@ class _HomePageState extends ConsumerState<HomePage> {
     }
   }
 
-  Widget _productCard(Product product) {
-    return ProductCard(
-      name: product.title,
-      price: product.basePrice,
-      originalPrice: product.comparePrice,
-      currency: product.currency,
-      imageUrl: '',
-      rating: product.ratingCount > 0 ? product.ratingAverage : null,
-      onTap: () => context.push(AppRoutes.productPath(product.id)),
-    );
-  }
+  Widget _productCard(Product product) => WishlistProductCard(product: product);
 }

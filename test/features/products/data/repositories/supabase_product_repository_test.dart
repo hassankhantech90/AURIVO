@@ -189,6 +189,25 @@ void main() {
     });
   });
 
+  group('getProductsByIds', () {
+    test('queries products via an IN filter and parses rows', () async {
+      db.onList = (table, q) => [productRow(id: 'p1'), productRow(id: 'p2')];
+
+      final products = await repo.getProductsByIds(['p1', 'p2']);
+
+      expect(products.map((p) => p.id), ['p1', 'p2']);
+      final q = db.queries.single;
+      expect(q.table, 'products');
+      expect(q.whereIn['id'], ['p1', 'p2']);
+    });
+
+    test('returns empty and skips the query for empty input', () async {
+      final products = await repo.getProductsByIds(const []);
+      expect(products, isEmpty);
+      expect(db.queries, isEmpty);
+    });
+  });
+
   group('getProductDetail', () {
     test('composes product, images and variants', () async {
       db.onList = (table, q) {

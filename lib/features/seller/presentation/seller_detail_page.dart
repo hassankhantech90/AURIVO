@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../../core/router/app_routes.dart';
 import '../../../shared/design_system.dart';
-import '../../products/domain/entities/product.dart';
+import '../../authentication/providers/session_provider.dart';
 import '../../profile/domain/entities/seller_profile.dart';
+import '../../wishlist/presentation/widgets/wishlist_product_card.dart';
+import '../../wishlist/providers/wishlist_providers.dart';
 import '../domain/entities/seller_storefront.dart';
 import '../providers/seller_providers.dart';
 import 'widgets/seller_reviews_section.dart';
@@ -29,8 +29,12 @@ class _SellerDetailPageState extends ConsumerState<SellerDetailPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _load());
   }
 
-  Future<void> _load() =>
-      ref.read(sellerStorefrontProvider(widget.slug).notifier).load();
+  Future<void> _load() {
+    if (ref.read(sessionProvider).isAuthenticated) {
+      ref.read(wishlistProvider.notifier).load();
+    }
+    return ref.read(sellerStorefrontProvider(widget.slug).notifier).load();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -94,18 +98,8 @@ class _StorefrontBody extends StatelessWidget {
               crossAxisSpacing: AppSpacing.md,
               childAspectRatio: 0.62,
             ),
-            itemBuilder: (context, index) {
-              final Product product = storefront.products[index];
-              return ProductCard(
-                name: product.title,
-                price: product.basePrice,
-                originalPrice: product.comparePrice,
-                currency: product.currency,
-                imageUrl: '',
-                rating: product.ratingCount > 0 ? product.ratingAverage : null,
-                onTap: () => context.push(AppRoutes.productPath(product.id)),
-              );
-            },
+            itemBuilder: (context, index) =>
+                WishlistProductCard(product: storefront.products[index]),
           ),
         const SizedBox(height: AppSpacing.xl),
         SellerReviewsSection(slug: slug, storefront: storefront),

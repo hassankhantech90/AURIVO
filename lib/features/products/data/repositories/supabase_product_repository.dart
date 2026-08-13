@@ -85,6 +85,21 @@ class SupabaseProductRepository implements ProductRepository {
   }
 
   @override
+  Future<List<Product>> getProductsByIds(List<String> ids) async {
+    if (ids.isEmpty) return const [];
+    try {
+      final rows = await _database.list(
+        table: _productsTable,
+        whereIn: {'id': List<Object>.from(ids)},
+        limit: ids.length,
+      );
+      return rows.map(Product.fromMap).toList();
+    } catch (error) {
+      throw CatalogFailureMapper.map(error);
+    }
+  }
+
+  @override
   Future<ProductDetail?> getProductDetail(String id) async {
     try {
       final product = await getProductById(id);

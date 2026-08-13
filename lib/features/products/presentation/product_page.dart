@@ -9,6 +9,7 @@ import '../../cart/providers/cart_providers.dart';
 import '../../reviews/presentation/widgets/product_reviews_section.dart';
 import '../../seller/providers/seller_providers.dart';
 import '../../wholesale/presentation/widgets/rfq_form_sheet.dart';
+import '../../wishlist/providers/wishlist_providers.dart';
 import '../domain/entities/product.dart';
 import '../domain/entities/product_detail.dart';
 import '../domain/entities/product_variant.dart';
@@ -34,6 +35,26 @@ class _ProductPageState extends ConsumerState<ProductPage> {
 
   void _load() {
     ref.read(productDetailProvider.notifier).load(widget.productId);
+    if (ref.read(sessionProvider).isAuthenticated) {
+      ref.read(wishlistProvider.notifier).load();
+    }
+  }
+
+  Future<void> _toggleFavourite() async {
+    if (!ref.read(sessionProvider).isAuthenticated) {
+      LuxurySnackBars.info(context, 'Sign in to save items to your wishlist.');
+      context.push(AppRoutes.login);
+      return;
+    }
+    await ref.read(wishlistProvider.notifier).toggle(widget.productId);
+    if (!mounted) return;
+    final state = ref.read(wishlistProvider);
+    if (state.status == WishlistStatus.failure) {
+      LuxurySnackBars.error(
+        context,
+        state.message ?? 'Could not update your wishlist.',
+      );
+    }
   }
 
   Future<void> _addToCart(String variantId) async {
@@ -53,10 +74,23 @@ class _ProductPageState extends ConsumerState<ProductPage> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(productDetailProvider);
+    final isFavourite = ref.watch(
+      wishlistProvider.select((s) => s.contains(widget.productId)),
+    );
     return Scaffold(
       appBar: LuxuryAppBar(
         showBackButton: true,
         title: state.data?.product.title ?? 'Product',
+        actions: [
+          IconButton(
+            onPressed: _toggleFavourite,
+            icon: Icon(
+              isFavourite ? Icons.favorite : Icons.favorite_border,
+              color: isFavourite ? AppColors.error : null,
+            ),
+            tooltip: isFavourite ? 'Remove from wishlist' : 'Add to wishlist',
+          ),
+        ],
       ),
       body: switch (state.status) {
         CatalogViewStatus.initial ||

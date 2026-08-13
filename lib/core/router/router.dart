@@ -35,6 +35,7 @@ import '../../features/seller/presentation/store_settings_page.dart';
 import '../../features/settings/presentation/settings_page.dart';
 import '../../features/wholesale/presentation/rfq_detail_page.dart';
 import '../../features/wholesale/presentation/wholesale_page.dart';
+import '../../features/wishlist/presentation/wishlist_page.dart';
 import '../theme/theme_exports.dart';
 import 'app_routes.dart';
 
@@ -138,6 +139,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.addresses,
         name: 'addresses',
         builder: (context, state) => const AddressesPage(),
+      ),
+      _fadeRoute(
+        path: AppRoutes.wishlist,
+        name: 'wishlist',
+        builder: (context, state) => const WishlistPage(),
       ),
       _fadeRoute(
         path: AppRoutes.seller,

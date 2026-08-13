@@ -117,6 +117,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   onEdit: () =>
                       EditProfileSheet.show(context, profile: profile),
                   onAddresses: () => context.push(AppRoutes.addresses),
+                  onWishlist: () => context.push(AppRoutes.wishlist),
                 ),
       },
     );
@@ -131,6 +132,7 @@ class _ProfileBody extends StatelessWidget {
     required this.onChangePhoto,
     required this.onEdit,
     required this.onAddresses,
+    required this.onWishlist,
   });
 
   final Profile profile;
@@ -139,6 +141,7 @@ class _ProfileBody extends StatelessWidget {
   final VoidCallback onChangePhoto;
   final VoidCallback onEdit;
   final VoidCallback onAddresses;
+  final VoidCallback onWishlist;
 
   @override
   Widget build(BuildContext context) {
@@ -207,6 +210,17 @@ class _ProfileBody extends StatelessWidget {
             subtitle: const Text('Manage your shipping addresses'),
             trailing: const Icon(Icons.chevron_right),
             onTap: onAddresses,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        LuxuryCard(
+          padding: EdgeInsets.zero,
+          child: ListTile(
+            leading: const Icon(Icons.favorite_border),
+            title: const Text('Wishlist'),
+            subtitle: const Text('Products you have saved'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: onWishlist,
           ),
         ),
         const SizedBox(height: AppSpacing.md),
