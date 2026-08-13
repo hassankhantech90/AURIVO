@@ -64,6 +64,12 @@ class SettingsPage extends ConsumerWidget {
             ),
           ),
           if (session.isAuthenticated) ...[
+            ListTile(
+              leading: const Icon(Icons.manage_accounts_outlined),
+              title: const Text('Profile & addresses'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push(AppRoutes.profile),
+            ),
             // Seller Studio entry — shown only when the user has a seller store.
             if (ref.watch(mySellerProfileIdProvider).valueOrNull != null)
               ListTile(

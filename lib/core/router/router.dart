@@ -20,6 +20,7 @@ import '../../features/notifications/presentation/notifications_page.dart';
 import '../../features/orders/presentation/order_detail_page.dart';
 import '../../features/orders/presentation/orders_page.dart';
 import '../../features/products/presentation/product_page.dart';
+import '../../features/profile/presentation/addresses_page.dart';
 import '../../features/profile/presentation/profile_page.dart';
 import '../../features/seller/presentation/seller_dashboard_page.dart';
 import '../../features/seller/presentation/seller_detail_page.dart';
@@ -130,6 +131,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.profile,
         name: 'profile',
         builder: (context, state) => const ProfilePage(),
+      ),
+      _fadeRoute(
+        path: AppRoutes.addresses,
+        name: 'addresses',
+        builder: (context, state) => const AddressesPage(),
       ),
       _fadeRoute(
         path: AppRoutes.seller,

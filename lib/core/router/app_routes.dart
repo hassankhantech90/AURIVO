@@ -23,6 +23,7 @@ class AppRoutes {
   /// Builds a concrete order-detail location for [id].
   static String orderDetailPath(String id) => '/orders/$id';
   static const profile = '/profile';
+  static const addresses = '/profile/addresses';
   static const seller = '/seller';
   static const sellerDetail = '/seller/:slug';
 

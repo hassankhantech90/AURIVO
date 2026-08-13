@@ -308,8 +308,8 @@ class _AddressSection extends StatelessWidget {
     if (addresses.isEmpty) {
       return _AddressNotice(
         message: 'You have no saved addresses yet.',
-        actionLabel: 'Add address in profile',
-        onAction: () => context.push(AppRoutes.profile),
+        actionLabel: 'Add an address',
+        onAction: () => context.push(AppRoutes.addresses),
       );
     }
     return Column(
