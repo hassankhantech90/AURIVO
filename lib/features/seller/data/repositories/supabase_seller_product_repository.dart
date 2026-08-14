@@ -127,10 +127,13 @@ class SupabaseSellerProductRepository implements SellerProductRepository {
   @override
   Future<SellerProduct> setPublished(String id, bool published) async {
     try {
+      // Sellers can only submit for review (draft -> pending) or withdraw
+      // (-> draft). Only an admin moves pending -> approved (enforced by the
+      // products_moderation_guard trigger); the app never sets 'approved' here.
       final row = await _database.update(
         table: _productsTable,
         values: {
-          'status': published ? ProductStatus.approved : ProductStatus.draft,
+          'status': published ? ProductStatus.pending : ProductStatus.draft,
         },
         matchColumn: 'id',
         matchValue: id,

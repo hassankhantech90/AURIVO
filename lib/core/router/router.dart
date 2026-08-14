@@ -10,6 +10,9 @@ import '../../features/authentication/presentation/otp_page.dart';
 import '../../features/authentication/presentation/password_updated_page.dart';
 import '../../features/authentication/presentation/reset_password_page.dart';
 import '../../features/authentication/presentation/signup_page.dart';
+import '../../features/admin/presentation/admin_home_page.dart';
+import '../../features/admin/presentation/admin_products_page.dart';
+import '../../features/admin/presentation/admin_verifications_page.dart';
 import '../../features/authentication/presentation/splash_page.dart';
 import '../../features/cart/presentation/cart_page.dart';
 import '../../features/checkout/presentation/checkout_page.dart';
@@ -238,6 +241,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.notifications,
         name: 'notifications',
         builder: (context, state) => const NotificationsPage(),
+      ),
+      _fadeRoute(
+        path: AppRoutes.admin,
+        name: 'admin',
+        builder: (context, state) => const AdminHomePage(),
+      ),
+      _fadeRoute(
+        path: AppRoutes.adminVerifications,
+        name: 'adminVerifications',
+        builder: (context, state) => const AdminVerificationsPage(),
+      ),
+      _fadeRoute(
+        path: AppRoutes.adminProducts,
+        name: 'adminProducts',
+        builder: (context, state) => const AdminProductsPage(),
       ),
     ],
   );

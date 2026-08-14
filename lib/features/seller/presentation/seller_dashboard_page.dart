@@ -87,7 +87,7 @@ class _MyProductsViewState extends ConsumerState<_MyProductsView> {
     } else {
       LuxurySnackBars.success(
         context,
-        publish ? 'Product published.' : 'Product unpublished.',
+        publish ? 'Submitted for review.' : 'Product unpublished.',
       );
     }
   }
@@ -241,7 +241,9 @@ class _ProductTile extends StatelessWidget {
               const PopupMenuItem(value: 'edit', child: Text('Edit')),
               PopupMenuItem(
                 value: 'publish',
-                child: Text(product.isPublished ? 'Unpublish' : 'Publish'),
+                child: Text(
+                  product.isPublished ? 'Unpublish' : 'Submit for review',
+                ),
               ),
               const PopupMenuItem(value: 'delete', child: Text('Delete')),
             ],

@@ -205,10 +205,11 @@ void main() {
     },
   );
 
-  test('setPublished flips status between approved and draft', () async {
+  test('setPublished submits for review (pending) or withdraws (draft)', () async {
+    // Sellers can no longer self-approve; publishing submits for admin review.
     _wireSeller(db);
     await repo.setPublished('prod-1', true);
-    expect(db.updated.last['status'], 'approved');
+    expect(db.updated.last['status'], 'pending');
     await repo.setPublished('prod-1', false);
     expect(db.updated.last['status'], 'draft');
   });

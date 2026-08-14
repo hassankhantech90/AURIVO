@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_routes.dart';
 import '../../../shared/design_system.dart';
+import '../../admin/providers/admin_providers.dart';
 import '../../authentication/providers/session_provider.dart';
 import '../../seller/providers/seller_product_providers.dart';
 import '../domain/entities/app_settings.dart';
@@ -78,6 +79,15 @@ class SettingsPage extends ConsumerWidget {
                 subtitle: const Text('Manage your products'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.push(AppRoutes.sellerDashboard),
+              ),
+            // Admin console — shown only to admins (has_role('admin')).
+            if (ref.watch(isAdminProvider).valueOrNull ?? false)
+              ListTile(
+                leading: const Icon(Icons.admin_panel_settings_outlined),
+                title: const Text('Admin console'),
+                subtitle: const Text('Verifications & moderation'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push(AppRoutes.admin),
               ),
             ListTile(
               leading: const Icon(Icons.logout, color: AppColors.error),

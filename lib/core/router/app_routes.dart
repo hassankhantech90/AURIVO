@@ -70,4 +70,9 @@ class AppRoutes {
   static String rfqDetailPath(String id) => '/wholesale/$id';
   static const settings = '/settings';
   static const notifications = '/notifications';
+
+  // Admin console (gated on the `admin` role via has_role).
+  static const admin = '/admin';
+  static const adminVerifications = '/admin/verifications';
+  static const adminProducts = '/admin/products';
 }
