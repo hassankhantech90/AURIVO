@@ -28,6 +28,19 @@ class AdminFailureMapper {
           code: error.code,
         );
       }
+      if (error.code == '23505') {
+        return Failure(
+          message: 'That already exists — the name or slug must be unique.',
+          code: error.code,
+        );
+      }
+      if (error.code == '23514') {
+        return Failure(
+          message: 'Some fields are invalid. Check the slug format and '
+              'required values.',
+          code: error.code,
+        );
+      }
       return Failure(
         message: 'Could not complete the action. Please try again.',
         code: error.code,

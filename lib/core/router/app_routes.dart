@@ -75,4 +75,13 @@ class AppRoutes {
   static const admin = '/admin';
   static const adminVerifications = '/admin/verifications';
   static const adminProducts = '/admin/products';
+  static const adminCatalog = '/admin/catalog';
+  static const adminCategories = '/admin/catalog/categories';
+  static const adminBrands = '/admin/catalog/brands';
+  static const adminAttributes = '/admin/catalog/attributes';
+  static const adminAttributeValues = '/admin/catalog/attributes/:id/values';
+
+  /// Builds a concrete attribute-values location for [attributeId].
+  static String adminAttributeValuesPath(String attributeId) =>
+      '/admin/catalog/attributes/$attributeId/values';
 }

@@ -10,6 +10,11 @@ import '../../features/authentication/presentation/otp_page.dart';
 import '../../features/authentication/presentation/password_updated_page.dart';
 import '../../features/authentication/presentation/reset_password_page.dart';
 import '../../features/authentication/presentation/signup_page.dart';
+import '../../features/admin/presentation/admin_attribute_values_page.dart';
+import '../../features/admin/presentation/admin_attributes_page.dart';
+import '../../features/admin/presentation/admin_brands_page.dart';
+import '../../features/admin/presentation/admin_catalog_home_page.dart';
+import '../../features/admin/presentation/admin_categories_page.dart';
 import '../../features/admin/presentation/admin_home_page.dart';
 import '../../features/admin/presentation/admin_products_page.dart';
 import '../../features/admin/presentation/admin_verifications_page.dart';
@@ -256,6 +261,34 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.adminProducts,
         name: 'adminProducts',
         builder: (context, state) => const AdminProductsPage(),
+      ),
+      _fadeRoute(
+        path: AppRoutes.adminCatalog,
+        name: 'adminCatalog',
+        builder: (context, state) => const AdminCatalogHomePage(),
+      ),
+      _fadeRoute(
+        path: AppRoutes.adminCategories,
+        name: 'adminCategories',
+        builder: (context, state) => const AdminCategoriesPage(),
+      ),
+      _fadeRoute(
+        path: AppRoutes.adminBrands,
+        name: 'adminBrands',
+        builder: (context, state) => const AdminBrandsPage(),
+      ),
+      _fadeRoute(
+        path: AppRoutes.adminAttributes,
+        name: 'adminAttributes',
+        builder: (context, state) => const AdminAttributesPage(),
+      ),
+      _fadeRoute(
+        path: AppRoutes.adminAttributeValues,
+        name: 'adminAttributeValues',
+        builder: (context, state) => AdminAttributeValuesPage(
+          attributeId: state.pathParameters['id'] ?? '',
+          attributeName: state.extra as String?,
+        ),
       ),
     ],
   );

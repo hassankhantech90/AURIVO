@@ -64,6 +64,17 @@ class _AdminMenu extends StatelessWidget {
             onTap: () => context.push(AppRoutes.adminProducts),
           ),
         ),
+        const SizedBox(height: AppSpacing.md),
+        LuxuryCard(
+          padding: EdgeInsets.zero,
+          child: ListTile(
+            leading: const Icon(Icons.category_outlined),
+            title: const Text('Catalog management'),
+            subtitle: const Text('Categories, brands & attributes'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.adminCatalog),
+          ),
+        ),
       ],
     );
   }
