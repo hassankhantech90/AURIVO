@@ -56,6 +56,12 @@ class AppRoutes {
 
   /// Builds a concrete seller RFQ-detail location for [id].
   static String sellerRfqDetailPath(String id) => '/seller-studio/rfqs/$id';
+  static const sellerOrders = '/seller-studio/orders';
+  static const sellerOrderDetail = '/seller-studio/orders/:id';
+
+  /// Builds a concrete seller order-detail location for [id].
+  static String sellerOrderDetailPath(String id) =>
+      '/seller-studio/orders/$id';
 
   static const wholesale = '/wholesale';
   static const rfqDetail = '/wholesale/:id';

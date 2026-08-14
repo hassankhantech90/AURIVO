@@ -22,6 +22,11 @@ class SellerDashboardPage extends ConsumerWidget {
         showBackButton: true,
         actions: [
           IconButton(
+            tooltip: 'Orders',
+            icon: const Icon(Icons.receipt_long_outlined),
+            onPressed: () => context.push(AppRoutes.sellerOrders),
+          ),
+          IconButton(
             tooltip: 'Quote requests',
             icon: const Icon(Icons.request_quote_outlined),
             onPressed: () => context.push(AppRoutes.sellerRfqInbox),
