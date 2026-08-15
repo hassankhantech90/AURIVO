@@ -90,4 +90,10 @@ class AppRoutes {
   /// Builds a concrete coupon-redemptions location for [couponId].
   static String adminCouponRedemptionsPath(String couponId) =>
       '/admin/coupons/$couponId/redemptions';
+  static const adminUsers = '/admin/users';
+  static const adminUserDetail = '/admin/users/:id';
+
+  /// Builds a concrete user-detail location for [profileId].
+  static String adminUserDetailPath(String profileId) =>
+      '/admin/users/$profileId';
 }

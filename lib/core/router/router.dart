@@ -17,6 +17,8 @@ import '../../features/admin/presentation/admin_catalog_home_page.dart';
 import '../../features/admin/presentation/admin_categories_page.dart';
 import '../../features/admin/presentation/admin_coupon_redemptions_page.dart';
 import '../../features/admin/presentation/admin_coupons_page.dart';
+import '../../features/admin/presentation/admin_user_detail_page.dart';
+import '../../features/admin/presentation/admin_users_page.dart';
 import '../../features/admin/presentation/admin_home_page.dart';
 import '../../features/admin/presentation/admin_products_page.dart';
 import '../../features/admin/presentation/admin_verifications_page.dart';
@@ -304,6 +306,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           couponId: state.pathParameters['id'] ?? '',
           couponCode: state.extra as String?,
         ),
+      ),
+      _fadeRoute(
+        path: AppRoutes.adminUsers,
+        name: 'adminUsers',
+        builder: (context, state) => const AdminUsersPage(),
+      ),
+      _fadeRoute(
+        path: AppRoutes.adminUserDetail,
+        name: 'adminUserDetail',
+        builder: (context, state) =>
+            AdminUserDetailPage(profileId: state.pathParameters['id'] ?? ''),
       ),
     ],
   );
