@@ -75,6 +75,17 @@ class _AdminMenu extends StatelessWidget {
             onTap: () => context.push(AppRoutes.adminCatalog),
           ),
         ),
+        const SizedBox(height: AppSpacing.md),
+        LuxuryCard(
+          padding: EdgeInsets.zero,
+          child: ListTile(
+            leading: const Icon(Icons.confirmation_number_outlined),
+            title: const Text('Coupons'),
+            subtitle: const Text('Create & manage discount coupons'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.adminCoupons),
+          ),
+        ),
       ],
     );
   }

@@ -84,4 +84,10 @@ class AppRoutes {
   /// Builds a concrete attribute-values location for [attributeId].
   static String adminAttributeValuesPath(String attributeId) =>
       '/admin/catalog/attributes/$attributeId/values';
+  static const adminCoupons = '/admin/coupons';
+  static const adminCouponRedemptions = '/admin/coupons/:id/redemptions';
+
+  /// Builds a concrete coupon-redemptions location for [couponId].
+  static String adminCouponRedemptionsPath(String couponId) =>
+      '/admin/coupons/$couponId/redemptions';
 }
