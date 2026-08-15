@@ -96,4 +96,9 @@ class AppRoutes {
   /// Builds a concrete user-detail location for [profileId].
   static String adminUserDetailPath(String profileId) =>
       '/admin/users/$profileId';
+  static const adminOrders = '/admin/orders';
+  static const adminOrderDetail = '/admin/orders/:id';
+
+  /// Builds a concrete admin order-detail location for [orderId].
+  static String adminOrderDetailPath(String orderId) => '/admin/orders/$orderId';
 }

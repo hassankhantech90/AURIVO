@@ -97,6 +97,17 @@ class _AdminMenu extends StatelessWidget {
             onTap: () => context.push(AppRoutes.adminUsers),
           ),
         ),
+        const SizedBox(height: AppSpacing.md),
+        LuxuryCard(
+          padding: EdgeInsets.zero,
+          child: ListTile(
+            leading: const Icon(Icons.receipt_long_outlined),
+            title: const Text('Orders'),
+            subtitle: const Text('Oversight, status & cancellations'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.adminOrders),
+          ),
+        ),
       ],
     );
   }
