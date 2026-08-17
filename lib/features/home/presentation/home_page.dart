@@ -10,6 +10,7 @@ import '../../categories/providers/category_providers.dart';
 import '../../products/domain/entities/product.dart';
 import '../../products/providers/catalog_state.dart';
 import '../../products/providers/product_providers.dart';
+import '../../notifications/providers/notification_providers.dart';
 import '../../wishlist/presentation/widgets/wishlist_product_card.dart';
 import '../../wishlist/providers/wishlist_providers.dart';
 
@@ -32,6 +33,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   Future<void> _load() async {
     if (ref.read(sessionProvider).isAuthenticated) {
       ref.read(wishlistProvider.notifier).load();
+      ref.read(notificationsProvider.notifier).load();
     }
     await Future.wait([
       ref.read(categoriesProvider.notifier).loadRoots(),
@@ -49,6 +51,10 @@ class _HomePageState extends ConsumerState<HomePage> {
         title: 'AURIVO',
         largeTitle: true,
         actions: [
+          _NotificationsBell(
+            count: ref.watch(unreadNotificationsCountProvider),
+            onPressed: () => context.push(AppRoutes.notifications),
+          ),
           IconButton(
             tooltip: 'Settings',
             icon: const Icon(Icons.settings_outlined),
@@ -149,4 +155,27 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   Widget _productCard(Product product) => WishlistProductCard(product: product);
+}
+
+/// Bell icon with an unread-count badge, linking to the notification centre.
+class _NotificationsBell extends StatelessWidget {
+  const _NotificationsBell({required this.count, required this.onPressed});
+
+  final int count;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final icon = IconButton(
+      tooltip: 'Notifications',
+      icon: const Icon(Icons.notifications_none_outlined),
+      onPressed: onPressed,
+    );
+    if (count == 0) return icon;
+    return Badge(
+      label: Text(count > 99 ? '99+' : '$count'),
+      offset: const Offset(-4, 4),
+      child: icon,
+    );
+  }
 }
