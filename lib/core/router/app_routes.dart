@@ -70,6 +70,7 @@ class AppRoutes {
   static String rfqDetailPath(String id) => '/wholesale/$id';
   static const settings = '/settings';
   static const notifications = '/notifications';
+  static const support = '/support';
 
   // Admin console (gated on the `admin` role via has_role).
   static const admin = '/admin';
@@ -101,4 +102,10 @@ class AppRoutes {
 
   /// Builds a concrete admin order-detail location for [orderId].
   static String adminOrderDetailPath(String orderId) => '/admin/orders/$orderId';
+  static const adminSupport = '/admin/support';
+  static const adminSupportDetail = '/admin/support/:id';
+
+  /// Builds a concrete admin ticket-detail location for [ticketId].
+  static String adminSupportDetailPath(String ticketId) =>
+      '/admin/support/$ticketId';
 }

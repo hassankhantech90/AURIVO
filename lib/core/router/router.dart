@@ -49,6 +49,9 @@ import '../../features/seller/presentation/seller_rfq_inbox_page.dart';
 import '../../features/seller/presentation/seller_variants_page.dart';
 import '../../features/seller/presentation/store_settings_page.dart';
 import '../../features/settings/presentation/settings_page.dart';
+import '../../features/support/presentation/admin_support_detail_page.dart';
+import '../../features/support/presentation/admin_support_page.dart';
+import '../../features/support/presentation/support_page.dart';
 import '../../features/wholesale/presentation/rfq_detail_page.dart';
 import '../../features/wholesale/presentation/wholesale_page.dart';
 import '../../features/wishlist/presentation/wishlist_page.dart';
@@ -254,9 +257,25 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const NotificationsPage(),
       ),
       _fadeRoute(
+        path: AppRoutes.support,
+        name: 'support',
+        builder: (context, state) => const SupportPage(),
+      ),
+      _fadeRoute(
         path: AppRoutes.admin,
         name: 'admin',
         builder: (context, state) => const AdminHomePage(),
+      ),
+      _fadeRoute(
+        path: AppRoutes.adminSupport,
+        name: 'adminSupport',
+        builder: (context, state) => const AdminSupportPage(),
+      ),
+      _fadeRoute(
+        path: AppRoutes.adminSupportDetail,
+        name: 'adminSupportDetail',
+        builder: (context, state) =>
+            AdminSupportDetailPage(ticketId: state.pathParameters['id'] ?? ''),
       ),
       _fadeRoute(
         path: AppRoutes.adminVerifications,

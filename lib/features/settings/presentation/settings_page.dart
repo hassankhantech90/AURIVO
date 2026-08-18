@@ -90,6 +90,12 @@ class SettingsPage extends ConsumerWidget {
                 onTap: () => context.push(AppRoutes.admin),
               ),
             ListTile(
+              leading: const Icon(Icons.support_agent_outlined),
+              title: const Text('Help & support'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push(AppRoutes.support),
+            ),
+            ListTile(
               leading: const Icon(Icons.logout, color: AppColors.error),
               title: const Text('Sign out'),
               onTap: () => _signOut(context, ref),
