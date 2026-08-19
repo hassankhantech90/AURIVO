@@ -116,12 +116,23 @@ class SupabaseDatabaseService {
   Stream<List<Map<String, dynamic>>> stream({
     required String table,
     required List<String> primaryKey,
+    String? filterColumn,
+    Object? filterValue,
+    String? orderBy,
+    bool ascending = true,
   }) {
     try {
-      return _supabaseService.client
+      dynamic query = _supabaseService.client
           .from(table)
-          .stream(primaryKey: primaryKey)
-          .map((rows) => rows.map(Map<String, dynamic>.from).toList());
+          .stream(primaryKey: primaryKey);
+      if (filterColumn != null) {
+        query = query.eq(filterColumn, filterValue as Object);
+      }
+      if (orderBy != null) {
+        query = query.order(orderBy, ascending: ascending);
+      }
+      final stream = query as Stream<List<Map<String, dynamic>>>;
+      return stream.map((rows) => rows.map(Map<String, dynamic>.from).toList());
     } catch (error) {
       throw SupabaseExceptionMapper.database(error);
     }
