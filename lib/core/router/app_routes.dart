@@ -71,6 +71,12 @@ class AppRoutes {
   static const settings = '/settings';
   static const notifications = '/notifications';
   static const support = '/support';
+  static const messages = '/messages';
+  static const messageThread = '/messages/:id';
+
+  /// Builds a concrete conversation-thread location for [conversationId].
+  static String messageThreadPath(String conversationId) =>
+      '/messages/$conversationId';
 
   // Admin console (gated on the `admin` role via has_role).
   static const admin = '/admin';

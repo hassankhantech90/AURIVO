@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/design_system.dart';
 import '../../authentication/providers/session_provider.dart';
+import '../../chat/presentation/widgets/message_seller_button.dart';
 import '../../profile/domain/entities/seller_profile.dart';
 import '../../wishlist/presentation/widgets/wishlist_product_card.dart';
 import '../../wishlist/providers/wishlist_providers.dart';
@@ -76,6 +77,8 @@ class _StorefrontBody extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.lg),
       children: [
         _HeaderCard(seller: seller, storefront: storefront),
+        const SizedBox(height: AppSpacing.md),
+        MessageSellerButton(sellerProfileId: seller.id, label: 'Message store'),
         const SizedBox(height: AppSpacing.lg),
         Text('Products', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: AppSpacing.sm),

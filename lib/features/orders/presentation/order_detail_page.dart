@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_routes.dart';
 import '../../../shared/design_system.dart';
+import '../../chat/presentation/widgets/message_seller_button.dart';
 import '../../reviews/presentation/widgets/review_form_sheet.dart';
 import '../../reviews/providers/review_providers.dart';
 import '../../seller/providers/seller_providers.dart';
@@ -133,6 +134,25 @@ class _OrderDetailBody extends StatelessWidget {
             ],
           ),
         ),
+        if (_sellerIds(detail).isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.md),
+          _SectionCard(
+            title: 'Questions about this order?',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final sellerId in _sellerIds(detail))
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                    child: _OrderSellerMessageEntry(
+                      sellerId: sellerId,
+                      orderId: order.id,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
         if (reviewable && _sellerIds(detail).isNotEmpty) ...[
           const SizedBox(height: AppSpacing.md),
           _SectionCard(
@@ -284,6 +304,32 @@ class _SellerReviewEntry extends ConsumerWidget {
       title: Text(seller.storeName),
       trailing: const Icon(Icons.chevron_right, color: AppColors.softGrey),
       onTap: () => context.push(AppRoutes.sellerDetailPath(seller.slug)),
+    );
+  }
+}
+
+/// "Message seller" entry for one seller in an order. Labels with the store
+/// name when the seller is a publicly visible storefront; the conversation is
+/// scoped to this order (the server validates the seller has items in it).
+class _OrderSellerMessageEntry extends ConsumerWidget {
+  const _OrderSellerMessageEntry({
+    required this.sellerId,
+    required this.orderId,
+  });
+
+  final String sellerId;
+  final String orderId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final seller = ref.watch(sellerByIdProvider(sellerId)).valueOrNull;
+    final label = seller != null
+        ? 'Message ${seller.storeName}'
+        : 'Message seller';
+    return MessageSellerButton(
+      sellerProfileId: sellerId,
+      orderId: orderId,
+      label: label,
     );
   }
 }

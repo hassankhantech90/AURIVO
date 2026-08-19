@@ -71,3 +71,12 @@ final chatMessagesProvider =
     StreamProvider.family<List<Message>, String>((ref, conversationId) {
       return ref.watch(chatRepositoryProvider).streamMessages(conversationId);
     });
+
+/// The caller's own profile id, used only to align messages in a thread (mine
+/// vs. the counterpart's). Resolved server-side; overridden in tests.
+final myProfileIdProvider = FutureProvider<String?>((ref) async {
+  final result = await const SupabaseDatabaseService(
+    supabaseService: SupabaseService(),
+  ).rpc(functionName: 'current_profile_id');
+  return result is String && result.isNotEmpty ? result : null;
+});

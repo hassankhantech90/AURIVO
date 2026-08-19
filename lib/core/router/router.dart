@@ -30,6 +30,8 @@ import '../../features/checkout/presentation/checkout_page.dart';
 import '../../features/checkout/providers/checkout_providers.dart';
 import '../../features/explore/presentation/explore_page.dart';
 import '../../features/home/presentation/home_page.dart';
+import '../../features/chat/presentation/chat_thread_page.dart';
+import '../../features/chat/presentation/messages_page.dart';
 import '../../features/notifications/presentation/notifications_page.dart';
 import '../../features/orders/presentation/order_detail_page.dart';
 import '../../features/orders/presentation/orders_page.dart';
@@ -260,6 +262,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.support,
         name: 'support',
         builder: (context, state) => const SupportPage(),
+      ),
+      _fadeRoute(
+        path: AppRoutes.messages,
+        name: 'messages',
+        builder: (context, state) => const MessagesPage(),
+      ),
+      _fadeRoute(
+        path: AppRoutes.messageThread,
+        name: 'messageThread',
+        builder: (context, state) =>
+            ChatThreadPage(conversationId: state.pathParameters['id'] ?? ''),
       ),
       _fadeRoute(
         path: AppRoutes.admin,

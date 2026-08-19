@@ -7,6 +7,7 @@ import '../../../shared/design_system.dart';
 import '../../authentication/providers/session_provider.dart';
 import '../../categories/domain/entities/category.dart';
 import '../../categories/providers/category_providers.dart';
+import '../../chat/providers/chat_providers.dart';
 import '../../products/domain/entities/product.dart';
 import '../../products/providers/catalog_state.dart';
 import '../../products/providers/product_providers.dart';
@@ -34,6 +35,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     if (ref.read(sessionProvider).isAuthenticated) {
       ref.read(wishlistProvider.notifier).load();
       ref.read(notificationsProvider.notifier).load();
+      ref.read(conversationsProvider.notifier).load();
     }
     await Future.wait([
       ref.read(categoriesProvider.notifier).loadRoots(),
@@ -51,6 +53,12 @@ class _HomePageState extends ConsumerState<HomePage> {
         title: 'AURIVO',
         largeTitle: true,
         actions: [
+          _CountBadgeIcon(
+            tooltip: 'Messages',
+            icon: Icons.chat_bubble_outline,
+            count: ref.watch(unreadChatCountProvider),
+            onPressed: () => context.push(AppRoutes.messages),
+          ),
           _NotificationsBell(
             count: ref.watch(unreadNotificationsCountProvider),
             onPressed: () => context.push(AppRoutes.notifications),
@@ -166,16 +174,41 @@ class _NotificationsBell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final icon = IconButton(
+    return _CountBadgeIcon(
       tooltip: 'Notifications',
-      icon: const Icon(Icons.notifications_none_outlined),
+      icon: Icons.notifications_none_outlined,
+      count: count,
       onPressed: onPressed,
     );
-    if (count == 0) return icon;
+  }
+}
+
+/// An app-bar icon button with an optional unread-count badge.
+class _CountBadgeIcon extends StatelessWidget {
+  const _CountBadgeIcon({
+    required this.tooltip,
+    required this.icon,
+    required this.count,
+    required this.onPressed,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final int count;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final button = IconButton(
+      tooltip: tooltip,
+      icon: Icon(icon),
+      onPressed: onPressed,
+    );
+    if (count == 0) return button;
     return Badge(
       label: Text(count > 99 ? '99+' : '$count'),
       offset: const Offset(-4, 4),
-      child: icon,
+      child: button,
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/design_system.dart';
+import '../../chat/presentation/widgets/message_seller_button.dart';
 import '../domain/entities/rfq.dart';
 import '../domain/entities/rfq_detail.dart';
 import '../domain/entities/rfq_status.dart';
@@ -136,6 +137,14 @@ class _RfqDetailBody extends StatelessWidget {
             ],
           ),
         ),
+        if (rfq.sellerProfileId != null) ...[
+          const SizedBox(height: AppSpacing.md),
+          MessageSellerButton(
+            sellerProfileId: rfq.sellerProfileId!,
+            rfqId: rfq.id,
+            label: 'Message seller',
+          ),
+        ],
         const SizedBox(height: AppSpacing.lg),
         Text('Quotes received', style: theme.textTheme.titleMedium),
         const SizedBox(height: AppSpacing.sm),
