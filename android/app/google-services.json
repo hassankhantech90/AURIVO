@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "556209962168",
+    "project_id": "aurivo-cc64c",
+    "storage_bucket": "aurivo-cc64c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:556209962168:android:9960ea543ddcfa7c72884d",
+        "android_client_info": {
+          "package_name": "com.example.aurivo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAJkxcBoQCmzkGYSBHNh6TMuyx72o4IDLQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
