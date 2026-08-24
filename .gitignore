@@ -60,3 +60,6 @@ supabase/.env.*
 !.env.sample
 !**/.env.example
 !**/.env.sample
+
+# Supabase CLI local temp
+supabase/.temp/
