@@ -43,3 +43,20 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Secrets — never commit (FCM service account, APNs key, env-based secrets).
+# NOTE: android/app/google-services.json and ios/Runner/GoogleService-Info.plist
+# are client config meant to ship with the app and are intentionally NOT ignored.
+*.p8
+# Leading * so project-prefixed names match (e.g. aurivo-firebase-adminsdk-xxx.json)
+**/*firebase-adminsdk*.json
+**/*service-account*.json
+.env
+.env.*
+supabase/.env
+supabase/.env.*
+# Keep committed env templates trackable.
+!.env.example
+!.env.sample
+!**/.env.example
+!**/.env.sample
