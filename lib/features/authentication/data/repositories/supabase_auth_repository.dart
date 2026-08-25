@@ -4,6 +4,7 @@ import '../../../../core/supabase/supabase_auth_service.dart';
 import '../../domain/auth_repository.dart';
 import '../../domain/entities/auth_flow.dart';
 import '../../domain/entities/auth_result.dart';
+import '../auth_diagnostics.dart';
 import '../auth_failure_mapper.dart';
 
 /// Production authentication repository backed by Supabase Auth.
@@ -33,6 +34,7 @@ class SupabaseAuthRepository implements AuthRepository {
       await _authService.signIn(email: identifier.trim(), password: password);
       return const AuthResult(message: 'Welcome back to AURIVO');
     } catch (error) {
+      AuthDiagnostics.report(error, stage: 'login');
       throw AuthFailureMapper.map(error);
     }
   }
@@ -57,6 +59,7 @@ class SupabaseAuthRepository implements AuthRepository {
       _pendingFlow = AuthFlow.signup;
       return const AuthResult(message: 'Account created. Verify your code.');
     } catch (error) {
+      AuthDiagnostics.report(error, stage: 'signup');
       throw AuthFailureMapper.map(error);
     }
   }
@@ -78,6 +81,7 @@ class SupabaseAuthRepository implements AuthRepository {
       await _authService.verifyOtp(email: email, token: otp, type: type);
       return const AuthResult(message: 'Verification successful');
     } catch (error) {
+      AuthDiagnostics.report(error, stage: 'verify_otp');
       throw AuthFailureMapper.map(error);
     }
   }
