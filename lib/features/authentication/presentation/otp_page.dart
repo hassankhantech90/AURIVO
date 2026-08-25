@@ -93,19 +93,24 @@ class _OtpPageState extends ConsumerState<OtpPage> {
     }
 
     await ref.read(authProvider.notifier).verifyOtp(_otp);
-  }
-
-  void _handleAuthState(AuthState? previous, AuthState next) {
-    if (next.status == AuthStatus.success && next.message != null) {
-      LuxurySnackBars.success(context, next.message!);
+    if (!mounted) return;
+    // Navigate ONLY after a successful verification — resending a code also
+    // produces a success status, and must not send the user into the app.
+    if (ref.read(authProvider).status == AuthStatus.success) {
       final route = widget.flow == AuthFlow.forgotPassword
           ? AppRoutes.resetPassword
           : AppRoutes.home;
       context.go(route);
       ref.read(authProvider.notifier).clearStatus();
     }
+  }
 
-    if (next.status == AuthStatus.failure && next.message != null) {
+  void _handleAuthState(AuthState? previous, AuthState next) {
+    // Only surface messages here; navigation is handled explicitly in _verify so
+    // that resend/verify are not conflated.
+    if (next.status == AuthStatus.success && next.message != null) {
+      LuxurySnackBars.success(context, next.message!);
+    } else if (next.status == AuthStatus.failure && next.message != null) {
       LuxurySnackBars.error(context, next.message!);
     }
   }
