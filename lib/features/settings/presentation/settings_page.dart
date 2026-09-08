@@ -6,6 +6,7 @@ import '../../../core/router/app_routes.dart';
 import '../../../shared/design_system.dart';
 import '../../admin/providers/admin_providers.dart';
 import '../../authentication/providers/session_provider.dart';
+import '../../push/providers/push_providers.dart';
 import '../../seller/providers/seller_product_providers.dart';
 import '../domain/entities/app_settings.dart';
 import '../providers/settings_providers.dart';
@@ -30,6 +31,15 @@ class SettingsPage extends ConsumerWidget {
       cancelLabel: 'Stay',
     );
     if (confirmed != true || !context.mounted) return;
+    // Unregister this device's push registration while the session is still
+    // authenticated — unregister_push_device resolves the owner from
+    // current_profile_id(), which is gone once signOut() clears the session.
+    // Best-effort: sign-out must proceed even if this fails; no token is logged.
+    try {
+      await ref.read(pushRegistrarProvider).unregister();
+    } catch (_) {
+      // Ignore: the PushBootstrap auth->unauth listener remains as a fallback.
+    }
     await ref.read(sessionProvider.notifier).signOut();
     if (context.mounted) context.go(AppRoutes.login);
   }
