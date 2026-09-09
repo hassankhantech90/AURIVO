@@ -6,6 +6,7 @@ import '../../../core/router/app_routes.dart';
 import '../../../shared/design_system.dart';
 import '../domain/authentication_constants.dart';
 import '../providers/onboarding_provider.dart';
+import '../providers/session_provider.dart';
 import '../widgets/authentication_widgets.dart';
 
 class SplashPage extends ConsumerStatefulWidget {
@@ -53,8 +54,16 @@ class _SplashPageState extends ConsumerState<SplashPage>
       return;
     }
 
-    final hasSeenOnboarding = ref.read(hasSeenOnboardingProvider);
-    context.go(hasSeenOnboarding ? AppRoutes.login : AppRoutes.onboarding);
+    if (!ref.read(hasSeenOnboardingProvider)) {
+      context.go(AppRoutes.onboarding);
+      return;
+    }
+    // Onboarding done: send a restored session straight Home, else to Login.
+    // The Supabase session is restored before runApp, so this read is accurate
+    // at first paint (no restoration race). A single go() — no stacking/flicker.
+    context.go(
+      ref.read(isAuthenticatedProvider) ? AppRoutes.home : AppRoutes.login,
+    );
   }
 
   @override

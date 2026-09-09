@@ -32,6 +32,15 @@ final sessionProvider = StateNotifierProvider<SessionNotifier, SessionState>((
   );
 });
 
+/// Whether a Supabase session is currently restored/active. A small read-only
+/// seam over [sessionProvider] so startup routing (Splash) can decide Home vs
+/// Login and be unit-tested by overriding just this value. The session is
+/// restored before `runApp` (main awaits Supabase init), so this is accurate at
+/// first read — no restoration race.
+final isAuthenticatedProvider = Provider<bool>((ref) {
+  return ref.watch(sessionProvider).isAuthenticated;
+});
+
 class SessionNotifier extends StateNotifier<SessionState> {
   SessionNotifier({required SupabaseAuthService authService})
     : _authService = authService,
