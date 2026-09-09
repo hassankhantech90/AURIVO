@@ -2,7 +2,12 @@
 class AuthValidators {
   const AuthValidators._();
 
-  static final RegExp _emailRegex = RegExp(r'^[\w\-.]+@([\w-]+\.)+[\w-]{2,4}$');
+  // Pragmatic client-side email check (not full RFC 5322): allows +tags in the
+  // local part and modern multi-char TLDs (.online, .studio, .jewelry). Supabase
+  // remains the final authority. Shared by email() and emailOrPakistanPhone().
+  static final RegExp _emailRegex = RegExp(
+    r'^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$',
+  );
 
   static final RegExp _pakistanPhoneRegex = RegExp(r'^(\+92|0)?3\d{9}$');
 

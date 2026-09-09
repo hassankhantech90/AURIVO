@@ -11,6 +11,49 @@ void main() {
       expect(AuthValidators.email('customer'), isNotNull);
     });
 
+    test('accepts modern TLDs, plus-addressing and multi-label domains', () {
+      for (final email in const [
+        'test@example.com',
+        'user.name@example.co.uk',
+        'user+test@example.com',
+        'test@aurivo.online',
+        'name@brand.studio',
+        'buyer@shop.jewelry',
+      ]) {
+        expect(AuthValidators.email(email), isNull, reason: email);
+      }
+    });
+
+    test('rejects obviously malformed emails', () {
+      for (final bad in const [
+        'abc',
+        'abc@',
+        '@example.com',
+        'abc@example',
+        '   ',
+      ]) {
+        expect(AuthValidators.email(bad), isNotNull, reason: bad);
+      }
+    });
+
+    test('invalid-email copy is unchanged', () {
+      expect(AuthValidators.email('not-an-email'), 'Enter a valid email address');
+    });
+
+    test('emailOrPakistanPhone accepts modern email and valid PK phones', () {
+      expect(AuthValidators.emailOrPakistanPhone('test@aurivo.online'), isNull);
+      expect(AuthValidators.emailOrPakistanPhone('03001234567'), isNull);
+      expect(AuthValidators.emailOrPakistanPhone('+923001234567'), isNull);
+      expect(AuthValidators.emailOrPakistanPhone('3001234567'), isNull);
+    });
+
+    test('emailOrPakistanPhone rejects garbage with the correct copy', () {
+      expect(
+        AuthValidators.emailOrPakistanPhone('abc'),
+        'Enter a valid email or Pakistan phone number',
+      );
+    });
+
     test('accepts Pakistan phone formats', () {
       expect(AuthValidators.pakistanPhone('03001234567'), isNull);
       expect(AuthValidators.pakistanPhone('+923001234567'), isNull);
