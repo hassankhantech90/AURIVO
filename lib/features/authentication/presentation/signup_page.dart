@@ -97,7 +97,11 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                         .setAcceptedTerms(value ?? false),
               title: Text(
                 'I accept the Terms & Conditions',
-                style: Theme.of(context).textTheme.bodyMedium,
+                // Explicit on-light colour: inline Text built above the
+                // AuthScaffold light theme, on the white card.
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: AppColors.charcoal),
               ),
               controlAffinity: ListTileControlAffinity.leading,
             ),

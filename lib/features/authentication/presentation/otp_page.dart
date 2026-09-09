@@ -63,7 +63,11 @@ class _OtpPageState extends ConsumerState<OtpPage> {
                 ? 'Did not receive a code?'
                 : 'Resend available in ${authState.otpSecondsRemaining}s',
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium,
+            // Explicit on-light colour: inline Text built above the
+            // AuthScaffold light theme, on the white card.
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColors.charcoal),
           ),
           const SizedBox(height: AppSpacing.sm),
           LuxuryTextButton(

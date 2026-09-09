@@ -22,8 +22,18 @@ class AuthScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.softCream,
-      body: SafeArea(
-        child: LayoutBuilder(
+      // Auth surfaces are intentionally light (softCream page + white card) in
+      // both themes, so force the on-light text theme for this subtree —
+      // otherwise the dark TextTheme paints headings/labels white-on-light
+      // (invisible). Colour-only: light/dark TextThemes share sizes/weights.
+      // Scoped to AuthScaffold descendants; the global darkTextTheme is
+      // untouched. Explicit colours (subtitle, buttons, links) are unaffected.
+      body: Theme(
+        data: Theme.of(
+          context,
+        ).copyWith(textTheme: AppTypography.lightTextTheme()),
+        child: SafeArea(
+          child: LayoutBuilder(
           builder: (context, constraints) {
             final maxWidth = constraints.maxWidth >= 700
                 ? 520.0
@@ -72,6 +82,7 @@ class AuthScaffold extends StatelessWidget {
             );
           },
         ),
+      ),
       ),
     );
   }

@@ -68,7 +68,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 Expanded(
                   child: Text(
                     'Remember Me',
-                    style: Theme.of(context).textTheme.bodyMedium,
+                    // Explicit on-light colour: this inline Text is built in
+                    // LoginPage's (dark) context, above AuthScaffold's light
+                    // theme, so it must set its own colour for the white card.
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: AppColors.charcoal),
                   ),
                 ),
                 LuxuryTextButton(
