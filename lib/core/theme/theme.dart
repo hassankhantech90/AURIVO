@@ -155,6 +155,19 @@ class AppTheme {
       hintStyle: AppTypography.lightTextTheme().bodyMedium?.copyWith(
         color: AppColors.mediumGrey,
       ),
+      // The fill is always pureWhite, so labels need an on-light colour in both
+      // themes (colour-only overrides keep the default sizes). Floating label
+      // stays gold on focus / red on error — otherwise on-light charcoal.
+      labelStyle: const TextStyle(color: AppColors.charcoal),
+      floatingLabelStyle: WidgetStateTextStyle.resolveWith((states) {
+        if (states.contains(WidgetState.error)) {
+          return const TextStyle(color: AppColors.error);
+        }
+        if (states.contains(WidgetState.focused)) {
+          return const TextStyle(color: AppColors.primaryGold);
+        }
+        return const TextStyle(color: AppColors.charcoal);
+      }),
     );
   }
 }

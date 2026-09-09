@@ -66,7 +66,12 @@ class _AuthOtpFieldState extends State<AuthOtpField> {
                   : TextInputAction.next,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               maxLength: _otpLength,
-              style: Theme.of(context).textTheme.titleLarge,
+              // On-light color for the always-white field (dark TextTheme would
+              // otherwise render the digits white-on-white). jetBlack matches
+              // the light-mode titleLarge colour, so light mode is unchanged.
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(color: AppColors.jetBlack),
               decoration: InputDecoration(
                 counterText: '',
                 enabledBorder: AppBorders.input(

@@ -68,6 +68,13 @@ class CustomTextField extends StatelessWidget {
       validator: validator,
       onChanged: onChanged,
       onTap: onTap,
+      // Input fill is always pureWhite (both themes), so entered text must be
+      // an on-light color — otherwise the dark TextTheme paints it white-on-
+      // white (invisible). charcoal is already the light-mode bodyLarge colour,
+      // so light mode is unchanged. Covers Password/Multiline/ReadOnly too.
+      style: Theme.of(
+        context,
+      ).textTheme.bodyLarge?.copyWith(color: AppColors.charcoal),
       decoration: InputDecoration(
         labelText: labelText,
         hintText: hintText,
