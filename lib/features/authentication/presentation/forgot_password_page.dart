@@ -33,7 +33,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
     return AuthScaffold(
       title: 'Forgot Password',
       subtitle:
-          'Enter your email or phone and we will send a verification code.',
+          'Enter your email and we will send a verification code.',
       child: Form(
         key: _formKey,
         child: Column(
@@ -41,10 +41,10 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
           children: [
             CustomTextField(
               controller: _identifierController,
-              labelText: 'Email or Phone',
+              labelText: 'Email',
               prefixIcon: Icons.contact_mail_outlined,
               keyboardType: TextInputType.emailAddress,
-              validator: AuthValidators.emailOrPakistanPhone,
+              validator: AuthValidators.email,
             ),
             const SizedBox(height: AppSpacing.lg),
             PrimaryButton(

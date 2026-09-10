@@ -40,6 +40,16 @@ void main() {
       expect(AuthValidators.email('not-an-email'), 'Enter a valid email address');
     });
 
+    test('email() rejects a Pakistan phone number (email-only recovery)', () {
+      // Forgot Password is email-only (Supabase resetPasswordForEmail), so a
+      // phone number must not pass the email validator.
+      expect(
+        AuthValidators.email('03001234567'),
+        'Enter a valid email address',
+      );
+      expect(AuthValidators.email(''), 'Email is required');
+    });
+
     test('emailOrPakistanPhone accepts modern email and valid PK phones', () {
       expect(AuthValidators.emailOrPakistanPhone('test@aurivo.online'), isNull);
       expect(AuthValidators.emailOrPakistanPhone('03001234567'), isNull);
