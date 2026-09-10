@@ -52,38 +52,21 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             PasswordTextField(
               controller: _passwordController,
               labelText: 'Password',
-              validator: AuthValidators.password,
+              // Login only requires a non-empty password; Supabase is the
+              // authority on correctness. (Signup/Reset keep the full-strength
+              // AuthValidators.password.)
+              validator: AuthValidators.loginPassword,
             ),
             const SizedBox(height: AppSpacing.sm),
-            Row(
-              children: [
-                Checkbox(
-                  value: authState.rememberMe,
-                  onChanged: authState.isLoading
-                      ? null
-                      : (value) => ref
-                            .read(authProvider.notifier)
-                            .setRememberMe(value ?? false),
-                ),
-                Expanded(
-                  child: Text(
-                    'Remember Me',
-                    // Explicit on-light colour: this inline Text is built in
-                    // LoginPage's (dark) context, above AuthScaffold's light
-                    // theme, so it must set its own colour for the white card.
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyMedium?.copyWith(color: AppColors.charcoal),
-                  ),
-                ),
-                LuxuryTextButton(
-                  label: 'Forgot Password',
-                  onPressed: authState.isLoading
-                      ? null
-                      : () => context.push(AppRoutes.forgotPassword),
-                  size: AppButtonSize.small,
-                ),
-              ],
+            Align(
+              alignment: Alignment.centerRight,
+              child: LuxuryTextButton(
+                label: 'Forgot Password',
+                onPressed: authState.isLoading
+                    ? null
+                    : () => context.push(AppRoutes.forgotPassword),
+                size: AppButtonSize.small,
+              ),
             ),
             const SizedBox(height: AppSpacing.lg),
             PrimaryButton(

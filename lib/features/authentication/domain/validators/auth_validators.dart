@@ -82,6 +82,13 @@ class AuthValidators {
     return null;
   }
 
+  /// Login only: require a non-empty password and let Supabase decide whether
+  /// it is correct. Signup/Reset keep the full-strength [password] rules — an
+  /// existing account may pre-date them, so Login must not enforce strength.
+  static String? loginPassword(String? value) {
+    return required(value, fieldName: 'Password');
+  }
+
   static String? confirmPassword(String? value, String password) {
     final requiredError = required(value, fieldName: 'Confirm password');
     if (requiredError != null) {

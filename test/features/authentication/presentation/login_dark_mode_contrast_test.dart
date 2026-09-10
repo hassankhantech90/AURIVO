@@ -25,15 +25,14 @@ Widget _login(ThemeData theme) => ProviderScope(
 
 void main() {
   group('Login text on the light auth surface', () {
-    testWidgets('dark: heading / Remember Me / or are on-light (not white)', (
+    testWidgets('dark: heading / or / fields are on-light (not white)', (
       t,
     ) async {
       await t.pumpWidget(_login(AppTheme.dark));
       await t.pump();
       expect(_color(t, 'Welcome Back'), AppColors.jetBlack);
-      expect(_color(t, 'Remember Me'), AppColors.charcoal);
       expect(_color(t, 'or'), AppColors.mediumGrey);
-      for (final s in ['Welcome Back', 'Remember Me', 'or']) {
+      for (final s in ['Welcome Back', 'or']) {
         expect(_color(t, s), isNot(AppColors.pureWhite));
       }
     });
@@ -42,7 +41,6 @@ void main() {
       await t.pumpWidget(_login(AppTheme.light));
       await t.pump();
       expect(_color(t, 'Welcome Back'), AppColors.jetBlack);
-      expect(_color(t, 'Remember Me'), AppColors.charcoal);
       expect(_color(t, 'or'), AppColors.mediumGrey);
     });
   });

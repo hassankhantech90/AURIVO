@@ -18,7 +18,9 @@ void main() {
 
       expect(find.text('Email / Phone'), findsOneWidget);
       expect(find.text('Password'), findsOneWidget);
-      expect(find.text('Remember Me'), findsOneWidget);
+      // Remember Me removed (was a non-functional no-op); Forgot Password stays.
+      expect(find.text('Remember Me'), findsNothing);
+      expect(find.text('Forgot Password'), findsOneWidget);
       expect(find.text('Continue with Google'), findsOneWidget);
       expect(find.text('Create Account'), findsOneWidget);
     });

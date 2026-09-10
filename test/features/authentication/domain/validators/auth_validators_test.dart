@@ -71,6 +71,16 @@ void main() {
       expect(AuthValidators.password('Weakpass1'), contains('special'));
     });
 
+    test('loginPassword requires only a non-empty password', () {
+      expect(AuthValidators.loginPassword(null), 'Password is required');
+      expect(AuthValidators.loginPassword(''), 'Password is required');
+      expect(AuthValidators.loginPassword('   '), 'Password is required');
+      expect(AuthValidators.loginPassword('abc'), isNull);
+      expect(AuthValidators.loginPassword('weak'), isNull);
+      // Signup/Reset strength validator must stay strict.
+      expect(AuthValidators.password('weak'), isNotNull);
+    });
+
     test('validates confirm password', () {
       expect(
         AuthValidators.confirmPassword('Secret123!', 'Secret123!'),
