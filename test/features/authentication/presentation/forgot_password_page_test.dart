@@ -126,4 +126,60 @@ void main() {
     // success-path timers are left pending.
     expect(find.text('Enter a valid email address'), findsNothing);
   });
+
+  group('submit-aware validation (Finding B)', () {
+    testWidgets('no premature validation before the first submit', (
+      tester,
+    ) async {
+      await tester.pumpWidget(harness());
+      await tester.pump();
+
+      // Type an invalid value but do NOT submit — nothing should validate yet.
+      await tester.enterText(find.byType(EditableText).first, 'abc');
+      await tester.pump();
+
+      expect(find.text('Enter a valid email address'), findsNothing);
+      expect(find.text('Email is required'), findsNothing);
+    });
+
+    testWidgets('stale error clears when the field is corrected (no resubmit)', (
+      tester,
+    ) async {
+      await tester.pumpWidget(harness());
+      await tester.pump();
+
+      await tester.enterText(find.byType(EditableText).first, 'abc');
+      await tapSendCode(tester);
+      expect(find.text('Enter a valid email address'), findsOneWidget);
+
+      // Correct the field to a valid email and pump — the error must clear on
+      // its own, without tapping Send Code again.
+      await tester.enterText(
+        find.byType(EditableText).first,
+        'test@aurivo.online',
+      );
+      await tester.pump();
+
+      expect(find.text('Enter a valid email address'), findsNothing);
+    });
+
+    testWidgets('error updates to the new failure after the first submit', (
+      tester,
+    ) async {
+      await tester.pumpWidget(harness());
+      await tester.pump();
+
+      await tester.enterText(find.byType(EditableText).first, 'abc');
+      await tapSendCode(tester);
+      expect(find.text('Enter a valid email address'), findsOneWidget);
+
+      // Clear the field — live revalidation should swap the message to the
+      // required-field copy without another submit.
+      await tester.enterText(find.byType(EditableText).first, '');
+      await tester.pump();
+
+      expect(find.text('Enter a valid email address'), findsNothing);
+      expect(find.text('Email is required'), findsOneWidget);
+    });
+  });
 }

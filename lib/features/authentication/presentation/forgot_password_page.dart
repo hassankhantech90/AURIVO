@@ -19,6 +19,11 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
   final _formKey = GlobalKey<FormState>();
   final _identifierController = TextEditingController();
 
+  // Validation stays off until the first failed submit, then switches to live
+  // revalidation so a corrected field clears/updates its error without needing
+  // a second Send Code tap.
+  AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
+
   @override
   void dispose() {
     _identifierController.dispose();
@@ -36,6 +41,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
           'Enter your email and we will send a verification code.',
       child: Form(
         key: _formKey,
+        autovalidateMode: _autovalidateMode,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -61,6 +67,9 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) {
+      setState(() {
+        _autovalidateMode = AutovalidateMode.onUserInteraction;
+      });
       return;
     }
 
