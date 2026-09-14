@@ -29,7 +29,7 @@ void main() {
       ProviderScope(
         overrides: [
           authRepositoryProvider.overrideWithValue(
-            const FakeAuthRepository(delay: Duration.zero),
+            FakeAuthRepository(delay: Duration.zero),
           ),
         ],
         child: MaterialApp.router(routerConfig: router),

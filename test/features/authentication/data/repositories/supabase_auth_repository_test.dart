@@ -13,6 +13,8 @@ class _StubAuthService extends SupabaseAuthService {
   Object? signInError;
   Object? signUpError;
   Object? verifyError;
+  Object? updateError;
+  Object? signOutError;
 
   String? lastSignInEmail;
   Map<String, dynamic>? lastSignUpData;
@@ -21,6 +23,8 @@ class _StubAuthService extends SupabaseAuthService {
   bool resendSignupCalled = false;
   bool resetCalled = false;
   bool updateCalled = false;
+  int updateCount = 0;
+  bool signOutCalled = false;
 
   @override
   Future<supabase.AuthResponse> signIn({
@@ -67,7 +71,15 @@ class _StubAuthService extends SupabaseAuthService {
 
   @override
   Future<void> updatePassword({required String password}) async {
+    if (updateError != null) throw updateError!;
     updateCalled = true;
+    updateCount++;
+  }
+
+  @override
+  Future<void> signOut() async {
+    signOutCalled = true;
+    if (signOutError != null) throw signOutError!;
   }
 }
 
@@ -198,10 +210,201 @@ void main() {
 
   group('update password', () {
     test('updates the password and returns a message', () async {
+      await repository.sendPasswordResetCode(identifier: 'aya@aurivo.pk');
+      await repository.verifyOtp(otp: '123456');
+
       final result = await repository.resetPassword(password: 'NewSecret123!');
 
       expect(service.updateCalled, isTrue);
       expect(result.message, contains('updated'));
+    });
+  });
+
+  group('recovery authorization gate', () {
+    Future<void> authorizeRecovery() async {
+      await repository.sendPasswordResetCode(identifier: 'aya@aurivo.pk');
+      await repository.verifyOtp(otp: '123456');
+    }
+
+    test('reset without recovery verification throws and does not update', () async {
+      await expectLater(
+        repository.resetPassword(password: 'NewSecret123!'),
+        throwsA(isA<SessionExpiredFailure>()),
+      );
+      expect(service.updateCalled, isFalse);
+    });
+
+    test('a normal login does not authorize a reset', () async {
+      await repository.login(
+        identifier: 'aya@aurivo.pk',
+        password: 'Secret123!',
+        rememberMe: false,
+      );
+
+      expect(repository.isRecoveryAuthorized, isFalse);
+      await expectLater(
+        repository.resetPassword(password: 'NewSecret123!'),
+        throwsA(isA<SessionExpiredFailure>()),
+      );
+      expect(service.updateCalled, isFalse);
+    });
+
+    test('signup OTP verification does not authorize a reset', () async {
+      await repository.signup(
+        fullName: 'Aya Khan',
+        email: 'aya@aurivo.pk',
+        phone: '03001234567',
+        password: 'Secret123!',
+      );
+      await repository.verifyOtp(otp: '123456');
+
+      expect(repository.isRecoveryAuthorized, isFalse);
+      await expectLater(
+        repository.resetPassword(password: 'NewSecret123!'),
+        throwsA(isA<SessionExpiredFailure>()),
+      );
+      expect(service.updateCalled, isFalse);
+    });
+
+    test('sending a reset code alone does not authorize', () async {
+      await repository.sendPasswordResetCode(identifier: 'aya@aurivo.pk');
+
+      expect(repository.isRecoveryAuthorized, isFalse);
+    });
+
+    test('a verified recovery OTP authorizes a reset', () async {
+      await authorizeRecovery();
+
+      expect(repository.isRecoveryAuthorized, isTrue);
+    });
+
+    test('an authorized reset updates once, clears auth, and signs out', () async {
+      await authorizeRecovery();
+
+      final result = await repository.resetPassword(password: 'NewSecret123!');
+
+      expect(result.message, contains('updated'));
+      expect(service.updateCount, 1);
+      expect(service.signOutCalled, isTrue);
+      expect(repository.isRecoveryAuthorized, isFalse);
+      // Pending recovery state cleared: a follow-up verify is now rejected.
+      await expectLater(
+        repository.verifyOtp(otp: '123456'),
+        throwsA(isA<SessionExpiredFailure>()),
+      );
+    });
+
+    test('a transient update failure keeps authorization and does not sign out', () async {
+      await authorizeRecovery();
+      service.updateError = Exception('Network error: connection failed');
+
+      await expectLater(
+        repository.resetPassword(password: 'NewSecret123!'),
+        throwsA(isA<NetworkFailure>()),
+      );
+      expect(repository.isRecoveryAuthorized, isTrue);
+      expect(service.signOutCalled, isFalse);
+
+      // Retry remains possible once the transient error clears.
+      service.updateError = null;
+      final result = await repository.resetPassword(password: 'NewSecret123!');
+      expect(result.message, contains('updated'));
+    });
+
+    test('a weak-password backend failure keeps authorization', () async {
+      await authorizeRecovery();
+      service.updateError = supabase.AuthException(
+        'Password should be at least 8 characters',
+        code: 'weak_password',
+      );
+
+      await expectLater(
+        repository.resetPassword(password: 'weak'),
+        throwsA(isA<WeakPasswordFailure>()),
+      );
+      expect(repository.isRecoveryAuthorized, isTrue);
+    });
+
+    test('a session-expired update failure clears authorization', () async {
+      await authorizeRecovery();
+      service.updateError = supabase.AuthException(
+        'Auth session missing!',
+        code: 'session_not_found',
+      );
+
+      await expectLater(
+        repository.resetPassword(password: 'NewSecret123!'),
+        throwsA(isA<SessionExpiredFailure>()),
+      );
+      expect(repository.isRecoveryAuthorized, isFalse);
+      // Pending recovery state cleared too.
+      await expectLater(
+        repository.verifyOtp(otp: '123456'),
+        throwsA(isA<SessionExpiredFailure>()),
+      );
+    });
+
+    test('a failed local sign-out does not fail the successful reset', () async {
+      await authorizeRecovery();
+      service.signOutError = supabase.AuthException('sign-out failed');
+
+      final result = await repository.resetPassword(password: 'NewSecret123!');
+
+      expect(result.message, contains('updated'));
+      expect(service.updateCount, 1);
+      expect(service.signOutCalled, isTrue);
+      expect(repository.isRecoveryAuthorized, isFalse);
+      // No automatic second update; a further reset is blocked.
+      await expectLater(
+        repository.resetPassword(password: 'Another1!'),
+        throwsA(isA<SessionExpiredFailure>()),
+      );
+      expect(service.updateCount, 1);
+    });
+
+    test('starting login clears a prior authorization', () async {
+      await authorizeRecovery();
+      expect(repository.isRecoveryAuthorized, isTrue);
+
+      await repository.login(
+        identifier: 'aya@aurivo.pk',
+        password: 'Secret123!',
+        rememberMe: false,
+      );
+
+      expect(repository.isRecoveryAuthorized, isFalse);
+    });
+
+    test('starting signup clears a prior authorization', () async {
+      await authorizeRecovery();
+      expect(repository.isRecoveryAuthorized, isTrue);
+
+      await repository.signup(
+        fullName: 'Aya Khan',
+        email: 'aya@aurivo.pk',
+        phone: '03001234567',
+        password: 'Secret123!',
+      );
+
+      expect(repository.isRecoveryAuthorized, isFalse);
+    });
+
+    test('a new forgot-password request clears a prior authorization', () async {
+      await authorizeRecovery();
+      expect(repository.isRecoveryAuthorized, isTrue);
+
+      await repository.sendPasswordResetCode(identifier: 'aya@aurivo.pk');
+
+      expect(repository.isRecoveryAuthorized, isFalse);
+    });
+
+    test('explicit sign-out clears authorization', () async {
+      await authorizeRecovery();
+      expect(repository.isRecoveryAuthorized, isTrue);
+
+      await repository.signOut();
+
+      expect(repository.isRecoveryAuthorized, isFalse);
     });
   });
 

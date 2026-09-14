@@ -15,7 +15,7 @@ import 'package:go_router/go_router.dart';
 /// validation and is dispatched, without the success path's SnackBar / route
 /// / countdown timers that would otherwise stay pending under fake time.
 class _HangingAuthRepository extends FakeAuthRepository {
-  const _HangingAuthRepository();
+  _HangingAuthRepository();
 
   @override
   Future<AuthResult> sendPasswordResetCode({required String identifier}) =>
@@ -44,7 +44,7 @@ void main() {
     return ProviderScope(
       overrides: [
         authRepositoryProvider.overrideWithValue(
-          repository ?? const FakeAuthRepository(delay: Duration.zero),
+          repository ?? FakeAuthRepository(delay: Duration.zero),
         ),
       ],
       child: MaterialApp.router(routerConfig: router),
@@ -109,7 +109,7 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      harness(repository: const _HangingAuthRepository()),
+      harness(repository: _HangingAuthRepository()),
     );
     await tester.pump();
 

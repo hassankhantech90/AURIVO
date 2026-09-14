@@ -8,7 +8,7 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         authRepositoryProvider.overrideWithValue(
-          const FakeAuthRepository(delay: Duration.zero),
+          FakeAuthRepository(delay: Duration.zero),
         ),
       ],
     );

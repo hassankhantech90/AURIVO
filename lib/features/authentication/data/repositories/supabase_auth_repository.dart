@@ -24,12 +24,22 @@ class SupabaseAuthRepository implements AuthRepository {
   String? _pendingEmail;
   AuthFlow? _pendingFlow;
 
+  // Single authoritative recovery authorization: in-memory only, so it never
+  // survives a cold restart. Set true ONLY by a successful recovery-flow OTP
+  // verify; gates resetPassword and is exposed read-only to the router.
+  bool _recoveryVerified = false;
+
+  @override
+  bool get isRecoveryAuthorized => _recoveryVerified;
+
   @override
   Future<AuthResult> login({
     required String identifier,
     required String password,
     required bool rememberMe,
   }) async {
+    // Beginning a different auth flow revokes any prior recovery authorization.
+    _recoveryVerified = false;
     try {
       await _authService.signIn(email: identifier.trim(), password: password);
       return const AuthResult(message: 'Welcome back to AURIVO');
@@ -46,6 +56,8 @@ class SupabaseAuthRepository implements AuthRepository {
     required String phone,
     required String password,
   }) async {
+    // Beginning a different auth flow revokes any prior recovery authorization.
+    _recoveryVerified = false;
     try {
       final normalizedEmail = email.trim();
       // Creates the Supabase Auth user only. Profile creation is a later
@@ -79,6 +91,11 @@ class SupabaseAuthRepository implements AuthRepository {
           ? supabase.OtpType.recovery
           : supabase.OtpType.signup;
       await _authService.verifyOtp(email: email, token: otp, type: type);
+      // Authorize a password reset ONLY for a verified recovery OTP. Signup OTP
+      // verification must never grant it.
+      if (flow == AuthFlow.forgotPassword) {
+        _recoveryVerified = true;
+      }
       return const AuthResult(message: 'Verification successful');
     } catch (error) {
       AuthDiagnostics.report(error, stage: 'verify_otp');
@@ -110,6 +127,8 @@ class SupabaseAuthRepository implements AuthRepository {
 
   @override
   Future<AuthResult> sendPasswordResetCode({required String identifier}) async {
+    // A fresh recovery request is not yet verified — revoke any prior grant.
+    _recoveryVerified = false;
     try {
       final email = identifier.trim();
       await _authService.resetPassword(email: email);
@@ -123,14 +142,45 @@ class SupabaseAuthRepository implements AuthRepository {
 
   @override
   Future<AuthResult> resetPassword({required String password}) async {
+    // Hard gate: only a verified recovery session may change the password. This
+    // is the operation-level defense — unbypassable even by a direct call.
+    if (!_recoveryVerified) {
+      throw const SessionExpiredFailure(
+        message: 'Verification session expired. Please start again.',
+      );
+    }
+
     try {
       await _authService.updatePassword(password: password);
-      _pendingEmail = null;
-      _pendingFlow = null;
-      return const AuthResult(message: 'Password updated successfully');
     } catch (error) {
-      throw AuthFailureMapper.map(error);
+      final failure = AuthFailureMapper.map(error);
+      // An expired/invalid recovery session cannot be retried, so revoke
+      // authorization. Transient (network) or validation (weak-password)
+      // failures keep it so the legitimate user can retry without re-verifying.
+      if (failure is SessionExpiredFailure) {
+        _recoveryVerified = false;
+        _pendingEmail = null;
+        _pendingFlow = null;
+      }
+      throw failure;
     }
+
+    // The update succeeded: the reset is DONE. Revoke authorization and clear
+    // pending recovery state up front, so a failed sign-out cleanup can neither
+    // restore them nor invite a second update.
+    _recoveryVerified = false;
+    _pendingEmail = null;
+    _pendingFlow = null;
+
+    // Best-effort LOCAL sign-out of the recovery session. A failure here must
+    // NOT downgrade the already-successful password reset.
+    try {
+      await _authService.signOut();
+    } catch (_) {
+      // Ignore: the password change already succeeded.
+    }
+
+    return const AuthResult(message: 'Password updated successfully');
   }
 
   @override
@@ -151,6 +201,7 @@ class SupabaseAuthRepository implements AuthRepository {
       await _authService.signOut();
       _pendingEmail = null;
       _pendingFlow = null;
+      _recoveryVerified = false;
     } catch (error) {
       throw AuthFailureMapper.map(error);
     }

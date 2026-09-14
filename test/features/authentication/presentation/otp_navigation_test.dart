@@ -25,7 +25,7 @@ Widget _app() {
   return ProviderScope(
     overrides: [
       authRepositoryProvider.overrideWithValue(
-        const FakeAuthRepository(delay: Duration.zero),
+        FakeAuthRepository(delay: Duration.zero),
       ),
     ],
     child: MaterialApp.router(routerConfig: router),
