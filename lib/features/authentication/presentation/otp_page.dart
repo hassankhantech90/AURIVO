@@ -37,7 +37,7 @@ class _OtpPageState extends ConsumerState<OtpPage> {
 
     return AuthScaffold(
       title: 'Verify Code',
-      subtitle: 'Enter the 6-digit code sent to your email or phone.',
+      subtitle: 'Enter the 6-digit code sent to your email.',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

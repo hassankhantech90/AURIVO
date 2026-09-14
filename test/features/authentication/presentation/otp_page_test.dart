@@ -91,6 +91,21 @@ void main() {
     await tester.pump(const Duration(seconds: 61));
   }
 
+  testWidgets('subtitle is email-only for both flows', (tester) async {
+    for (final flow in AuthFlow.values) {
+      await tester.pumpWidget(harness(flow: flow));
+      await tester.pump();
+
+      expect(
+        find.text('Enter the 6-digit code sent to your email.'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('phone'), findsNothing);
+
+      await drainTimers(tester);
+    }
+  });
+
   testWidgets('empty OTP shows the shape error and does not call verify', (
     tester,
   ) async {
