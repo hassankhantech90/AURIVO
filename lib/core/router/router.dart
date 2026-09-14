@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/authentication/domain/entities/auth_flow.dart';
+import '../../features/authentication/providers/auth_provider.dart';
+import '../../features/authentication/providers/session_provider.dart';
 import '../../features/authentication/presentation/forgot_password_page.dart';
 import '../../features/authentication/presentation/login_page.dart';
 import '../../features/authentication/presentation/onboarding_page.dart';
@@ -103,6 +105,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.resetPassword,
         name: 'resetPassword',
         builder: (context, state) => const ResetPasswordPage(),
+        // Only a verified recovery flow may reach the reset screen.
+        redirect: (context, state) => resetPasswordRedirect(ref),
       ),
       _fadeRoute(
         path: AppRoutes.passwordUpdated,
@@ -366,6 +370,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
+
+/// Redirect guard for [AppRoutes.resetPassword]: allow only a verified recovery
+/// flow, reading the repository's single authoritative recovery authorization
+/// at navigation time. Otherwise send an authenticated user Home and everyone
+/// else to the recovery entry point ([AppRoutes.forgotPassword]).
+String? resetPasswordRedirect(Ref ref) {
+  if (ref.read(authRepositoryProvider).isRecoveryAuthorized) {
+    return null;
+  }
+  return ref.read(isAuthenticatedProvider)
+      ? AppRoutes.home
+      : AppRoutes.forgotPassword;
+}
 
 GoRoute _fadeRoute({
   required String path,
