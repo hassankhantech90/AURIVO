@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
@@ -48,8 +49,31 @@ class SessionNotifier extends StateNotifier<SessionState> {
     _initialize();
   }
 
+  /// Test-only seam: drive the notifier from an explicit auth-event stream
+  /// without requiring Supabase configuration, so the recovery state machine can
+  /// be exercised. Production always uses the default constructor; `_recovering`
+  /// starts false and is never persisted across recreation.
+  @visibleForTesting
+  SessionNotifier.forTest({
+    required Stream<supabase.AuthState> authEvents,
+    required SupabaseAuthService authService,
+    SessionState initial = const SessionState(
+      status: SessionStatus.unauthenticated,
+    ),
+  }) : _authService = authService,
+       super(initial) {
+    _subscription = authEvents.listen(_onAuthStateChanged);
+  }
+
   final SupabaseAuthService _authService;
   StreamSubscription<supabase.AuthState>? _subscription;
+
+  // Transient recovery-lifecycle flag — NOT security authorization (that is the
+  // repository's isRecoveryAuthorized). It only suppresses the app-level
+  // authenticated transition (and thus push registration) while a recovery
+  // session is active, so verifyOTP(recovery) -> updateUser -> signOut never
+  // looks like a login. In-memory only; never persisted.
+  bool _recovering = false;
 
   void _initialize() {
     // Without Supabase credentials there is no session to synchronize.
@@ -69,19 +93,43 @@ class SessionNotifier extends StateNotifier<SessionState> {
   void _onAuthStateChanged(supabase.AuthState data) {
     final session = data.session;
     switch (data.event) {
-      case supabase.AuthChangeEvent.initialSession:
-      case supabase.AuthChangeEvent.signedIn:
-      case supabase.AuthChangeEvent.tokenRefreshed:
+      case supabase.AuthChangeEvent.passwordRecovery:
+        // A recovery session now exists in the SDK, but the app must NOT treat
+        // it as a login: stay unauthenticated so push never registers. The
+        // permission to reset lives solely in the repository.
+        _recovering = true;
+        state = const SessionState(status: SessionStatus.unauthenticated);
       case supabase.AuthChangeEvent.userUpdated:
-        final user = session?.user;
-        state = user != null
-            ? SessionState(status: SessionStatus.authenticated, user: user)
-            : const SessionState(status: SessionStatus.unauthenticated);
+      case supabase.AuthChangeEvent.tokenRefreshed:
+        // During recovery, suppress the authenticated transition — the recovery
+        // session's updateUser (success path) and background auto-refresh must
+        // not look like a login. Outside recovery, behave exactly as before.
+        if (_recovering) {
+          state = const SessionState(status: SessionStatus.unauthenticated);
+        } else {
+          _applySession(session);
+        }
+      case supabase.AuthChangeEvent.signedIn:
+        // A genuine sign-in ends any recovery lifecycle and authenticates.
+        _recovering = false;
+        _applySession(session);
+      case supabase.AuthChangeEvent.initialSession:
+        // Cold-start restore: normal behavior. `_recovering` is always false
+        // here (in-memory, never carried across provider recreation).
+        _applySession(session);
       case supabase.AuthChangeEvent.signedOut:
+        _recovering = false;
         state = const SessionState(status: SessionStatus.unauthenticated);
       default:
         break;
     }
+  }
+
+  void _applySession(supabase.Session? session) {
+    final user = session?.user;
+    state = user != null
+        ? SessionState(status: SessionStatus.authenticated, user: user)
+        : const SessionState(status: SessionStatus.unauthenticated);
   }
 
   /// Signs the user out and clears the synchronized session state.
