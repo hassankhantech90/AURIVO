@@ -20,6 +20,11 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
+  // Validation stays off until the first failed submit, then switches to live
+  // revalidation so corrected fields clear/update their errors without needing
+  // a second Update Password tap.
+  AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
+
   @override
   void dispose() {
     _passwordController.dispose();
@@ -37,6 +42,7 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage> {
       subtitle: 'Choose a strong password to protect your AURIVO account.',
       child: Form(
         key: _formKey,
+        autovalidateMode: _autovalidateMode,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -69,6 +75,11 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) {
+      if (_autovalidateMode != AutovalidateMode.onUserInteraction) {
+        setState(() {
+          _autovalidateMode = AutovalidateMode.onUserInteraction;
+        });
+      }
       return;
     }
 

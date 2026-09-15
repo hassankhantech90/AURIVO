@@ -245,24 +245,130 @@ void main() {
     expect(entered, isNot(AppColors.pureWhite));
   });
 
-  // CHARACTERIZATION of CURRENT submit-only validation. This documents existing
-  // behavior and is intentionally the target of the separate submit-aware
-  // validation fix (Commit 5), which will change this expectation. It does NOT
-  // assert stale validation is the desired permanent UX.
-  testWidgets('current behavior: a fixed field keeps its stale error until '
-      'resubmit (pending Commit 5)', (tester) async {
-    await tester.pumpWidget(_harness(_SpyAuthRepository()));
-    await tester.pump();
+  group('submit-aware validation', () {
+    testWidgets('no premature validation before the first submit', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_harness(_SpyAuthRepository()));
+      await tester.pump();
 
-    await tester.enterText(_newPassword(), 'weak');
-    await tester.enterText(_confirmPassword(), 'weak');
-    await tester.tap(find.text('Update Password'));
-    await tester.pump();
-    expect(find.text('Password must be at least 8 characters'), findsOneWidget);
+      // Type invalid values but do NOT submit — nothing should validate yet.
+      await tester.enterText(_newPassword(), 'weak');
+      await tester.enterText(_confirmPassword(), 'nope');
+      await tester.pump();
 
-    // Correct the field WITHOUT resubmitting; the stale error still shows today.
-    await tester.enterText(_newPassword(), 'Secret123!');
-    await tester.pump();
-    expect(find.text('Password must be at least 8 characters'), findsOneWidget);
+      expect(
+        find.text('Password must be at least 8 characters'),
+        findsNothing,
+      );
+      expect(find.text('Passwords do not match'), findsNothing);
+    });
+
+    testWidgets('New Password error clears on correction without resubmit', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_harness(_SpyAuthRepository()));
+      await tester.pump();
+
+      await tester.enterText(_newPassword(), 'weak');
+      await tester.enterText(_confirmPassword(), 'weak');
+      await tester.tap(find.text('Update Password'));
+      await tester.pump();
+      expect(
+        find.text('Password must be at least 8 characters'),
+        findsOneWidget,
+      );
+
+      // Correct New Password; its strength error clears with no second submit.
+      await tester.enterText(_newPassword(), 'Secret123!');
+      await tester.pump();
+      expect(
+        find.text('Password must be at least 8 characters'),
+        findsNothing,
+      );
+    });
+
+    testWidgets('a fixed New Password updates to the current error, not stale',
+        (tester) async {
+      await tester.pumpWidget(_harness(_SpyAuthRepository()));
+      await tester.pump();
+
+      await tester.enterText(_newPassword(), 'weak');
+      await tester.enterText(_confirmPassword(), 'weak');
+      await tester.tap(find.text('Update Password'));
+      await tester.pump();
+      expect(
+        find.text('Password must be at least 8 characters'),
+        findsOneWidget,
+      );
+
+      // A password that is long enough but has no digit -> error UPDATES.
+      await tester.enterText(_newPassword(), 'NoDigits!');
+      await tester.pump();
+      expect(find.text('Password must be at least 8 characters'), findsNothing);
+      expect(find.text('Password must include a number'), findsOneWidget);
+    });
+
+    testWidgets('Confirm Password required clears when a match is entered', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_harness(_SpyAuthRepository()));
+      await tester.pump();
+
+      await tester.enterText(_newPassword(), 'Secret123!');
+      // confirm left empty
+      await tester.tap(find.text('Update Password'));
+      await tester.pump();
+      expect(find.text('Confirm password is required'), findsOneWidget);
+
+      await tester.enterText(_confirmPassword(), 'Secret123!');
+      await tester.pump();
+      expect(find.text('Confirm password is required'), findsNothing);
+    });
+
+    testWidgets('Confirm mismatch clears when the confirmation is corrected', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_harness(_SpyAuthRepository()));
+      await tester.pump();
+
+      await tester.enterText(_newPassword(), 'Secret123!');
+      await tester.enterText(_confirmPassword(), 'Secret123?');
+      await tester.tap(find.text('Update Password'));
+      await tester.pump();
+      expect(find.text('Passwords do not match'), findsOneWidget);
+
+      await tester.enterText(_confirmPassword(), 'Secret123!');
+      await tester.pump();
+      expect(find.text('Passwords do not match'), findsNothing);
+    });
+
+    // CROSS-FIELD probe: Confirm Password's validator depends on the New
+    // Password controller. After a match, changing ONLY New Password must make
+    // the Confirm field re-validate to a mismatch WITHOUT another submit.
+    testWidgets('changing New Password revalidates the dependent Confirm field',
+        (tester) async {
+      await tester.pumpWidget(_harness(_SpyAuthRepository()));
+      await tester.pump();
+
+      // Force onUserInteraction via a first failed submit (confirm empty).
+      await tester.enterText(_newPassword(), 'Secret123!');
+      await tester.tap(find.text('Update Password'));
+      await tester.pump();
+      expect(find.text('Confirm password is required'), findsOneWidget);
+
+      // Now enter a matching confirmation -> no errors.
+      await tester.enterText(_confirmPassword(), 'Secret123!');
+      await tester.pump();
+      expect(find.text('Passwords do not match'), findsNothing);
+      expect(find.text('Confirm password is required'), findsNothing);
+
+      // Change ONLY New Password so it no longer matches Confirm.
+      await tester.enterText(_newPassword(), 'Different123!');
+      await tester.pump();
+
+      // The dependent Confirm field should update on its own.
+      expect(find.text('Passwords do not match'), findsOneWidget);
+    });
   });
 }
