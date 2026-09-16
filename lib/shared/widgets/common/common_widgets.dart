@@ -191,26 +191,34 @@ class PriceWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Text(
-          '$currency ${price.toStringAsFixed(2)}',
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(color: AppColors.jetBlack),
-        ),
-        if (originalPrice != null) ...[
-          const SizedBox(width: AppSpacing.sm),
+    // Scale the whole price block down (never up) so wide amounts — e.g. large
+    // PKR prices, optionally with a struck-through original — stay fully
+    // readable on narrow product-card cells instead of overflowing. No digits
+    // are ellipsised or dropped; on roomy layouts nothing changes.
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: Alignment.centerLeft,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
           Text(
-            '$currency ${originalPrice!.toStringAsFixed(2)}',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              decoration: TextDecoration.lineThrough,
-            ),
+            '$currency ${price.toStringAsFixed(2)}',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(color: AppColors.jetBlack),
           ),
+          if (originalPrice != null) ...[
+            const SizedBox(width: AppSpacing.sm),
+            Text(
+              '$currency ${originalPrice!.toStringAsFixed(2)}',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                decoration: TextDecoration.lineThrough,
+              ),
+            ),
+          ],
         ],
-      ],
+      ),
     );
   }
 }

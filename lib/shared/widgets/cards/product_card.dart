@@ -37,26 +37,30 @@ class ProductCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Stack(
-            children: [
-              AspectRatio(
-                aspectRatio: 1,
-                child: NetworkImageWidget(
+          // The image flexes to fill the space left after the text block, so a
+          // fixed grid cell never overflows on narrow phones. On typical cells
+          // (childAspectRatio 0.62) this stays ~square; on tight cells it simply
+          // shortens to keep title/price/rating fully visible.
+          Expanded(
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                NetworkImageWidget(
                   imageUrl: imageUrl,
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(AppRadius.xl),
                   ),
                 ),
-              ),
-              Positioned(
-                top: AppSpacing.sm,
-                right: AppSpacing.sm,
-                child: FavouriteButton(
-                  isFavourite: isFavourite,
-                  onPressed: onFavouritePressed,
+                Positioned(
+                  top: AppSpacing.sm,
+                  right: AppSpacing.sm,
+                  child: FavouriteButton(
+                    isFavourite: isFavourite,
+                    onPressed: onFavouritePressed,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           Padding(
             padding: const EdgeInsets.all(AppSpacing.md),
