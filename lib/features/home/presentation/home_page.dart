@@ -121,7 +121,14 @@ class _HomePageState extends ConsumerState<HomePage> {
               child: CategoryCard(
                 title: category.name,
                 imageUrl: category.imagePath ?? '',
-                onTap: () => context.push(AppRoutes.explore),
+                // Filter Explore by this root category's subtree. Encode the id
+                // as a query parameter rather than concatenating a raw string.
+                onTap: () => context.push(
+                  Uri(
+                    path: AppRoutes.explore,
+                    queryParameters: {'category': category.id},
+                  ).toString(),
+                ),
               ),
             );
           },

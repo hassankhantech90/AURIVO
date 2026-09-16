@@ -143,6 +143,70 @@ void main() {
     });
   });
 
+  group('getProducts by category set (categoryIds)', () {
+    test('maps a category-id set to unique product ids via IN filters', () async {
+      db.onList = (table, q) {
+        if (table == 'product_categories') {
+          // p1 appears under two subtree categories -> must dedupe.
+          return [
+            {'product_id': 'p1'},
+            {'product_id': 'p1'},
+            {'product_id': 'p2'},
+          ];
+        }
+        return [productRow(id: 'p1'), productRow(id: 'p2')];
+      };
+
+      final products = await repo.getProducts(
+        categoryIds: ['root', 'childA', 'grandchild'],
+      );
+
+      expect(products, hasLength(2)); // deduped
+      final mappingQuery = db.queries.firstWhere(
+        (q) => q.table == 'product_categories',
+      );
+      expect(mappingQuery.whereIn['category_id'], [
+        'root',
+        'childA',
+        'grandchild',
+      ]);
+      final productsQuery = db.queries.firstWhere((q) => q.table == 'products');
+      expect(productsQuery.whereIn['id'], containsAll(['p1', 'p2']));
+      expect(productsQuery.whereIn['id'], hasLength(2)); // unique
+      // Final ordering/limit stays on the products query.
+      expect(productsQuery.orderBy, 'created_at');
+    });
+
+    test('empty categoryIds returns [] and issues no query', () async {
+      final products = await repo.getProducts(categoryIds: const []);
+      expect(products, isEmpty);
+      expect(db.queries, isEmpty);
+    });
+
+    test('no mapped products returns [] and skips the products query', () async {
+      db.onList = (table, q) => const []; // no product_categories rows
+      final products = await repo.getProducts(categoryIds: ['root']);
+      expect(products, isEmpty);
+      expect(db.queries.any((q) => q.table == 'products'), isFalse);
+    });
+
+    test('categoryIds takes precedence over categoryId', () async {
+      db.onList = (table, q) {
+        if (table == 'product_categories') return [{'product_id': 'p1'}];
+        return [productRow(id: 'p1')];
+      };
+
+      await repo.getProducts(categoryId: 'single', categoryIds: ['a', 'b']);
+
+      final mappingQuery = db.queries.firstWhere(
+        (q) => q.table == 'product_categories',
+      );
+      // The set path was used (IN), not the single-category eq path.
+      expect(mappingQuery.whereIn['category_id'], ['a', 'b']);
+      expect(mappingQuery.filters.containsKey('category_id'), isFalse);
+    });
+  });
+
   group('getProductsByCategory', () {
     test('resolves product ids then queries products via IN filter', () async {
       db.onList = (table, q) {

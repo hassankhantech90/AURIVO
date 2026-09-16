@@ -28,17 +28,6 @@ final productListProvider =
       return ProductListNotifier(ref.watch(productRepositoryProvider));
     });
 
-/// Dedicated catalogue state for the Explore grid, independent of
-/// [productListProvider] (which Home uses for its Featured rail). Same notifier
-/// and repository — only the state instance is separate, so the two surfaces
-/// never overwrite each other's products.
-final exploreProductsProvider =
-    StateNotifierProvider<ProductListNotifier, CatalogState<List<Product>>>((
-      ref,
-    ) {
-      return ProductListNotifier(ref.watch(productRepositoryProvider));
-    });
-
 class ProductListNotifier extends StateNotifier<CatalogState<List<Product>>> {
   ProductListNotifier(this._repository)
     : super(const CatalogState<List<Product>>()) {

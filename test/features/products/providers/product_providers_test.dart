@@ -34,6 +34,7 @@ class _FakeProductRepository implements ProductRepository {
     int offset = 0,
     String? brandId,
     String? categoryId,
+    List<String>? categoryIds,
     bool? featured,
     ProductSort sort = ProductSort.newest,
   }) async {

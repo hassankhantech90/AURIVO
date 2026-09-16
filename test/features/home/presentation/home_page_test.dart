@@ -59,6 +59,7 @@ class _FakeProductRepository implements ProductRepository {
     int offset = 0,
     String? brandId,
     String? categoryId,
+    List<String>? categoryIds,
     bool? featured,
     ProductSort sort = ProductSort.newest,
   }) {
@@ -142,7 +143,9 @@ Widget _home({required List<Override> overrides, ThemeData? theme}) {
       GoRoute(path: AppRoutes.home, builder: (_, _) => const HomePage()),
       GoRoute(
         path: AppRoutes.explore,
-        builder: (_, _) => const Scaffold(body: Text('EXPLORE')),
+        builder: (_, s) => Scaffold(
+          body: Text('EXPLORE_${s.uri.queryParameters['category'] ?? 'none'}'),
+        ),
       ),
       GoRoute(
         path: AppRoutes.product,
@@ -492,10 +495,13 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
     }
 
-    testWidgets('category card -> /explore', (tester) async {
+    testWidgets('category card -> /explore with the exact category id', (
+      tester,
+    ) async {
       await pumpHome(tester);
       await tapAndSettle(tester, find.text('Rings'));
-      expect(find.text('EXPLORE'), findsOneWidget);
+      // The tapped category's id ('rings') is transmitted as ?category=.
+      expect(find.text('EXPLORE_rings'), findsOneWidget);
     });
 
     testWidgets('product card -> /product/:id with the product id', (

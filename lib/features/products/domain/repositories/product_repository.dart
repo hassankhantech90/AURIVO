@@ -11,11 +11,15 @@ import '../entities/product_variant.dart';
 /// active variants/images are returned) and must throw the shared `Failure`
 /// type rather than raw Supabase exceptions.
 abstract class ProductRepository {
+  /// When [categoryIds] is provided it takes precedence over [categoryId] and
+  /// matches products in ANY of the given categories; a non-null empty list
+  /// yields no products. [categoryId] is kept for backward compatibility.
   Future<List<Product>> getProducts({
     int limit = 20,
     int offset = 0,
     String? brandId,
     String? categoryId,
+    List<String>? categoryIds,
     bool? featured,
     ProductSort sort = ProductSort.newest,
   });

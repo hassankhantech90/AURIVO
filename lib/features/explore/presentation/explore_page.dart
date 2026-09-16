@@ -5,15 +5,19 @@ import '../../../shared/design_system.dart';
 import '../../authentication/providers/session_provider.dart';
 import '../../products/domain/entities/product.dart';
 import '../../products/providers/catalog_state.dart';
-import '../../products/providers/product_providers.dart';
 import '../../wishlist/presentation/widgets/wishlist_product_card.dart';
 import '../../wishlist/providers/wishlist_providers.dart';
+import '../providers/explore_products_provider.dart';
 
-/// Explore surface: the full public product catalogue grid, wired to
+/// Explore surface: the public product catalogue grid, wired to
 /// [exploreProductsProvider] — a dedicated state independent of Home's
-/// [productListProvider], so the two surfaces never overwrite each other.
+/// productListProvider. When given a [categoryId] (a root category) it shows
+/// that category's whole visible subtree; otherwise the full newest catalogue.
 class ExplorePage extends ConsumerStatefulWidget {
-  const ExplorePage({super.key});
+  const ExplorePage({super.key, this.categoryId});
+
+  /// Root category to filter by (its subtree), or null for the full catalogue.
+  final String? categoryId;
 
   @override
   ConsumerState<ExplorePage> createState() => _ExplorePageState();
@@ -30,7 +34,9 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
     if (ref.read(sessionProvider).isAuthenticated) {
       ref.read(wishlistProvider.notifier).load();
     }
-    return ref.read(exploreProductsProvider.notifier).load();
+    return ref
+        .read(exploreProductsProvider.notifier)
+        .load(rootCategoryId: widget.categoryId);
   }
 
   @override

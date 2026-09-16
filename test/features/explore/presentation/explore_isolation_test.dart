@@ -3,6 +3,7 @@ import 'package:aurivo/features/categories/domain/entities/category.dart';
 import 'package:aurivo/features/categories/domain/repositories/category_repository.dart';
 import 'package:aurivo/features/categories/providers/category_providers.dart';
 import 'package:aurivo/features/explore/presentation/explore_page.dart';
+import 'package:aurivo/features/explore/providers/explore_products_provider.dart';
 import 'package:aurivo/features/home/presentation/home_page.dart';
 import 'package:aurivo/features/products/domain/entities/product.dart';
 import 'package:aurivo/features/products/domain/entities/product_sort.dart';
@@ -30,6 +31,7 @@ class _RoutingProductRepository implements ProductRepository {
     int offset = 0,
     String? brandId,
     String? categoryId,
+    List<String>? categoryIds,
     bool? featured,
     ProductSort sort = ProductSort.newest,
   }) async {
@@ -46,6 +48,9 @@ class _FakeCategoryRepository implements CategoryRepository {
 
   @override
   Future<List<Category>> getRootCategories() async => categories;
+
+  @override
+  Future<List<String>> descendantCategoryIds(String rootId) async => [rootId];
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);

@@ -33,6 +33,9 @@ class _FakeCategoryRepository implements CategoryRepository {
 
   @override
   Future<Category?> getCategoryById(String id) async => null;
+
+  @override
+  Future<List<String>> descendantCategoryIds(String rootId) async => [rootId];
 }
 
 ProviderContainer _container(CategoryRepository repo) {

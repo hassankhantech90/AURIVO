@@ -103,4 +103,48 @@ void main() {
     db.throwError = const ex.DatabaseException('boom', code: '42P01');
     await expectLater(repo.getCategories(), throwsA(isA<Failure>()));
   });
+
+  group('descendantCategoryIds', () {
+    // ROOT ├ CHILD_A ┤ GRANDCHILD  └ CHILD_B  (+ an unrelated OTHER root)
+    List<Map<String, dynamic>> tree(String _, Map<String, Object?> _) => [
+      categoryRow(id: 'root'),
+      categoryRow(id: 'childA', parentId: 'root'),
+      categoryRow(id: 'grandchild', parentId: 'childA'),
+      categoryRow(id: 'childB', parentId: 'root'),
+      categoryRow(id: 'other'),
+    ];
+
+    test('returns the root plus every descendant, once', () async {
+      db.onList = tree;
+
+      final ids = await repo.descendantCategoryIds('root');
+
+      expect(ids.toSet(), {'root', 'childA', 'grandchild', 'childB'});
+      expect(ids, hasLength(4)); // no duplicates
+      expect(ids.contains('other'), isFalse); // outside the subtree
+    });
+
+    test('a leaf root returns just itself', () async {
+      db.onList = tree;
+      expect(await repo.descendantCategoryIds('grandchild'), ['grandchild']);
+    });
+
+    test('an unknown root returns just itself (no full-catalogue fallback)', () async {
+      db.onList = tree;
+      expect(await repo.descendantCategoryIds('missing'), ['missing']);
+    });
+
+    test('is cycle-safe (visited set prevents infinite traversal)', () async {
+      // Defensive: a data cycle a<->b must not hang or duplicate.
+      db.onList = (_, _) => [
+        categoryRow(id: 'a', parentId: 'b'),
+        categoryRow(id: 'b', parentId: 'a'),
+      ];
+
+      final ids = await repo.descendantCategoryIds('a');
+
+      expect(ids.toSet(), {'a', 'b'});
+      expect(ids, hasLength(2));
+    });
+  });
 }

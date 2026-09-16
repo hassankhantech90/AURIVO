@@ -59,4 +59,30 @@ class SupabaseCategoryRepository implements CategoryRepository {
       throw CatalogFailureMapper.map(error);
     }
   }
+
+  @override
+  Future<List<String>> descendantCategoryIds(String rootId) async {
+    // Fetch the visible tree once, then traverse locally (no per-level query).
+    final categories = await getCategories();
+    final childrenByParent = <String, List<String>>{};
+    for (final category in categories) {
+      final parentId = category.parentId;
+      if (parentId != null) {
+        (childrenByParent[parentId] ??= <String>[]).add(category.id);
+      }
+    }
+
+    // BFS from the root; the visited set both dedupes and guards against cycles.
+    final result = <String>[];
+    final visited = <String>{};
+    final queue = <String>[rootId];
+    while (queue.isNotEmpty) {
+      final id = queue.removeAt(0);
+      if (!visited.add(id)) continue;
+      result.add(id);
+      final children = childrenByParent[id];
+      if (children != null) queue.addAll(children);
+    }
+    return result;
+  }
 }

@@ -38,6 +38,7 @@ class SupabaseProductRepository implements ProductRepository {
     int offset = 0,
     String? brandId,
     String? categoryId,
+    List<String>? categoryIds,
     bool? featured,
     ProductSort sort = ProductSort.newest,
   }) async {
@@ -47,7 +48,14 @@ class SupabaseProductRepository implements ProductRepository {
         'featured': ?featured,
       };
       final whereIn = <String, List<Object>>{};
-      if (categoryId != null) {
+      // categoryIds (a category-set / subtree filter) takes precedence over the
+      // single categoryId; they are never combined.
+      if (categoryIds != null) {
+        if (categoryIds.isEmpty) return const [];
+        final ids = await _productIdsInCategories(categoryIds);
+        if (ids.isEmpty) return const [];
+        whereIn['id'] = ids;
+      } else if (categoryId != null) {
         final ids = await _productIdsInCategory(categoryId);
         if (ids.isEmpty) return const [];
         whereIn['id'] = ids;
@@ -225,6 +233,21 @@ class SupabaseProductRepository implements ProductRepository {
     return rows
         .map((row) => row['product_id'])
         .whereType<Object>()
+        .toList(growable: false);
+  }
+
+  /// Unique product ids assigned to ANY of [categoryIds] (subtree filter). A
+  /// product mapped to multiple supplied categories is returned once.
+  Future<List<Object>> _productIdsInCategories(List<String> categoryIds) async {
+    final rows = await _database.list(
+      table: _productCategoriesTable,
+      columns: 'product_id',
+      whereIn: {'category_id': List<Object>.from(categoryIds)},
+    );
+    return rows
+        .map((row) => row['product_id'])
+        .whereType<Object>()
+        .toSet()
         .toList(growable: false);
   }
 

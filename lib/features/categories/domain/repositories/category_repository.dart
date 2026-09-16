@@ -14,4 +14,11 @@ abstract class CategoryRepository {
   Future<List<Category>> getSubcategories(String parentId);
 
   Future<Category?> getCategoryById(String id);
+
+  /// [rootId] plus every reachable descendant id, over the currently visible
+  /// category tree (see [getCategories] — RLS-active, non-deleted only). An
+  /// unknown root resolves to `[rootId]`. Never falls back to the full
+  /// catalogue; a subtree hidden behind an inactive/deleted intermediate node
+  /// is intentionally unreachable (consistent with category visibility).
+  Future<List<String>> descendantCategoryIds(String rootId);
 }
