@@ -10,7 +10,8 @@ import '../../wishlist/presentation/widgets/wishlist_product_card.dart';
 import '../../wishlist/providers/wishlist_providers.dart';
 
 /// Explore surface: the full public product catalogue grid, wired to
-/// [productListProvider].
+/// [exploreProductsProvider] — a dedicated state independent of Home's
+/// [productListProvider], so the two surfaces never overwrite each other.
 class ExplorePage extends ConsumerStatefulWidget {
   const ExplorePage({super.key});
 
@@ -29,12 +30,12 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
     if (ref.read(sessionProvider).isAuthenticated) {
       ref.read(wishlistProvider.notifier).load();
     }
-    return ref.read(productListProvider.notifier).load();
+    return ref.read(exploreProductsProvider.notifier).load();
   }
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(productListProvider);
+    final state = ref.watch(exploreProductsProvider);
     return Scaffold(
       appBar: const LuxuryAppBar(title: 'Explore'),
       body: RefreshIndicator(onRefresh: _load, child: _body(state)),
