@@ -34,7 +34,7 @@ class _ProductPageState extends ConsumerState<ProductPage> {
   }
 
   void _load() {
-    ref.read(productDetailProvider.notifier).load(widget.productId);
+    ref.read(productDetailProvider(widget.productId).notifier).load();
     if (ref.read(sessionProvider).isAuthenticated) {
       ref.read(wishlistProvider.notifier).load();
     }
@@ -73,7 +73,7 @@ class _ProductPageState extends ConsumerState<ProductPage> {
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(productDetailProvider);
+    final state = ref.watch(productDetailProvider(widget.productId));
     final isFavourite = ref.watch(
       wishlistProvider.select((s) => s.contains(widget.productId)),
     );

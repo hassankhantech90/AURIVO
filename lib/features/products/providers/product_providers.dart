@@ -76,15 +76,24 @@ class ProductListNotifier extends StateNotifier<CatalogState<List<Product>>> {
 
 // Product detail -------------------------------------------------------------
 
+/// Product-detail state scoped per product id. Each id owns its own notifier and
+/// state, so opening product B never observes product A's detail (no stale
+/// flash, no cross-product contamination). autoDispose frees a product's state
+/// once its page is gone; reopening simply reloads.
 final productDetailProvider =
-    StateNotifierProvider<ProductDetailNotifier, CatalogState<ProductDetail>>((
-      ref,
-    ) {
-      return ProductDetailNotifier(ref.watch(productRepositoryProvider));
-    });
+    StateNotifierProvider.autoDispose
+        .family<ProductDetailNotifier, CatalogState<ProductDetail>, String>((
+          ref,
+          productId,
+        ) {
+          return ProductDetailNotifier(
+            ref.watch(productRepositoryProvider),
+            productId,
+          );
+        });
 
 class ProductDetailNotifier extends StateNotifier<CatalogState<ProductDetail>> {
-  ProductDetailNotifier(this._repository)
+  ProductDetailNotifier(this._repository, this._productId)
     : super(const CatalogState<ProductDetail>()) {
     _runner = CatalogRunner<ProductDetail>(
       () => state,
@@ -93,11 +102,14 @@ class ProductDetailNotifier extends StateNotifier<CatalogState<ProductDetail>> {
   }
 
   final ProductRepository _repository;
+  final String _productId;
   late final CatalogRunner<ProductDetail> _runner;
 
-  Future<void> load(String productId) {
+  /// Loads the detail for this notifier's bound product id. The id is fixed at
+  /// construction, so a page can never accidentally load a different product.
+  Future<void> load() {
     return _runner.run(() async {
-      final detail = await _repository.getProductDetail(productId);
+      final detail = await _repository.getProductDetail(_productId);
       if (detail == null) {
         throw const Failure(message: 'This product is no longer available.');
       }
