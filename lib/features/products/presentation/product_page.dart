@@ -288,10 +288,15 @@ class _VariantRow extends StatelessWidget {
               style: Theme.of(context).textTheme.bodyMedium,
             ),
           ),
-          PriceWidget(
-            price: variant.price,
-            originalPrice: variant.comparePrice,
-            currency: variant.currency,
+          // Bound the price so its FittedBox(scaleDown) can shrink wide PKR
+          // amounts (incl. a struck compare price) to fit on narrow phones and
+          // large text scales, instead of overflowing the row.
+          Flexible(
+            child: PriceWidget(
+              price: variant.price,
+              originalPrice: variant.comparePrice,
+              currency: variant.currency,
+            ),
           ),
           const SizedBox(width: AppSpacing.sm),
           IconButton.filledTonal(
