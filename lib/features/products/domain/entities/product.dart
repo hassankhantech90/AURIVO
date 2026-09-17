@@ -28,6 +28,7 @@ class Product {
     this.ratingCount = 0,
     this.createdAt,
     this.updatedAt,
+    this.primaryImageUrl,
   });
 
   final String id;
@@ -51,6 +52,11 @@ class Product {
   final int ratingCount;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+
+  /// Resolved public URL of the primary catalogue image, populated by the data
+  /// layer (not a `products` column). Null when the product has no visible
+  /// image or imagery could not be resolved — the UI then shows a placeholder.
+  final String? primaryImageUrl;
 
   factory Product.fromMap(Map<String, dynamic> map) {
     return Product(
@@ -77,6 +83,58 @@ class Product {
       ratingCount: parseInt(map['rating_count']),
       createdAt: parseTimestamp(map['created_at']),
       updatedAt: parseTimestamp(map['updated_at']),
+    );
+  }
+
+  /// Returns a copy with the given fields replaced. Used by the data layer to
+  /// attach an enrichment-only [primaryImageUrl] after the catalogue query.
+  Product copyWith({
+    String? id,
+    String? sellerId,
+    String? brandId,
+    String? title,
+    String? slug,
+    String? description,
+    String? shortDescription,
+    String? jewelleryType,
+    String? material,
+    String? purity,
+    String? gender,
+    String? occasion,
+    bool? featured,
+    String? currency,
+    double? basePrice,
+    double? comparePrice,
+    int? minOrderQuantity,
+    double? ratingAverage,
+    int? ratingCount,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? primaryImageUrl,
+  }) {
+    return Product(
+      id: id ?? this.id,
+      sellerId: sellerId ?? this.sellerId,
+      brandId: brandId ?? this.brandId,
+      title: title ?? this.title,
+      slug: slug ?? this.slug,
+      description: description ?? this.description,
+      shortDescription: shortDescription ?? this.shortDescription,
+      jewelleryType: jewelleryType ?? this.jewelleryType,
+      material: material ?? this.material,
+      purity: purity ?? this.purity,
+      gender: gender ?? this.gender,
+      occasion: occasion ?? this.occasion,
+      featured: featured ?? this.featured,
+      currency: currency ?? this.currency,
+      basePrice: basePrice ?? this.basePrice,
+      comparePrice: comparePrice ?? this.comparePrice,
+      minOrderQuantity: minOrderQuantity ?? this.minOrderQuantity,
+      ratingAverage: ratingAverage ?? this.ratingAverage,
+      ratingCount: ratingCount ?? this.ratingCount,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      primaryImageUrl: primaryImageUrl ?? this.primaryImageUrl,
     );
   }
 }

@@ -2,7 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/supabase/supabase_database_service.dart';
 import '../../../core/supabase/supabase_service.dart';
+import '../../../core/supabase/supabase_storage_service.dart';
 import '../../../core/utils/failure.dart';
+import '../../products/data/primary_image_resolver.dart';
 import '../../profile/domain/entities/seller_profile.dart';
 import '../data/repositories/supabase_seller_repository.dart';
 import '../data/repositories/supabase_seller_review_repository.dart';
@@ -14,8 +16,13 @@ import '../domain/repositories/seller_review_repository.dart';
 /// Supabase client).
 final sellerRepositoryProvider = Provider<SellerRepository>((ref) {
   const service = SupabaseService();
+  const database = SupabaseDatabaseService(supabaseService: service);
   return SupabaseSellerRepository(
-    database: const SupabaseDatabaseService(supabaseService: service),
+    database: database,
+    imageResolver: const PrimaryImageResolver(
+      database: database,
+      storage: SupabaseStorageService(supabaseService: service),
+    ),
   );
 });
 

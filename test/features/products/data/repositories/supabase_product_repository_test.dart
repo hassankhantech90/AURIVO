@@ -1,7 +1,9 @@
 import 'package:aurivo/core/supabase/supabase_database_service.dart';
 import 'package:aurivo/core/supabase/supabase_exceptions.dart' as ex;
 import 'package:aurivo/core/supabase/supabase_service.dart';
+import 'package:aurivo/core/supabase/supabase_storage_service.dart';
 import 'package:aurivo/core/utils/failure.dart';
+import 'package:aurivo/features/products/data/primary_image_resolver.dart';
 import 'package:aurivo/features/products/data/repositories/supabase_product_repository.dart';
 import 'package:aurivo/features/products/domain/entities/product_sort.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -99,14 +101,32 @@ class _StubDatabase extends SupabaseDatabaseService {
   }
 }
 
+/// Builds a deterministic, offline public URL from a storage path.
+class _FakeStorage extends SupabaseStorageService {
+  _FakeStorage() : super(supabaseService: const SupabaseService());
+
+  @override
+  String getPublicUrl({required String bucket, required String path}) =>
+      'https://cdn.test/$bucket/$path';
+}
+
 void main() {
   late _StubDatabase db;
   late SupabaseProductRepository repo;
 
   setUp(() {
     db = _StubDatabase();
-    repo = SupabaseProductRepository(database: db);
+    repo = SupabaseProductRepository(
+      database: db,
+      imageResolver: PrimaryImageResolver(
+        database: db,
+        storage: _FakeStorage(),
+      ),
+    );
   });
+
+  // Products query for tests that also trigger the batch product_images query.
+  _Query productsQuery() => db.queries.firstWhere((q) => q.table == 'products');
 
   group('getProducts', () {
     test(
@@ -118,7 +138,7 @@ void main() {
 
         expect(products, hasLength(2));
         expect(products.first.title, contains('Gold Ring'));
-        final q = db.queries.single;
+        final q = productsQuery();
         expect(q.table, 'products');
         expect(q.orderBy, 'created_at');
         expect(q.ascending, isFalse);
@@ -132,7 +152,7 @@ void main() {
 
       await repo.getProductsByBrand('b1');
 
-      expect(db.queries.single.filters['brand_id'], 'b1');
+      expect(productsQuery().filters['brand_id'], 'b1');
     });
 
     test('price sort maps to base_price ascending', () async {
@@ -260,7 +280,7 @@ void main() {
       final products = await repo.getProductsByIds(['p1', 'p2']);
 
       expect(products.map((p) => p.id), ['p1', 'p2']);
-      final q = db.queries.single;
+      final q = productsQuery();
       expect(q.table, 'products');
       expect(q.whereIn['id'], ['p1', 'p2']);
     });
@@ -294,6 +314,47 @@ void main() {
       expect(detail.images, hasLength(1));
       expect(detail.variants, hasLength(2));
       expect(detail.primaryImage?.id, 'img1');
+      // The hero is resolved to a public URL, and no extra image query is made
+      // (the already-loaded images are reused): products, images, variants only.
+      expect(
+        detail.product.primaryImageUrl,
+        'https://cdn.test/product-images/p1/img1.jpg',
+      );
+      expect(
+        db.queries.where((q) => q.table == 'product_images'),
+        hasLength(1),
+      );
+      expect(db.queries, hasLength(3));
+    });
+
+    test('falls back to the first image by sort order when no primary', () async {
+      db.onList = (table, q) {
+        switch (table) {
+          case 'products':
+            return [productRow()];
+          case 'product_images':
+            return [imageRow(id: 'first'), imageRow(id: 'second')];
+          default:
+            return const [];
+        }
+      };
+
+      final detail = await repo.getProductDetail('p1');
+
+      expect(
+        detail!.product.primaryImageUrl,
+        'https://cdn.test/product-images/p1/first.jpg',
+      );
+    });
+
+    test('leaves primaryImageUrl null when the product has no images', () async {
+      db.onList = (table, q) =>
+          table == 'products' ? [productRow()] : const [];
+
+      final detail = await repo.getProductDetail('p1');
+
+      expect(detail!.images, isEmpty);
+      expect(detail.product.primaryImageUrl, isNull);
     });
 
     test('returns null when the product does not exist', () async {
@@ -339,6 +400,94 @@ void main() {
       db.onList = (table, q) => const [];
       await repo.getAttributes(filterableOnly: true);
       expect(db.queries.single.filters['is_filterable'], true);
+    });
+  });
+
+  group('primary image enrichment', () {
+    Map<String, dynamic> imgRow(
+      String productId, {
+      String id = 'i',
+      bool isPrimary = false,
+      int sortOrder = 0,
+    }) => {
+      'product_id': productId,
+      'storage_path': '$productId/$id.jpg',
+      'is_primary': isPrimary,
+      'sort_order': sortOrder,
+    };
+
+    test('getProducts enriches primaryImageUrl from one batch query', () async {
+      db.onList = (table, q) {
+        if (table == 'product_images') {
+          return [imgRow('p1', id: 'a'), imgRow('p2', id: 'b')];
+        }
+        return [productRow(id: 'p1'), productRow(id: 'p2')];
+      };
+
+      final products = await repo.getProducts();
+
+      expect(
+        products.firstWhere((p) => p.id == 'p1').primaryImageUrl,
+        'https://cdn.test/product-images/p1/a.jpg',
+      );
+      expect(
+        products.firstWhere((p) => p.id == 'p2').primaryImageUrl,
+        'https://cdn.test/product-images/p2/b.jpg',
+      );
+      // Exactly one product_images query for the whole page (no N+1).
+      expect(
+        db.queries.where((q) => q.table == 'product_images'),
+        hasLength(1),
+      );
+    });
+
+    test('getProductsByIds enriches primaryImageUrl', () async {
+      db.onList = (table, q) {
+        if (table == 'product_images') return [imgRow('p1', id: 'a')];
+        return [productRow(id: 'p1')];
+      };
+
+      final products = await repo.getProductsByIds(['p1']);
+
+      expect(
+        products.single.primaryImageUrl,
+        'https://cdn.test/product-images/p1/a.jpg',
+      );
+    });
+
+    test('a product with no image keeps primaryImageUrl null', () async {
+      db.onList = (table, q) {
+        if (table == 'product_images') return [imgRow('p1', id: 'a')];
+        return [productRow(id: 'p1'), productRow(id: 'p2')];
+      };
+
+      final products = await repo.getProducts();
+
+      expect(products.firstWhere((p) => p.id == 'p1').primaryImageUrl, isNotNull);
+      expect(products.firstWhere((p) => p.id == 'p2').primaryImageUrl, isNull);
+    });
+
+    test('empty products result triggers no image batch query', () async {
+      db.onList = (table, q) => const [];
+
+      final products = await repo.getProducts();
+
+      expect(products, isEmpty);
+      expect(db.queries.any((q) => q.table == 'product_images'), isFalse);
+    });
+
+    test('image batch failure degrades to null urls, not a load error', () async {
+      db.onList = (table, q) {
+        if (table == 'product_images') {
+          throw const ex.NetworkException('images offline');
+        }
+        return [productRow(id: 'p1')];
+      };
+
+      final products = await repo.getProducts();
+
+      expect(products, hasLength(1));
+      expect(products.single.primaryImageUrl, isNull);
     });
   });
 

@@ -6,6 +6,7 @@ import 'package:aurivo/features/wishlist/domain/entities/wishlist_item.dart';
 import 'package:aurivo/features/wishlist/domain/repositories/wishlist_repository.dart';
 import 'package:aurivo/features/wishlist/presentation/widgets/wishlist_product_card.dart';
 import 'package:aurivo/features/wishlist/providers/wishlist_providers.dart';
+import 'package:aurivo/shared/widgets/common/network_image_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -54,17 +55,19 @@ class _FakeWishlistRepository implements WishlistRepository {
   }
 }
 
-Product _product() => Product(
+Product _product({String? primaryImageUrl}) => Product(
   id: 'p1',
   sellerId: 'seller-1',
   title: 'Gold Ring',
   slug: 'gold-ring',
   jewelleryType: 'ring',
   basePrice: 1000,
+  primaryImageUrl: primaryImageUrl,
 );
 
 Widget _app({
   required List<Override> overrides,
+  Product? product,
 }) {
   final router = GoRouter(
     initialLocation: '/',
@@ -75,7 +78,7 @@ Widget _app({
           body: Center(
             child: SizedBox(
               width: 300,
-              child: WishlistProductCard(product: _product()),
+              child: WishlistProductCard(product: product ?? _product()),
             ),
           ),
         ),
@@ -114,6 +117,30 @@ void main() {
 
     expect(repo.addCalls, 1);
     expect(find.byIcon(Icons.favorite), findsOneWidget);
+  });
+
+  testWidgets('renders the enriched primary image url', (tester) async {
+    tester.view.physicalSize = const Size(700, 1000);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      _app(
+        overrides: [
+          wishlistRepositoryProvider.overrideWithValue(
+            _FakeWishlistRepository(),
+          ),
+        ],
+        product: _product(
+          primaryImageUrl: 'https://cdn.test/product-images/p1/hero.jpg',
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final image = tester.widget<NetworkImageWidget>(
+      find.byType(NetworkImageWidget),
+    );
+    expect(image.imageUrl, 'https://cdn.test/product-images/p1/hero.jpg');
   });
 
   testWidgets('guest tap routes to login without writing', (tester) async {

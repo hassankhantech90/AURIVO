@@ -46,7 +46,7 @@ class WishlistProductCard extends ConsumerWidget {
       price: product.basePrice,
       originalPrice: product.comparePrice,
       currency: product.currency,
-      imageUrl: '',
+      imageUrl: product.primaryImageUrl ?? '',
       rating: product.ratingCount > 0 ? product.ratingAverage : null,
       isFavourite: isFavourite,
       onTap: onTap ?? () => context.push(AppRoutes.productPath(product.id)),

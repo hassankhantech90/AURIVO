@@ -1,7 +1,9 @@
 import 'package:aurivo/core/supabase/supabase_database_service.dart';
 import 'package:aurivo/core/supabase/supabase_exceptions.dart' as ex;
 import 'package:aurivo/core/supabase/supabase_service.dart';
+import 'package:aurivo/core/supabase/supabase_storage_service.dart';
 import 'package:aurivo/core/utils/failure.dart';
+import 'package:aurivo/features/products/data/primary_image_resolver.dart';
 import 'package:aurivo/features/seller/data/repositories/supabase_seller_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -56,13 +58,27 @@ class _StubDatabase extends SupabaseDatabaseService {
   }
 }
 
+class _FakeStorage extends SupabaseStorageService {
+  _FakeStorage() : super(supabaseService: const SupabaseService());
+
+  @override
+  String getPublicUrl({required String bucket, required String path}) =>
+      'https://cdn.test/$bucket/$path';
+}
+
 void main() {
   late _StubDatabase db;
   late SupabaseSellerRepository repo;
 
   setUp(() {
     db = _StubDatabase();
-    repo = SupabaseSellerRepository(database: db);
+    repo = SupabaseSellerRepository(
+      database: db,
+      imageResolver: PrimaryImageResolver(
+        database: db,
+        storage: _FakeStorage(),
+      ),
+    );
   });
 
   test('getVerifiedSellers filters by verified status', () async {
@@ -99,17 +115,36 @@ void main() {
   });
 
   test('getSellerProducts filters by seller and approved status', () async {
-    Map<String, Object?>? seen;
+    Map<String, Object?>? productFilters;
+    var imageQueries = 0;
     db.onList = (table, filters) {
-      seen = filters;
+      if (table == 'product_images') {
+        imageQueries++;
+        return [
+          {
+            'product_id': 'a',
+            'storage_path': 'a/hero.jpg',
+            'is_primary': true,
+            'sort_order': 0,
+          },
+        ];
+      }
+      productFilters = filters;
       return [productRow(id: 'a'), productRow(id: 'b')];
     };
 
     final products = await repo.getSellerProducts('s1');
 
     expect(products, hasLength(2));
-    expect(seen!['seller_id'], 's1');
-    expect(seen!['status'], 'approved');
+    expect(productFilters!['seller_id'], 's1');
+    expect(productFilters!['status'], 'approved');
+    // A single batch image query enriches the whole storefront page (no N+1).
+    expect(imageQueries, 1);
+    expect(
+      products.firstWhere((p) => p.id == 'a').primaryImageUrl,
+      'https://cdn.test/product-images/a/hero.jpg',
+    );
+    expect(products.firstWhere((p) => p.id == 'b').primaryImageUrl, isNull);
   });
 
   test('maps a database exception to a Failure', () async {

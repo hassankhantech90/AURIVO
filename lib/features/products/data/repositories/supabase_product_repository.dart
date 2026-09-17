@@ -8,6 +8,7 @@ import '../../domain/entities/product_sort.dart';
 import '../../domain/entities/product_variant.dart';
 import '../../domain/repositories/product_repository.dart';
 import '../catalog_failure_mapper.dart';
+import '../primary_image_resolver.dart';
 
 /// Supabase-backed read-only [ProductRepository].
 ///
@@ -15,10 +16,14 @@ import '../catalog_failure_mapper.dart';
 /// non-deleted rows only) — it never bypasses security. Buyer-facing variant
 /// columns are selected explicitly so internal inventory data is not exposed.
 class SupabaseProductRepository implements ProductRepository {
-  SupabaseProductRepository({required SupabaseDatabaseService database})
-    : _database = database;
+  SupabaseProductRepository({
+    required SupabaseDatabaseService database,
+    required PrimaryImageResolver imageResolver,
+  }) : _database = database,
+       _imageResolver = imageResolver;
 
   final SupabaseDatabaseService _database;
+  final PrimaryImageResolver _imageResolver;
 
   static const String _productsTable = 'products';
   static const String _productCategoriesTable = 'product_categories';
@@ -71,7 +76,8 @@ class SupabaseProductRepository implements ProductRepository {
         limit: limit,
         offset: offset,
       );
-      return rows.map(Product.fromMap).toList();
+      final products = rows.map(Product.fromMap).toList();
+      return _imageResolver.enrich(products);
     } catch (error) {
       throw CatalogFailureMapper.map(error);
     }
@@ -101,7 +107,8 @@ class SupabaseProductRepository implements ProductRepository {
         whereIn: {'id': List<Object>.from(ids)},
         limit: ids.length,
       );
-      return rows.map(Product.fromMap).toList();
+      final products = rows.map(Product.fromMap).toList();
+      return _imageResolver.enrich(products);
     } catch (error) {
       throw CatalogFailureMapper.map(error);
     }
@@ -114,8 +121,26 @@ class SupabaseProductRepository implements ProductRepository {
       if (product == null) return null;
       final images = await getProductImages(id);
       final variants = await getProductVariants(id);
-      return ProductDetail(
+      // Reuse the images already loaded above (no extra image query) and the
+      // same primary-image semantic as the catalogue cards. getPublicUrl is a
+      // local string build; guarded so a resolution issue degrades the hero to
+      // a placeholder instead of failing the whole detail load.
+      final detail = ProductDetail(
         product: product,
+        images: images,
+        variants: variants,
+      );
+      String? primaryImageUrl;
+      final primary = detail.primaryImage;
+      if (primary != null && primary.storagePath.isNotEmpty) {
+        try {
+          primaryImageUrl = _imageResolver.publicUrl(primary.storagePath);
+        } catch (_) {
+          primaryImageUrl = null;
+        }
+      }
+      return ProductDetail(
+        product: product.copyWith(primaryImageUrl: primaryImageUrl),
         images: images,
         variants: variants,
       );

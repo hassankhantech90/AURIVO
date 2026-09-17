@@ -117,7 +117,8 @@ class _ProductDetailView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Product product = detail.product;
-    final imagePath = detail.primaryImage?.storagePath ?? '';
+    // Resolved public URL from the data layer; empty falls back to a placeholder.
+    final imageUrl = product.primaryImageUrl ?? '';
 
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -125,7 +126,7 @@ class _ProductDetailView extends StatelessWidget {
         AspectRatio(
           aspectRatio: 1,
           child: NetworkImageWidget(
-            imageUrl: imagePath,
+            imageUrl: imageUrl,
             borderRadius: BorderRadius.circular(AppRadius.xl),
           ),
         ),

@@ -1,4 +1,5 @@
 import '../../../../core/supabase/supabase_database_service.dart';
+import '../../../products/data/primary_image_resolver.dart';
 import '../../../products/domain/entities/product.dart';
 import '../../../profile/domain/entities/seller_profile.dart';
 import '../../domain/repositories/seller_repository.dart';
@@ -11,10 +12,14 @@ import '../seller_failure_mapper.dart';
 /// `products` only when `status = 'approved'` (both non-deleted). It never
 /// bypasses security and performs no writes.
 class SupabaseSellerRepository implements SellerRepository {
-  SupabaseSellerRepository({required SupabaseDatabaseService database})
-    : _database = database;
+  SupabaseSellerRepository({
+    required SupabaseDatabaseService database,
+    required PrimaryImageResolver imageResolver,
+  }) : _database = database,
+       _imageResolver = imageResolver;
 
   final SupabaseDatabaseService _database;
+  final PrimaryImageResolver _imageResolver;
 
   static const String _sellersTable = 'seller_profiles';
   static const String _productsTable = 'products';
@@ -84,7 +89,8 @@ class SupabaseSellerRepository implements SellerRepository {
         limit: limit,
         offset: offset,
       );
-      return rows.map(Product.fromMap).toList();
+      final products = rows.map(Product.fromMap).toList();
+      return _imageResolver.enrich(products);
     } catch (error) {
       throw SellerFailureMapper.map(error);
     }

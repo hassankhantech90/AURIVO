@@ -2,7 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/supabase/supabase_database_service.dart';
 import '../../../core/supabase/supabase_service.dart';
+import '../../../core/supabase/supabase_storage_service.dart';
 import '../../../core/utils/failure.dart';
+import '../data/primary_image_resolver.dart';
 import '../data/repositories/supabase_product_repository.dart';
 import '../domain/entities/brand.dart';
 import '../domain/entities/product.dart';
@@ -14,8 +16,13 @@ import 'catalog_state.dart';
 /// Repository binding for the product catalogue (lazy service — stays test-safe
 /// without an initialized Supabase client).
 final productRepositoryProvider = Provider<ProductRepository>((ref) {
+  const database = SupabaseDatabaseService(supabaseService: SupabaseService());
   return SupabaseProductRepository(
-    database: const SupabaseDatabaseService(supabaseService: SupabaseService()),
+    database: database,
+    imageResolver: const PrimaryImageResolver(
+      database: database,
+      storage: SupabaseStorageService(supabaseService: SupabaseService()),
+    ),
   );
 });
 
