@@ -58,6 +58,14 @@ class _ProductPageState extends ConsumerState<ProductPage> {
   }
 
   Future<void> _addToCart(String variantId) async {
+    // Guests are routed to sign-in before any cart write, mirroring the
+    // wishlist guard. The backend RLS remains authoritative; this is a clear
+    // UX path instead of a generic authorization failure.
+    if (!ref.read(sessionProvider).isAuthenticated) {
+      LuxurySnackBars.info(context, 'Sign in to add items to your cart.');
+      context.push(AppRoutes.login);
+      return;
+    }
     await ref.read(cartProvider.notifier).addItem(variantId);
     if (!mounted) return;
     final cartState = ref.read(cartProvider);
