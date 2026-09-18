@@ -5,6 +5,11 @@ import 'package:aurivo/core/theme/theme.dart';
 import 'package:aurivo/core/supabase/supabase_auth_service.dart';
 import 'package:aurivo/core/supabase/supabase_service.dart';
 import 'package:aurivo/features/authentication/providers/session_provider.dart';
+import 'package:aurivo/features/cart/domain/entities/cart.dart';
+import 'package:aurivo/features/cart/domain/entities/cart_item.dart';
+import 'package:aurivo/features/cart/domain/entities/cart_view.dart';
+import 'package:aurivo/features/cart/domain/repositories/cart_repository.dart';
+import 'package:aurivo/features/cart/providers/cart_providers.dart';
 import 'package:aurivo/features/categories/domain/entities/category.dart';
 import 'package:aurivo/features/categories/domain/repositories/category_repository.dart';
 import 'package:aurivo/features/categories/providers/category_providers.dart';
@@ -110,6 +115,41 @@ class _SpyNotificationRepository implements NotificationRepository {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+/// Cart notifier seeded to a fixed item count (no repository calls).
+class _StubCartRepository implements CartRepository {
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _StubCartNotifier extends CartNotifier {
+  _StubCartNotifier(int itemCount) : super(_StubCartRepository()) {
+    state = itemCount <= 0
+        ? const CartState(status: CartStatus.success)
+        : CartState(
+            status: CartStatus.success,
+            cart: CartView(
+              cart: const Cart(id: 'c1'),
+              items: [
+                CartItem(
+                  id: 'i1',
+                  cartId: 'c1',
+                  productVariantId: 'v1',
+                  quantity: itemCount,
+                  unitPriceSnapshot: 1000,
+                ),
+              ],
+            ),
+          );
+  }
+
+  // The badge only reads state; never trigger a real load.
+  @override
+  Future<void> load() async {}
+}
+
+Override _cartCount(int count) =>
+    cartProvider.overrideWith((ref) => _StubCartNotifier(count));
+
 /// Session fixed to authenticated (no override => unauthenticated/guest).
 class _AuthedSession extends SessionNotifier {
   _AuthedSession()
@@ -163,6 +203,10 @@ Widget _home({required List<Override> overrides, ThemeData? theme}) {
       GoRoute(
         path: AppRoutes.settings,
         builder: (_, _) => const Scaffold(body: Text('SETTINGS')),
+      ),
+      GoRoute(
+        path: AppRoutes.cart,
+        builder: (_, _) => const Scaffold(body: Text('CART')),
       ),
     ],
   );
@@ -219,6 +263,7 @@ void main() {
       expect(find.text('Featured'), findsOneWidget);
       expect(find.text('Rings'), findsOneWidget); // category card
       expect(find.text('Ring p1'), findsOneWidget); // featured product card
+      expect(find.byTooltip('Cart'), findsOneWidget);
       expect(find.byTooltip('Messages'), findsOneWidget);
       expect(find.byTooltip('Notifications'), findsOneWidget);
       expect(find.byTooltip('Settings'), findsOneWidget);
@@ -528,6 +573,80 @@ void main() {
       await pumpHome(tester);
       await tapAndSettle(tester, find.byTooltip('Settings'));
       expect(find.text('SETTINGS'), findsOneWidget);
+    });
+  });
+
+  group('G. cart action', () {
+    List<Override> base(int cartCount) => [
+      ..._catalog(
+        categories: _FakeCategoryRepository(categories: [_category('Rings')]),
+        products: _FakeProductRepository(products: [_product('p1')]),
+      ),
+      _cartCount(cartCount),
+      unreadChatCountProvider.overrideWithValue(0),
+      unreadNotificationsCountProvider.overrideWithValue(0),
+    ];
+
+    testWidgets('shows a Cart action that navigates to /cart', (tester) async {
+      _bigView(tester);
+      await tester.pumpWidget(_home(overrides: base(0)));
+      await _settle(tester);
+
+      expect(find.byTooltip('Cart'), findsOneWidget);
+      // Existing Chat + Notifications actions remain present.
+      expect(find.byTooltip('Messages'), findsOneWidget);
+      expect(find.byTooltip('Notifications'), findsOneWidget);
+
+      await tester.tap(find.byTooltip('Cart'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.text('CART'), findsOneWidget);
+    });
+
+    testWidgets('zero cart items shows no cart badge', (tester) async {
+      _bigView(tester);
+      await tester.pumpWidget(_home(overrides: base(0)));
+      await _settle(tester);
+
+      expect(find.byTooltip('Cart'), findsOneWidget);
+      expect(find.byType(Badge), findsNothing);
+    });
+
+    testWidgets('positive cart count shows the correct badge', (tester) async {
+      _bigView(tester);
+      await tester.pumpWidget(_home(overrides: base(3)));
+      await _settle(tester);
+
+      // Only the cart badge (chat/notifications overridden to 0).
+      expect(find.byType(Badge), findsOneWidget);
+      expect(find.text('3'), findsOneWidget);
+    });
+
+    testWidgets('no overflow at 320px with all actions and badges', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(320, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        _home(
+          overrides: [
+            ..._catalog(
+              categories: _FakeCategoryRepository(
+                categories: [_category('Rings')],
+              ),
+              products: _FakeProductRepository(products: [_product('p1')]),
+            ),
+            _cartCount(3),
+            unreadChatCountProvider.overrideWithValue(8),
+            unreadNotificationsCountProvider.overrideWithValue(2),
+          ],
+        ),
+      );
+      await _settle(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(find.byTooltip('Cart'), findsOneWidget);
     });
   });
 

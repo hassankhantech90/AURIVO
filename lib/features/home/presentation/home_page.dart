@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/router/app_routes.dart';
 import '../../../shared/design_system.dart';
 import '../../authentication/providers/session_provider.dart';
+import '../../cart/providers/cart_providers.dart';
 import '../../categories/domain/entities/category.dart';
 import '../../categories/providers/category_providers.dart';
 import '../../chat/providers/chat_providers.dart';
@@ -53,6 +54,14 @@ class _HomePageState extends ConsumerState<HomePage> {
         title: 'AURIVO',
         largeTitle: true,
         actions: [
+          _CountBadgeIcon(
+            tooltip: 'Cart',
+            icon: Icons.shopping_bag_outlined,
+            // Reflects the existing cart state's item count; a read only — it
+            // never triggers a cart load or write from Home.
+            count: ref.watch(cartProvider.select((s) => s.itemCount)),
+            onPressed: () => context.push(AppRoutes.cart),
+          ),
           _CountBadgeIcon(
             tooltip: 'Messages',
             icon: Icons.chat_bubble_outline,
