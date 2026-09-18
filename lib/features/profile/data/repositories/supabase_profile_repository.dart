@@ -262,6 +262,7 @@ class SupabaseProfileRepository implements ProfileRepository {
       _validateRequired(addressLine1, 'Address');
       _validateRequired(city, 'City');
       _validateRequired(province, 'Province');
+      _validateProvince(province);
 
       final row = await _database.insert(
         table: _addressesTable,
@@ -269,7 +270,7 @@ class SupabaseProfileRepository implements ProfileRepository {
           'profile_id': profileId,
           'address_type': addressType,
           'recipient_name': recipientName.trim(),
-          'phone': phone.trim(),
+          'phone': _normalizePhone(phone),
           'address_line_1': addressLine1.trim(),
           'city': city.trim(),
           'province': province,
@@ -304,9 +305,10 @@ class SupabaseProfileRepository implements ProfileRepository {
   }) async {
     try {
       if (phone != null) _validatePhone(phone);
+      if (province != null) _validateProvince(province);
       final values = <String, dynamic>{
         if (recipientName != null) 'recipient_name': recipientName.trim(),
-        if (phone != null) 'phone': phone.trim(),
+        if (phone != null) 'phone': _normalizePhone(phone),
         if (addressLine1 != null) 'address_line_1': addressLine1.trim(),
         'address_line_2': ?addressLine2,
         'area': ?area,
@@ -605,6 +607,22 @@ class SupabaseProfileRepository implements ProfileRepository {
     if (validationError != null) {
       throw Failure(message: validationError);
     }
+  }
+
+  /// Strips spaces/dashes so a phone that passed [AuthValidators.pakistanPhone]
+  /// (which normalizes before matching) also satisfies the DB's strict
+  /// `addresses_phone_check` regex, which allows digits only.
+  String _normalizePhone(String phone) =>
+      phone.trim().replaceAll(RegExp(r'[\s-]'), '');
+
+  /// Guards the `addresses_province_check` constraint with a clear message
+  /// rather than a generic backend error.
+  void _validateProvince(String province) {
+    _throwIfInvalid(
+      kPakistanProvinces.contains(province)
+          ? null
+          : 'Please select a valid province.',
+    );
   }
 
   bool _isValid(String? validationError) => validationError == null;

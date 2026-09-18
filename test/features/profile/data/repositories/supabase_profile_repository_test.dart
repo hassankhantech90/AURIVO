@@ -295,6 +295,43 @@ void main() {
       expect(db.inserted.single['profile_id'], 'profile-1');
     });
 
+    test('normalizes a formatted phone before insert', () async {
+      db.onInsert = (table, values) => addressRow();
+
+      await repo.addAddress(
+        recipientName: 'Aya Khan',
+        phone: '0300 1234-567',
+        addressLine1: 'House 1, Street 2',
+        city: 'Lahore',
+        province: 'Punjab',
+      );
+
+      // Spaces/dashes stripped so the DB phone CHECK is satisfied.
+      expect(db.inserted.single['phone'], '03001234567');
+    });
+
+    test('rejects a province outside the allowed set', () async {
+      db.onInsert = (table, values) => addressRow();
+
+      await expectLater(
+        repo.addAddress(
+          recipientName: 'Aya Khan',
+          phone: '03001234567',
+          addressLine1: 'House 1, Street 2',
+          city: 'Lahore',
+          province: 'Lahore', // a city, not a valid province
+        ),
+        throwsA(
+          predicate(
+            (e) =>
+                e is Failure &&
+                e.message.toLowerCase().contains('valid province'),
+          ),
+        ),
+      );
+      expect(db.inserted, isEmpty); // never reached the database
+    });
+
     test('updates an address by id', () async {
       db.onUpdate = (table, values) =>
           addressRow(recipientName: 'Updated Name');

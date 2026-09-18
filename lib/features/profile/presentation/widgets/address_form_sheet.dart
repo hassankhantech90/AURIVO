@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../shared/design_system.dart';
+import '../../../authentication/domain/validators/auth_validators.dart';
 import '../../domain/entities/address.dart';
 import '../../providers/profile_providers.dart';
 
@@ -31,8 +32,8 @@ class _AddressFormSheetState extends ConsumerState<AddressFormSheet> {
   late final TextEditingController _line2;
   late final TextEditingController _area;
   late final TextEditingController _city;
-  late final TextEditingController _province;
   late final TextEditingController _postal;
+  String? _province;
   bool _isDefault = false;
   bool _submitting = false;
   String? _error;
@@ -50,8 +51,10 @@ class _AddressFormSheetState extends ConsumerState<AddressFormSheet> {
     _line2 = TextEditingController(text: a?.addressLine2 ?? '');
     _area = TextEditingController(text: a?.area ?? '');
     _city = TextEditingController(text: a?.city ?? '');
-    _province = TextEditingController(text: a?.province ?? '');
     _postal = TextEditingController(text: a?.postalCode ?? '');
+    _province = (a?.province != null && kPakistanProvinces.contains(a!.province))
+        ? a.province
+        : null;
     _isDefault = a?.isDefault ?? false;
   }
 
@@ -65,7 +68,6 @@ class _AddressFormSheetState extends ConsumerState<AddressFormSheet> {
       _line2,
       _area,
       _city,
-      _province,
       _postal,
     ]) {
       c.dispose();
@@ -78,24 +80,50 @@ class _AddressFormSheetState extends ConsumerState<AddressFormSheet> {
     return v.isEmpty ? null : v;
   }
 
+  /// Returns a field-specific validation message, or null when the form is
+  /// valid. Mirrors the backend CHECK constraints so the buyer gets useful
+  /// feedback before a submit ever reaches the database.
+  String? _validate({
+    required String recipient,
+    required String phone,
+    required String line1,
+    required String city,
+  }) {
+    if (recipient.isEmpty ||
+        phone.isEmpty ||
+        line1.isEmpty ||
+        city.isEmpty ||
+        _province == null) {
+      return 'Recipient, phone, address, city and province are required.';
+    }
+    final phoneError = AuthValidators.pakistanPhone(phone);
+    if (phoneError != null) return phoneError;
+    if (line1.length < 5) {
+      return 'Address line 1 must be at least 5 characters.';
+    }
+    final postal = _postal.text.trim();
+    if (postal.isNotEmpty && !RegExp(r'^[0-9]{5}$').hasMatch(postal)) {
+      return 'Postal code must be a 5-digit number.';
+    }
+    return null;
+  }
+
   Future<void> _submit() async {
     final recipient = _recipient.text.trim();
     final phone = _phone.text.trim();
     final line1 = _line1.text.trim();
     final city = _city.text.trim();
-    final province = _province.text.trim();
-    if (recipient.isEmpty ||
-        phone.isEmpty ||
-        line1.isEmpty ||
-        city.isEmpty ||
-        province.isEmpty) {
-      setState(
-        () => _error =
-            'Recipient, phone, address, city and province are '
-            'required.',
-      );
+    final validationError = _validate(
+      recipient: recipient,
+      phone: phone,
+      line1: line1,
+      city: city,
+    );
+    if (validationError != null) {
+      setState(() => _error = validationError);
       return;
     }
+    final province = _province!;
 
     setState(() {
       _submitting = true;
@@ -146,7 +174,11 @@ class _AddressFormSheetState extends ConsumerState<AddressFormSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Padding(
+      // Keep the whole form (incl. the submit button) scrollable above the
+      // keyboard; the parent sheet is a SingleChildScrollView.
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -181,9 +213,21 @@ class _AddressFormSheetState extends ConsumerState<AddressFormSheet> {
             ),
             const SizedBox(width: AppSpacing.md),
             Expanded(
-              child: CustomTextField(
-                controller: _province,
-                labelText: 'Province',
+              child: DropdownButtonFormField<String>(
+                initialValue: _province,
+                isExpanded: true,
+                decoration: const InputDecoration(
+                  labelText: 'Province',
+                  border: OutlineInputBorder(),
+                ),
+                items: [
+                  for (final p in kPakistanProvinces)
+                    DropdownMenuItem<String>(
+                      value: p,
+                      child: Text(p, overflow: TextOverflow.ellipsis),
+                    ),
+                ],
+                onChanged: (v) => setState(() => _province = v),
               ),
             ),
           ],
@@ -220,6 +264,7 @@ class _AddressFormSheetState extends ConsumerState<AddressFormSheet> {
           ),
         ),
       ],
+      ),
     );
   }
 }

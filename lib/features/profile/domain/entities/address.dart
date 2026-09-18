@@ -1,5 +1,17 @@
 import 'entity_parsing.dart';
 
+/// Provinces/territories the backend accepts for `addresses.province`
+/// (must match the `addresses_province_check` constraint exactly).
+const List<String> kPakistanProvinces = [
+  'Punjab',
+  'Sindh',
+  'Khyber Pakhtunkhwa',
+  'Balochistan',
+  'Islamabad Capital Territory',
+  'Gilgit-Baltistan',
+  'Azad Jammu and Kashmir',
+];
+
 /// Billing / shipping / business address for a profile (`public.addresses`).
 class Address {
   const Address({
