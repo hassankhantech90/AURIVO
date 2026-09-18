@@ -26,6 +26,18 @@ class _CartPageState extends ConsumerState<CartPage> {
 
   Future<void> _load() => ref.read(cartProvider.notifier).load();
 
+  Future<void> _confirmClear() async {
+    final confirmed = await LuxuryDialogs.showConfirmation(
+      context: context,
+      title: 'Clear cart?',
+      message: 'This removes all items from your cart.',
+      confirmLabel: 'Clear',
+      cancelLabel: 'Keep items',
+    );
+    if (confirmed != true || !mounted) return;
+    await ref.read(cartProvider.notifier).clear();
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(cartProvider);
@@ -39,7 +51,7 @@ class _CartPageState extends ConsumerState<CartPage> {
             IconButton(
               tooltip: 'Clear cart',
               icon: const Icon(Icons.delete_sweep_outlined),
-              onPressed: () => ref.read(cartProvider.notifier).clear(),
+              onPressed: _confirmClear,
             ),
         ],
       ),

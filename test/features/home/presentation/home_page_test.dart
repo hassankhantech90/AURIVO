@@ -31,6 +31,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show User;
 
 // --- Fakes (unused interface methods route through noSuchMethod) -------------
 
@@ -149,6 +150,55 @@ class _StubCartNotifier extends CartNotifier {
 
 Override _cartCount(int count) =>
     cartProvider.overrideWith((ref) => _StubCartNotifier(count));
+
+/// A real cart repository returning [items] lines, to exercise the genuine
+/// cartProvider (with its auth-reset listener) rather than a stub.
+class _CountCartRepository implements CartRepository {
+  _CountCartRepository(this.items);
+  final int items;
+
+  @override
+  Future<CartView> getCart() async => CartView(
+    cart: const Cart(id: 'c1', profileId: 'p1'),
+    items: List.generate(
+      items,
+      (i) => CartItem(
+        id: 'i$i',
+        cartId: 'c1',
+        productVariantId: 'v$i',
+        quantity: 1,
+        unitPriceSnapshot: 1000,
+      ),
+    ),
+  );
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+/// Session whose state the test drives (starts at [initial]).
+class _MutableSession extends SessionNotifier {
+  _MutableSession([SessionState? initial])
+    : super(
+        authService: const SupabaseAuthService(
+          supabaseService: SupabaseService(),
+        ),
+      ) {
+    if (initial != null) state = initial;
+  }
+  void set(SessionState next) => state = next;
+}
+
+SessionState _authAs(String id) => SessionState(
+  status: SessionStatus.authenticated,
+  user: User(
+    id: id,
+    appMetadata: const {},
+    userMetadata: const {},
+    aud: 'authenticated',
+    createdAt: DateTime(2026).toIso8601String(),
+  ),
+);
 
 /// Session fixed to authenticated (no override => unauthenticated/guest).
 class _AuthedSession extends SessionNotifier {
@@ -647,6 +697,39 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.byTooltip('Cart'), findsOneWidget);
+    });
+  });
+
+  group('G2. cart badge auth reset', () {
+    testWidgets('badge clears when the auth identity changes', (tester) async {
+      _bigView(tester);
+      final session = _MutableSession(_authAs('user-A'));
+      await tester.pumpWidget(
+        _home(
+          overrides: [
+            ..._catalog(),
+            cartRepositoryProvider.overrideWithValue(_CountCartRepository(3)),
+            sessionProvider.overrideWith((ref) => session),
+            unreadChatCountProvider.overrideWithValue(0),
+            unreadNotificationsCountProvider.overrideWithValue(0),
+          ],
+        ),
+      );
+      await _settle(tester);
+
+      // Seed user A's cart, then confirm the badge reflects it.
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(HomePage)),
+      );
+      await container.read(cartProvider.notifier).load();
+      await tester.pump();
+      expect(find.text('3'), findsOneWidget);
+
+      // Identity change A -> guest: the previous count must disappear.
+      session.set(const SessionState(status: SessionStatus.unauthenticated));
+      await tester.pump();
+
+      expect(find.byType(Badge), findsNothing);
     });
   });
 
