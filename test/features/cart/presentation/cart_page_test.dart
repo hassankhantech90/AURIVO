@@ -15,8 +15,9 @@ import 'package:supabase_flutter/supabase_flutter.dart' show User;
 
 /// Cart repository returning a fixed number of lines; counts clear calls.
 class _FakeCartRepository implements CartRepository {
-  _FakeCartRepository({this.items = 1});
+  _FakeCartRepository({this.items = 1, this.titles = const []});
   final int items;
+  final List<String> titles;
   int clearCalls = 0;
   bool _cleared = false;
 
@@ -31,6 +32,7 @@ class _FakeCartRepository implements CartRepository {
               productVariantId: 'v$i',
               quantity: 1,
               unitPriceSnapshot: 1000,
+              productTitle: i < titles.length ? titles[i] : null,
             ),
           );
     return CartView(cart: const Cart(id: 'c1', profileId: 'p1'), items: list);
@@ -135,6 +137,90 @@ void main() {
       expect(repo.clearCalls, 1);
       expect(find.text('Your cart is empty'), findsOneWidget);
     });
+  });
+
+  group('product titles', () {
+    testWidgets('renders real product titles instead of the generic label', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _app(
+          overrides: [
+            cartRepositoryProvider.overrideWithValue(
+              _FakeCartRepository(
+                items: 2,
+                titles: const [
+                  '[TEST] Gold Diamond Solitaire Ring',
+                  '[TEST] Emerald Jhumka Earrings',
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+      await _settle(tester);
+
+      expect(find.text('[TEST] Gold Diamond Solitaire Ring'), findsOneWidget);
+      expect(find.text('[TEST] Emerald Jhumka Earrings'), findsOneWidget);
+      expect(find.text('Item'), findsNothing); // no generic label
+    });
+
+    testWidgets('falls back to a generic label when title is null', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _app(
+          overrides: [
+            cartRepositoryProvider.overrideWithValue(
+              _FakeCartRepository(items: 1), // no titles -> null
+            ),
+          ],
+        ),
+      );
+      await _settle(tester);
+
+      expect(find.text('Item'), findsOneWidget); // graceful fallback, no crash
+    });
+
+    for (final (label, width, scale) in const [
+      ('320px / 1.0x', 320.0, 1.0),
+      ('375px / 1.3x', 375.0, 1.3),
+    ]) {
+      testWidgets('long title lays out safely at $label', (tester) async {
+        tester.view.physicalSize = Size(width, 1600);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.reset);
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              cartRepositoryProvider.overrideWithValue(
+                _FakeCartRepository(
+                  items: 1,
+                  titles: const [
+                    '[TEST] Handcrafted 22k Gold Diamond Solitaire '
+                        'Engagement Ring — Limited Heritage Edition',
+                  ],
+                ),
+              ),
+            ],
+            child: MaterialApp(
+              home: const CartPage(),
+              builder: (context, child) => MediaQuery(
+                data: MediaQuery.of(
+                  context,
+                ).copyWith(textScaler: TextScaler.linear(scale)),
+                child: child!,
+              ),
+            ),
+          ),
+        );
+        await _settle(tester);
+
+        expect(tester.takeException(), isNull);
+        expect(find.textContaining('Handcrafted 22k Gold'), findsOneWidget);
+        expect(find.byTooltip('Remove'), findsOneWidget);
+      });
+    }
   });
 
   group('auth identity change', () {

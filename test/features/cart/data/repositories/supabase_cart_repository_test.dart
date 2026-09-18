@@ -321,6 +321,84 @@ void main() {
     });
   });
 
+  group('product-title enrichment', () {
+    test('authenticated cart maps the product title', () async {
+      db.onList = (table, filters) {
+        switch (table) {
+          case 'carts':
+            return [cartRow()];
+          case 'cart_items':
+            return [cartItemRow(variantId: 'var-1')];
+          case 'product_variants':
+            return [
+              {'id': 'var-1', 'product_id': 'prod-1'},
+            ];
+          case 'products':
+            return [
+              {'id': 'prod-1', 'title': '[TEST] Gold Diamond Solitaire Ring'},
+            ];
+          default:
+            return const [];
+        }
+      };
+      final repo = build(authenticated: true);
+
+      final view = await repo.getCart();
+
+      expect(
+        view.items.single.productTitle,
+        '[TEST] Gold Diamond Solitaire Ring',
+      );
+    });
+
+    test('guest cart maps the product title via public catalogue reads', () async {
+      db.onRpc = (fn, params) {
+        if (fn == 'guest_cart_get_or_create') return cartRow(profileId: null);
+        if (fn == 'guest_cart_items') return [cartItemRow(variantId: 'var-1')];
+        return null;
+      };
+      db.onList = (table, filters) {
+        if (table == 'product_variants') {
+          return [
+            {'id': 'var-1', 'product_id': 'prod-1'},
+          ];
+        }
+        if (table == 'products') {
+          return [
+            {'id': 'prod-1', 'title': '[TEST] Emerald Jhumka Earrings'},
+          ];
+        }
+        return const [];
+      };
+      final repo = build(authenticated: false);
+
+      final view = await repo.getCart();
+
+      expect(
+        view.items.single.productTitle,
+        '[TEST] Emerald Jhumka Earrings',
+      );
+    });
+
+    test('unresolved product keeps the title null without crashing', () async {
+      db.onList = (table, filters) {
+        switch (table) {
+          case 'carts':
+            return [cartRow()];
+          case 'cart_items':
+            return [cartItemRow(variantId: 'var-1')];
+          default:
+            return const []; // variant/product not publicly visible
+        }
+      };
+      final repo = build(authenticated: true);
+
+      final view = await repo.getCart();
+
+      expect(view.items.single.productTitle, isNull);
+    });
+  });
+
   test('never surfaces a raw Supabase exception', () async {
     db.throwError = const ex.NetworkException('offline');
     final repo = build(authenticated: true);

@@ -34,6 +34,7 @@ class SupabaseCartRepository implements CartRepository {
   static const String _cartsTable = 'carts';
   static const String _cartItemsTable = 'cart_items';
   static const String _variantsTable = 'product_variants';
+  static const String _productsTable = 'products';
 
   @override
   bool get isAuthenticated => _authService.currentUser != null;
@@ -123,7 +124,9 @@ class SupabaseCartRepository implements CartRepository {
       filters: {'cart_id': cart.id},
       orderBy: 'created_at',
     );
-    return CartView(cart: cart, items: itemRows.map(CartItem.fromMap).toList());
+    return _withTitles(
+      CartView(cart: cart, items: itemRows.map(CartItem.fromMap).toList()),
+    );
   }
 
   Future<CartView> _addAuth(String variantId, int quantity) async {
@@ -265,7 +268,7 @@ class SupabaseCartRepository implements CartRepository {
       params: {'p_guest_token': token},
     );
     final items = _asRows(itemsResult).map(CartItem.fromMap).toList();
-    return CartView(cart: cart, items: items);
+    return _withTitles(CartView(cart: cart, items: items));
   }
 
   Future<CartView> _addGuest(String variantId, int quantity) async {
@@ -313,5 +316,73 @@ class SupabaseCartRepository implements CartRepository {
     }
     if (result is Map) return [Map<String, dynamic>.from(result)];
     return const [];
+  }
+
+  // Product-title enrichment --------------------------------------------------
+
+  /// Attaches each line's product title for display. Resolution uses the public,
+  /// RLS-governed catalogue tables (approved products only), so it works for
+  /// both authenticated and guest sessions without touching the cart RPCs. A
+  /// title that cannot be resolved stays null and the UI falls back gracefully.
+  Future<CartView> _withTitles(CartView view) async {
+    if (view.items.isEmpty) return view;
+    final titles = await _titlesForVariants(
+      view.items.map((item) => item.productVariantId).toList(),
+    );
+    if (titles.isEmpty) return view;
+    return CartView(
+      cart: view.cart,
+      items: view.items
+          .map(
+            (item) =>
+                item.copyWith(productTitle: titles[item.productVariantId]),
+          )
+          .toList(),
+    );
+  }
+
+  /// Maps each variant id to its product title with exactly two batch queries
+  /// (variant -> product id, then product id -> title) — no per-line lookup.
+  Future<Map<String, String>> _titlesForVariants(
+    List<String> variantIds,
+  ) async {
+    final ids = variantIds.toSet().toList(growable: false);
+    if (ids.isEmpty) return const {};
+
+    final variantRows = await _database.list(
+      table: _variantsTable,
+      columns: 'id, product_id',
+      whereIn: {'id': List<Object>.from(ids)},
+    );
+    final productIdByVariant = <String, String>{};
+    final productIds = <String>{};
+    for (final row in variantRows) {
+      final variantId = row['id'] as String?;
+      final productId = row['product_id'] as String?;
+      if (variantId != null && productId != null) {
+        productIdByVariant[variantId] = productId;
+        productIds.add(productId);
+      }
+    }
+    if (productIds.isEmpty) return const {};
+
+    final productRows = await _database.list(
+      table: _productsTable,
+      columns: 'id, title',
+      whereIn: {'id': List<Object>.from(productIds)},
+    );
+    final titleByProduct = <String, String>{};
+    for (final row in productRows) {
+      final productId = row['id'] as String?;
+      final title = row['title'] as String?;
+      if (productId != null && title != null) titleByProduct[productId] = title;
+    }
+
+    final result = <String, String>{};
+    productIdByVariant.forEach((variantId, productId) {
+      final title = titleByProduct[productId];
+      if (title != null) result[variantId] = title;
+    });
+    return result;
   }
 }

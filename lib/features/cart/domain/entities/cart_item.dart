@@ -12,6 +12,7 @@ class CartItem {
     this.currency = 'PKR',
     this.createdAt,
     this.updatedAt,
+    this.productTitle,
   });
 
   final String id;
@@ -23,7 +24,24 @@ class CartItem {
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
+  /// The owning product's title, resolved by the data layer for display (not a
+  /// `cart_items` column). Null when it could not be resolved (e.g. the product
+  /// is no longer publicly visible) — the UI then falls back to a generic label.
+  final String? productTitle;
+
   double get lineTotal => unitPriceSnapshot * quantity;
+
+  CartItem copyWith({String? productTitle}) => CartItem(
+    id: id,
+    cartId: cartId,
+    productVariantId: productVariantId,
+    quantity: quantity,
+    unitPriceSnapshot: unitPriceSnapshot,
+    currency: currency,
+    createdAt: createdAt,
+    updatedAt: updatedAt,
+    productTitle: productTitle ?? this.productTitle,
+  );
 
   factory CartItem.fromMap(Map<String, dynamic> map) {
     return CartItem(

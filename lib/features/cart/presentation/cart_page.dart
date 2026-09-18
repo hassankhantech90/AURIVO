@@ -115,7 +115,12 @@ class _CartItemTile extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Item', style: Theme.of(context).textTheme.titleSmall),
+              Text(
+                item.productTitle ?? 'Item',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
               const SizedBox(height: AppSpacing.xs),
               PriceWidget(price: item.lineTotal, currency: item.currency),
             ],
