@@ -507,7 +507,12 @@ class _CheckoutSummaryBar extends StatelessWidget {
                       ),
                     ],
                   ),
-                  PriceWidget(price: total, currency: currency),
+                  // Bound the price so its FittedBox(scaleDown) can shrink a wide
+                  // PKR total on narrow phones / large text scales instead of
+                  // overflowing the summary row.
+                  Flexible(
+                    child: PriceWidget(price: total, currency: currency),
+                  ),
                 ],
               ),
               const SizedBox(height: AppSpacing.md),
