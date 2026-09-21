@@ -116,6 +116,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   onChangePhoto: _changePhoto,
                   onEdit: () =>
                       EditProfileSheet.show(context, profile: profile),
+                  onOrders: () => context.push(AppRoutes.orders),
                   onAddresses: () => context.push(AppRoutes.addresses),
                   onWishlist: () => context.push(AppRoutes.wishlist),
                 ),
@@ -131,6 +132,7 @@ class _ProfileBody extends StatelessWidget {
     required this.uploadingAvatar,
     required this.onChangePhoto,
     required this.onEdit,
+    required this.onOrders,
     required this.onAddresses,
     required this.onWishlist,
   });
@@ -140,6 +142,7 @@ class _ProfileBody extends StatelessWidget {
   final bool uploadingAvatar;
   final VoidCallback onChangePhoto;
   final VoidCallback onEdit;
+  final VoidCallback onOrders;
   final VoidCallback onAddresses;
   final VoidCallback onWishlist;
 
@@ -202,6 +205,17 @@ class _ProfileBody extends StatelessWidget {
           child: LuxuryOutlinedButton(label: 'Edit profile', onPressed: onEdit),
         ),
         const SizedBox(height: AppSpacing.lg),
+        LuxuryCard(
+          padding: EdgeInsets.zero,
+          child: ListTile(
+            leading: const Icon(Icons.receipt_long_outlined),
+            title: const Text('My orders'),
+            subtitle: const Text('Track and review your orders'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: onOrders,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
         LuxuryCard(
           padding: EdgeInsets.zero,
           child: ListTile(
