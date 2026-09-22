@@ -234,10 +234,11 @@ void main() {
       expect(find.text('Ali Khan'), findsOneWidget);
       expect(find.text('Sara Ahmed'), findsOneWidget);
       expect(find.byIcon(Icons.radio_button_checked), findsOneWidget);
-      // COD + notes + coupon sections.
+      // COD + notes sections (coupon is hidden for the v1 pilot).
       expect(find.text('Payment method'), findsOneWidget);
       expect(find.text('Pay when your order arrives.'), findsOneWidget);
       expect(find.text('Order note (optional)'), findsOneWidget);
+      expect(find.text('Coupon'), findsNothing);
       // Summary + CTA.
       expect(find.text('Total'), findsOneWidget);
       expect(find.text('PKR 129999.00'), findsWidgets);

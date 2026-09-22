@@ -169,7 +169,9 @@ void main() {
     expect(coupon.orderId, 'order-1');
     // Navigated to the order despite (here) a successful coupon.
     expect(find.text('order-page:order-1'), findsOneWidget);
-  });
+    // Skipped for the v1 pilot: the checkout coupon field is hidden
+    // (_couponsEnabledInCheckout=false). Re-enable with that flag.
+  }, skip: true);
 
   testWidgets('a failed coupon does not break the placed order', (
     tester,
@@ -197,7 +199,9 @@ void main() {
     expect(coupon.redeemCalls, 1);
     // Order still placed → navigation happened.
     expect(find.text('order-page:order-1'), findsOneWidget);
-  });
+    // Skipped for the v1 pilot: the checkout coupon field is hidden
+    // (_couponsEnabledInCheckout=false). Re-enable with that flag.
+  }, skip: true);
 
   testWidgets('no coupon code skips redemption entirely', (tester) async {
     final coupon = _RecordingCouponRepository();

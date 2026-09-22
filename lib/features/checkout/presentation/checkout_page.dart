@@ -12,6 +12,13 @@ import '../../profile/domain/entities/address.dart';
 import '../../profile/providers/profile_providers.dart';
 import '../providers/checkout_providers.dart';
 
+/// Coupons are out of scope for the v1 pilot — the post-order redeem flow is
+/// unverified, so the checkout coupon field and its after-order redemption are
+/// hidden. Flip this to `true` to restore them (the underlying coupon module is
+/// left intact). Kept non-`const` so the guarded branches don't read as dead
+/// code under the analyzer.
+final bool _couponsEnabledInCheckout = false;
+
 /// Checkout screen. Collects a shipping address and (COD-only) payment method,
 /// then places the order exclusively through the `checkout_cart` RPC via
 /// [checkoutProvider]. The client never computes or sends any monetary value —
@@ -89,7 +96,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
     // RPC (server computes the discount and updates the order totals). A failed
     // coupon must never undo the already-placed order — surface a warning and
     // continue to the order, which shows the authoritative totals.
-    final code = _couponController.text.trim();
+    final code = _couponsEnabledInCheckout ? _couponController.text.trim() : '';
     if (code.isNotEmpty) {
       final couponError = await ref
           .read(couponProvider.notifier)
@@ -247,16 +254,21 @@ class _CheckoutBody extends StatelessWidget {
                 minLines: 2,
                 maxLines: 5,
               ),
-              const SizedBox(height: AppSpacing.lg),
-              Text('Coupon', style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: AppSpacing.sm),
-              CouponField(controller: couponController, enabled: !isSubmitting),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                'Applied after your order is placed; the final total updates '
-                'on the order screen.',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
+              if (_couponsEnabledInCheckout) ...[
+                const SizedBox(height: AppSpacing.lg),
+                Text('Coupon', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: AppSpacing.sm),
+                CouponField(
+                  controller: couponController,
+                  enabled: !isSubmitting,
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  'Applied after your order is placed; the final total updates '
+                  'on the order screen.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
             ],
           ),
         ),
