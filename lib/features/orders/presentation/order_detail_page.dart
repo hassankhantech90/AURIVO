@@ -95,6 +95,7 @@ class _OrderDetailPageState extends ConsumerState<OrderDetailPage> {
                   detail: detail,
                   cancelling: _cancelling,
                   onCancel: _confirmCancel,
+                  onRefresh: _load,
                 ),
       },
     );
@@ -106,11 +107,13 @@ class _OrderDetailBody extends StatelessWidget {
     required this.detail,
     required this.cancelling,
     required this.onCancel,
+    required this.onRefresh,
   });
 
   final OrderDetail detail;
   final bool cancelling;
   final VoidCallback onCancel;
+  final Future<void> Function() onRefresh;
 
   @override
   Widget build(BuildContext context) {
@@ -120,9 +123,13 @@ class _OrderDetailBody extends StatelessWidget {
     final reviewable =
         order.status == OrderStatus.delivered ||
         order.status == OrderStatus.completed;
-    return ListView(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      children: [
+    return RefreshIndicator(
+      onRefresh: onRefresh,
+      child: ListView(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        // Always scrollable so pull-to-refresh works even on a short order.
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
         _HeaderCard(order: order),
         const SizedBox(height: AppSpacing.md),
         _SectionCard(
@@ -227,7 +234,8 @@ class _OrderDetailBody extends StatelessWidget {
             ),
           ),
         ],
-      ],
+        ],
+      ),
     );
   }
 }
@@ -397,9 +405,15 @@ class _OrderItemRow extends ConsumerWidget {
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
-              Text(
-                '${item.currency} ${item.lineTotal.toStringAsFixed(2)}',
-                style: Theme.of(context).textTheme.titleSmall,
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    '${item.currency} ${item.lineTotal.toStringAsFixed(2)}',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                ),
               ),
             ],
           ),
@@ -485,10 +499,17 @@ class _AmountRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: style),
-          Text('$currency ${amount.toStringAsFixed(2)}', style: style),
+          Expanded(child: Text(label, style: style)),
+          const SizedBox(width: AppSpacing.sm),
+          // Scale the amount down instead of overflowing at large text scales.
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: Text('$currency ${amount.toStringAsFixed(2)}', style: style),
+            ),
+          ),
         ],
       ),
     );
@@ -556,15 +577,20 @@ class _PaymentInfo extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              PaymentMethod.label(payment.method),
-              style: Theme.of(context).textTheme.titleSmall,
+            Expanded(
+              child: Text(
+                PaymentMethod.label(payment.method),
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
             ),
-            Text(
-              PaymentStatus.label(payment.status),
-              style: Theme.of(context).textTheme.bodySmall,
+            const SizedBox(width: AppSpacing.sm),
+            Flexible(
+              child: Text(
+                PaymentStatus.label(payment.status),
+                style: Theme.of(context).textTheme.bodySmall,
+                textAlign: TextAlign.end,
+              ),
             ),
           ],
         ),

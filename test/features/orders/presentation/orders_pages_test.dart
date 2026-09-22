@@ -116,4 +116,70 @@ void main() {
     // Pending orders are cancellable → the cancel CTA is offered.
     expect(find.text('Cancel order'), findsOneWidget);
   });
+
+  testWidgets(
+    'OrderDetailPage is refreshable and does not overflow at 320px / 2x scale',
+    (tester) async {
+      tester.view.physicalSize = const Size(320, 4000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final detail = OrderDetail(
+        order: Order.fromMap({
+          'id': 'o1',
+          'order_number': 'AUR260811000001',
+          'profile_id': 'p1',
+          'status': 'shipped',
+          'payment_status': 'pending',
+          'currency': 'PKR',
+          'subtotal': 1299999,
+          'grand_total': 1299999,
+          'placed_at': '2026-08-11T10:00:00Z',
+        }),
+        items: [
+          OrderItem.fromMap({
+            'id': 'i1',
+            'order_id': 'o1',
+            'product_id': 'prod-1',
+            'product_variant_id': 'var-1',
+            'seller_id': 'seller-1',
+            'product_title_snapshot':
+                '[TEST] Handcrafted 22k Gold Diamond Solitaire '
+                'Engagement Ring — Limited Heritage Edition',
+            'sku_snapshot': 'SKU-1',
+            'unit_price': 1299999,
+            'quantity': 1,
+            'line_total': 1299999,
+            'currency': 'PKR',
+          }),
+        ],
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            orderRepositoryProvider.overrideWithValue(
+              _FakeOrderRepository(detail: detail),
+            ),
+          ],
+          child: MaterialApp(
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(
+                context,
+              ).copyWith(textScaler: const TextScaler.linear(2.0)),
+              child: child!,
+            ),
+            home: const OrderDetailPage(orderId: 'o1'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // A1: pull-to-refresh is available on the tracking view.
+      expect(find.byType(RefreshIndicator), findsOneWidget);
+      // A2: no RenderFlex overflow at a large text scale.
+      expect(tester.takeException(), isNull);
+    },
+  );
 }
