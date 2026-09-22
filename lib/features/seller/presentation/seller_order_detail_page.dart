@@ -138,12 +138,21 @@ class _SellerOrderDetailPageState extends ConsumerState<SellerOrderDetailPage> {
                 for (final item in detail.items) _ItemRow(item: item),
                 const Divider(height: AppSpacing.lg),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Your subtotal', style: theme.textTheme.titleSmall),
-                    PriceWidget(
-                      price: detail.sellerSubtotal,
-                      currency: detail.currency,
+                    Expanded(
+                      child: Text(
+                        'Your subtotal',
+                        style: theme.textTheme.titleSmall,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    // Bound the price so its FittedBox(scaleDown) can shrink a
+                    // wide PKR total at large text scales instead of overflowing.
+                    Flexible(
+                      child: PriceWidget(
+                        price: detail.sellerSubtotal,
+                        currency: detail.currency,
+                      ),
                     ),
                   ],
                 ),
@@ -307,7 +316,10 @@ class _ItemRow extends StatelessWidget {
               ],
             ),
           ),
-          PriceWidget(price: item.lineTotal, currency: item.currency),
+          const SizedBox(width: AppSpacing.sm),
+          Flexible(
+            child: PriceWidget(price: item.lineTotal, currency: item.currency),
+          ),
         ],
       ),
     );

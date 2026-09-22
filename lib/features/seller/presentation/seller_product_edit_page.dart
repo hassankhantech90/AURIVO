@@ -195,7 +195,10 @@ class _SellerProductEditPageState extends ConsumerState<SellerProductEditPage> {
                 const SizedBox(height: AppSpacing.md),
                 Row(
                   children: [
+                    // Flexible shares (2:1) instead of a fixed-width currency
+                    // box, so neither field overflows at large text scales.
                     Expanded(
+                      flex: 2,
                       child: CustomTextField(
                         controller: _basePrice,
                         labelText: 'Base price',
@@ -205,10 +208,11 @@ class _SellerProductEditPageState extends ConsumerState<SellerProductEditPage> {
                       ),
                     ),
                     const SizedBox(width: AppSpacing.md),
-                    SizedBox(
-                      width: 110,
+                    Expanded(
+                      flex: 1,
                       child: DropdownButtonFormField<String>(
                         initialValue: _currency,
+                        isExpanded: true,
                         decoration: const InputDecoration(
                           labelText: 'Currency',
                         ),
