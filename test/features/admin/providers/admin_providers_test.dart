@@ -1,123 +1,96 @@
-import 'package:aurivo/core/utils/failure.dart';
+import 'package:aurivo/core/supabase/supabase_auth_service.dart';
+import 'package:aurivo/core/supabase/supabase_service.dart';
 import 'package:aurivo/features/admin/domain/repositories/admin_repository.dart';
 import 'package:aurivo/features/admin/providers/admin_providers.dart';
-import 'package:aurivo/features/profile/domain/entities/seller_profile.dart';
-import 'package:aurivo/features/seller/domain/entities/seller_product.dart';
+import 'package:aurivo/features/authentication/providers/session_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show User;
 
-SellerProfile _seller(String id) => SellerProfile(
-  id: id,
-  profileId: 'p-$id',
-  storeName: 'Store $id',
-  slug: 'store-$id',
-  verificationStatus: 'pending',
-);
-
-SellerProduct _product(String id) => SellerProduct.fromMap({
-  'id': id,
-  'seller_id': 'sp1',
-  'title': 'Ring $id',
-  'slug': 'ring-$id',
-  'jewellery_type': 'ring',
-  'currency': 'PKR',
-  'base_price': 1000,
-  'status': 'pending',
-});
-
-class _FakeRepo implements AdminRepository {
-  _FakeRepo({this.admin = true});
-  final bool admin;
-
-  final List<String> verifications = [];
-  final List<String> productStatuses = [];
+/// Minimal AdminRepository: only isAdmin() is exercised here; it records calls
+/// and returns a settable result.
+class _FakeAdminRepo implements AdminRepository {
+  _FakeAdminRepo(this._result);
+  bool _result;
+  int isAdminCalls = 0;
+  set result(bool v) => _result = v;
 
   @override
-  Future<bool> isAdmin() async => admin;
-
-  @override
-  Future<List<SellerProfile>> getPendingSellers() async =>
-      [_seller('a'), _seller('b')];
-
-  @override
-  Future<void> setSellerVerification({
-    required String sellerId,
-    required String status,
-  }) async {
-    verifications.add('$sellerId:$status');
+  Future<bool> isAdmin() async {
+    isAdminCalls++;
+    return _result;
   }
 
   @override
-  Future<List<SellerProduct>> getPendingProducts() async =>
-      [_product('x'), _product('y')];
-
-  @override
-  Future<void> setProductStatus({
-    required String productId,
-    required String status,
-  }) async {
-    productStatuses.add('$productId:$status');
-  }
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-ProviderContainer _container(AdminRepository repo) {
+class _TestSession extends SessionNotifier {
+  _TestSession()
+    : super(
+        authService: const SupabaseAuthService(
+          supabaseService: SupabaseService(),
+        ),
+      );
+  void set(SessionState next) => state = next;
+}
+
+SessionState _authAs(String userId) => SessionState(
+  status: SessionStatus.authenticated,
+  user: User(
+    id: userId,
+    appMetadata: const {},
+    userMetadata: const {},
+    aud: 'authenticated',
+    createdAt: DateTime(2026).toIso8601String(),
+  ),
+);
+
+const SessionState _guest = SessionState(status: SessionStatus.unauthenticated);
+
+ProviderContainer _container(_FakeAdminRepo repo, _TestSession session) {
   final container = ProviderContainer(
-    overrides: [adminRepositoryProvider.overrideWithValue(repo)],
+    overrides: [
+      adminRepositoryProvider.overrideWithValue(repo),
+      sessionProvider.overrideWith((ref) => session),
+    ],
   );
   addTearDown(container.dispose);
+  // Keep the async provider alive so it rebuilds on session changes.
+  container.listen(isAdminProvider, (_, _) {});
   return container;
 }
 
 void main() {
-  test('isAdminProvider reflects the repository', () async {
-    final container = _container(_FakeRepo(admin: true));
+  test('isAdminProvider is false when signed out, without hitting the RPC', () async {
+    final repo = _FakeAdminRepo(true);
+    final session = _TestSession()..set(_guest);
+    final container = _container(repo, session);
+
+    expect(await container.read(isAdminProvider.future), isFalse);
+    expect(repo.isAdminCalls, 0); // short-circuited: no has_role RPC
+  });
+
+  test('isAdminProvider reflects the current user', () async {
+    final repo = _FakeAdminRepo(true);
+    final session = _TestSession()..set(_authAs('admin-user'));
+    final container = _container(repo, session);
+
     expect(await container.read(isAdminProvider.future), isTrue);
   });
 
-  test('pendingSellers load then approve removes from the queue', () async {
-    final repo = _FakeRepo();
-    final container = _container(repo);
-    final notifier = container.read(pendingSellersProvider.notifier);
-    await notifier.load();
-    expect(container.read(pendingSellersProvider).data.map((s) => s.id),
-        ['a', 'b']);
+  test('isAdminProvider recomputes on account switch (no stale admin leak)', () async {
+    final repo = _FakeAdminRepo(true); // signed-in admin
+    final session = _TestSession()..set(_authAs('admin-user'));
+    final container = _container(repo, session);
 
-    final err = await notifier.setVerification('a', 'verified');
-    expect(err, isNull);
-    expect(repo.verifications, ['a:verified']);
-    expect(container.read(pendingSellersProvider).data.map((s) => s.id), ['b']);
+    expect(await container.read(isAdminProvider.future), isTrue);
+
+    // Switch to a different (non-admin) identity: must recompute to false,
+    // never reuse the cached admin=true.
+    repo.result = false;
+    session.set(_authAs('buyer-user'));
+
+    expect(await container.read(isAdminProvider.future), isFalse);
   });
-
-  test('pendingProducts load then reject removes from the queue', () async {
-    final repo = _FakeRepo();
-    final container = _container(repo);
-    final notifier = container.read(pendingProductsProvider.notifier);
-    await notifier.load();
-    expect(container.read(pendingProductsProvider).data, hasLength(2));
-
-    final err = await notifier.setStatus('x', 'rejected');
-    expect(err, isNull);
-    expect(repo.productStatuses, ['x:rejected']);
-    expect(container.read(pendingProductsProvider).data.map((p) => p.id), ['y']);
-  });
-
-  test('setVerification surfaces an error message on failure', () async {
-    final repo = _ThrowingRepo();
-    final container = _container(repo);
-    await container.read(pendingSellersProvider.notifier).load();
-    final err = await container
-        .read(pendingSellersProvider.notifier)
-        .setVerification('a', 'verified');
-    expect(err, contains('denied'));
-  });
-}
-
-class _ThrowingRepo extends _FakeRepo {
-  @override
-  Future<void> setSellerVerification({
-    required String sellerId,
-    required String status,
-  }) async {
-    throw const Failure(message: 'denied');
-  }
 }

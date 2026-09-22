@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/supabase/supabase_database_service.dart';
 import '../../../core/supabase/supabase_service.dart';
+import '../../authentication/providers/session_provider.dart';
 import '../../profile/domain/entities/seller_profile.dart';
 import '../../seller/domain/entities/seller_product.dart';
 import '../data/repositories/supabase_admin_repository.dart';
@@ -16,7 +17,14 @@ final adminRepositoryProvider = Provider<AdminRepository>((ref) {
 });
 
 /// Whether the current user is an admin. Gates the entire admin console.
+///
+/// Watches the signed-in identity so it recomputes on every account switch —
+/// otherwise a cached `true` from an admin session would leak the admin console
+/// to the next (non-admin) user who signs in. When signed out it short-circuits
+/// to `false` without an RPC.
 final isAdminProvider = FutureProvider<bool>((ref) {
+  final userId = ref.watch(sessionProvider.select((s) => s.user?.id));
+  if (userId == null) return Future.value(false);
   return ref.watch(adminRepositoryProvider).isAdmin();
 });
 
