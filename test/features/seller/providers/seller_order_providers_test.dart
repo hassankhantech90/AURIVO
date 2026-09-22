@@ -112,13 +112,47 @@ void main() {
         'shipped');
   });
 
-  test('saveShipment succeeds and reloads', () async {
-    final repo = _FakeRepo();
+  test('saveShipment with a shipped shipment also advances the order', () async {
+    final repo = _FakeRepo(); // order starts 'confirmed'
     final container = _container(repo);
     final notifier = container.read(sellerOrderDetailProvider('o1').notifier);
     await notifier.load();
+
     final err = await notifier.saveShipment(status: 'shipped', courier: 'TCS');
+
     expect(err, isNull);
     expect(repo.shipmentCalls, 1);
+    expect(repo.advanceCalls, 1); // auto-advanced to shipped
+    expect(container.read(sellerOrderDetailProvider('o1')).data!.status,
+        'shipped');
+  });
+
+  test('saveShipment with a pending shipment does not advance the order', () async {
+    final repo = _FakeRepo(); // order 'confirmed'
+    final container = _container(repo);
+    final notifier = container.read(sellerOrderDetailProvider('o1').notifier);
+    await notifier.load();
+
+    final err = await notifier.saveShipment(status: 'pending');
+
+    expect(err, isNull);
+    expect(repo.shipmentCalls, 1);
+    expect(repo.advanceCalls, 0); // status not shipped -> no advance
+    expect(container.read(sellerOrderDetailProvider('o1')).data!.status,
+        'confirmed');
+  });
+
+  test('saveShipment does not re-advance an already-shipped order', () async {
+    final repo = _FakeRepo()..detailStatus = 'shipped';
+    final container = _container(repo);
+    final notifier = container.read(sellerOrderDetailProvider('o1').notifier);
+    await notifier.load();
+
+    // Updating tracking after shipping must not append another shipped event.
+    final err = await notifier.saveShipment(status: 'in_transit');
+
+    expect(err, isNull);
+    expect(repo.shipmentCalls, 1);
+    expect(repo.advanceCalls, 0);
   });
 }

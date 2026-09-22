@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/supabase/supabase_database_service.dart';
 import '../../../core/supabase/supabase_service.dart';
+import '../../orders/domain/entities/order_status.dart';
 import '../data/repositories/supabase_seller_order_repository.dart';
 import '../domain/entities/seller_order_detail.dart';
 import '../domain/entities/seller_order_summary.dart';
@@ -100,6 +101,12 @@ class SellerOrderDetailNotifier
 
   /// Creates or updates the order's shipment, then reloads. Returns null on
   /// success or a user-facing error message.
+  ///
+  /// Recording a shipment that is shipped-or-later also advances the order to
+  /// `shipped` (which notifies the buyer), so the shipment and the order status
+  /// can never disagree. It is skipped when the order is already shipped/
+  /// delivered or terminal, so updating tracking later never re-notifies the
+  /// buyer or regresses the status.
   Future<String?> saveShipment({
     required String status,
     String? courier,
@@ -114,10 +121,30 @@ class SellerOrderDetailNotifier
         trackingNumber: trackingNumber,
         trackingUrl: trackingUrl,
       );
+      final current = state.data?.status;
+      if (current != null &&
+          _shipmentImpliesShipped(status) &&
+          _canMarkShipped(current)) {
+        await _repository.advanceStatus(
+          orderId: _orderId,
+          status: OrderStatus.shipped,
+        );
+      }
       await load();
       return null;
     } catch (error) {
       return error.toString();
     }
   }
+
+  static bool _shipmentImpliesShipped(String shipmentStatus) =>
+      shipmentStatus == ShipmentStatus.shipped ||
+      shipmentStatus == ShipmentStatus.inTransit ||
+      shipmentStatus == ShipmentStatus.outForDelivery ||
+      shipmentStatus == ShipmentStatus.delivered;
+
+  static bool _canMarkShipped(String orderStatus) =>
+      !OrderStatus.isTerminal(orderStatus) &&
+      orderStatus != OrderStatus.shipped &&
+      orderStatus != OrderStatus.delivered;
 }
