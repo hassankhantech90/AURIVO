@@ -104,6 +104,15 @@ class _StubDatabase extends SupabaseDatabaseService {
   }
 
   @override
+  Future<void> insertVoid({
+    required String table,
+    required Map<String, dynamic> values,
+  }) async {
+    if (insertError != null) throw insertError!;
+    inserted.add({'_table': table, ...values});
+  }
+
+  @override
   Future<Map<String, dynamic>> update({
     required String table,
     required Map<String, dynamic> values,

@@ -79,6 +79,24 @@ class SupabaseDatabaseService {
     }
   }
 
+  /// Insert without reading the row back.
+  ///
+  /// The default [insert] runs `.select().single()`, which fails on tables
+  /// where the caller has INSERT but not SELECT under RLS (e.g. a seller
+  /// appending to `order_status_history`): the read-back returns no visible
+  /// row and PostgREST rolls the whole insert back. Use this when the inserted
+  /// row is not needed by the caller.
+  Future<void> insertVoid({
+    required String table,
+    required Map<String, dynamic> values,
+  }) async {
+    try {
+      await _supabaseService.client.from(table).insert(values);
+    } catch (error) {
+      throw SupabaseExceptionMapper.database(error);
+    }
+  }
+
   Future<Map<String, dynamic>> update({
     required String table,
     required Map<String, dynamic> values,

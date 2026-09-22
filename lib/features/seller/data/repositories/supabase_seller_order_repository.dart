@@ -79,7 +79,10 @@ class SupabaseSellerOrderRepository implements SellerOrderRepository {
     required String status,
   }) async {
     try {
-      await _database.insert(
+      // Fire-and-forget: sellers can INSERT into order_status_history but have
+      // no SELECT policy on it, so a read-back (`.select().single()`) would
+      // roll the insert back. The updated status is re-read via the header RPC.
+      await _database.insertVoid(
         table: _statusHistoryTable,
         values: {
           'order_id': orderId,
