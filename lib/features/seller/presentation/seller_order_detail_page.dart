@@ -23,6 +23,11 @@ class SellerOrderDetailPage extends ConsumerStatefulWidget {
 }
 
 class _SellerOrderDetailPageState extends ConsumerState<SellerOrderDetailPage> {
+  // Guards the fulfilment buttons against a double-tap that would append a
+  // duplicate status-history row (and, for `shipped`, a duplicate buyer
+  // notification).
+  bool _advancing = false;
+
   @override
   void initState() {
     super.initState();
@@ -33,10 +38,13 @@ class _SellerOrderDetailPageState extends ConsumerState<SellerOrderDetailPage> {
       ref.read(sellerOrderDetailProvider(widget.orderId).notifier).load();
 
   Future<void> _advance(String status, String doneLabel) async {
+    if (_advancing) return;
+    setState(() => _advancing = true);
     final error = await ref
         .read(sellerOrderDetailProvider(widget.orderId).notifier)
         .advanceStatus(status);
     if (!mounted) return;
+    setState(() => _advancing = false);
     if (error != null) {
       LuxurySnackBars.error(context, error);
     } else {
@@ -181,7 +189,9 @@ class _SellerOrderDetailPageState extends ConsumerState<SellerOrderDetailPage> {
                 padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                 child: LuxuryOutlinedButton(
                   label: 'Mark as packed',
-                  onPressed: () => _advance(OrderStatus.packed, 'Marked packed.'),
+                  onPressed: _advancing
+                      ? null
+                      : () => _advance(OrderStatus.packed, 'Marked packed.'),
                 ),
               ),
             if (canShip)
@@ -189,8 +199,9 @@ class _SellerOrderDetailPageState extends ConsumerState<SellerOrderDetailPage> {
                 padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                 child: LuxuryOutlinedButton(
                   label: 'Mark as shipped',
-                  onPressed: () =>
-                      _advance(OrderStatus.shipped, 'Marked shipped.'),
+                  onPressed: _advancing
+                      ? null
+                      : () => _advance(OrderStatus.shipped, 'Marked shipped.'),
                 ),
               ),
             PrimaryButton(

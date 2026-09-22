@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:aurivo/features/orders/domain/entities/order_item.dart';
 import 'package:aurivo/features/orders/domain/entities/shipment.dart';
 import 'package:aurivo/features/seller/domain/entities/seller_order_detail.dart';
@@ -27,6 +29,10 @@ class _FakeRepo implements SellerOrderRepository {
   int advanceCalls = 0;
   int shipmentCalls = 0;
 
+  /// When set, [advanceStatus] blocks on this until completed, so a test can
+  /// tap again while the first advance is still in flight.
+  Completer<void>? advanceGate;
+
   SellerOrderDetail _detail() => SellerOrderDetail.fromParts(
     header: {
       'order_id': 'o1',
@@ -52,6 +58,7 @@ class _FakeRepo implements SellerOrderRepository {
     required String status,
   }) async {
     advanceCalls++;
+    if (advanceGate != null) await advanceGate!.future;
     this.status = status;
   }
 
@@ -101,6 +108,27 @@ void main() {
     expect(repo.advanceCalls, 1);
     expect(find.text('Packed'), findsOneWidget); // badge reflects new status
     expect(find.text('Mark as packed'), findsNothing); // no longer offered
+  });
+
+  testWidgets('double-tapping mark as packed advances only once', (
+    tester,
+  ) async {
+    final repo = _FakeRepo()..advanceGate = Completer<void>();
+    await tester.pumpWidget(_wrap(repo));
+    await tester.pumpAndSettle();
+
+    // First tap starts the advance and disables the button.
+    await tester.tap(find.text('Mark as packed'));
+    await tester.pump();
+    // Second tap while the first is still in flight must be ignored.
+    await tester.tap(find.text('Mark as packed'), warnIfMissed: false);
+    await tester.pump();
+
+    // Let the in-flight advance complete.
+    repo.advanceGate!.complete();
+    await tester.pumpAndSettle();
+
+    expect(repo.advanceCalls, 1);
   });
 
   testWidgets('opens the shipment form sheet', (tester) async {
