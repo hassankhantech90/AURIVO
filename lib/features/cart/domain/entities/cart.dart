@@ -28,6 +28,21 @@ class Cart {
 
   bool get isGuest => profileId == null;
 
+  /// Only for optimistic UI: recomputed totals shown instantly while a cart
+  /// mutation is in flight. The database-authoritative totals replace these as
+  /// soon as the write returns — never treat a client-set total as canonical.
+  Cart copyWith({double? subtotal, double? grandTotal}) => Cart(
+    id: id,
+    profileId: profileId,
+    status: status,
+    currency: currency,
+    subtotal: subtotal ?? this.subtotal,
+    discountTotal: discountTotal,
+    grandTotal: grandTotal ?? this.grandTotal,
+    createdAt: createdAt,
+    updatedAt: updatedAt,
+  );
+
   factory Cart.fromMap(Map<String, dynamic> map) {
     return Cart(
       id: map['id'] as String,

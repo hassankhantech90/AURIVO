@@ -28,4 +28,8 @@ abstract class CartRepository {
   Future<CartView> removeItem({required String productVariantId});
 
   Future<CartView> clearCart();
+
+  /// Drops any per-session caches (resolved profile id, product titles). Called
+  /// when the auth identity changes so a new session never reuses stale data.
+  void clearSessionCache();
 }

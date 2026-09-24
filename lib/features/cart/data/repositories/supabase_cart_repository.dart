@@ -31,6 +31,12 @@ class SupabaseCartRepository implements CartRepository {
   final SupabaseAuthService _authService;
   final GuestTokenService _guestTokenService;
 
+  // Per-session caches (the provider clears these on any auth identity change).
+  // The profile id is stable for a session; product titles are stable per
+  // variant. Caching them removes repeated round-trips on every cart tap.
+  String? _profileId;
+  final Map<String, String> _titleCache = {};
+
   static const String _cartsTable = 'carts';
   static const String _cartItemsTable = 'cart_items';
   static const String _variantsTable = 'product_variants';
@@ -38,6 +44,12 @@ class SupabaseCartRepository implements CartRepository {
 
   @override
   bool get isAuthenticated => _authService.currentUser != null;
+
+  @override
+  void clearSessionCache() {
+    _profileId = null;
+    _titleCache.clear();
+  }
 
   @override
   Future<CartView> getCart() async {
@@ -118,6 +130,24 @@ class SupabaseCartRepository implements CartRepository {
 
   Future<CartView> _loadAuth() async {
     final cartRow = await _getOrCreateActiveCartRow();
+    return _buildAuthView(cartRow);
+  }
+
+  /// Reload after a mutation that already knows the cart id: re-reads the cart
+  /// row by id (for the trigger-updated totals) without re-resolving the profile
+  /// and re-finding the active cart. Falls back to a full [_loadAuth] if the row
+  /// has vanished (e.g. converted at checkout).
+  Future<CartView> _loadAuthCart(String cartId) async {
+    final rows = await _database.list(
+      table: _cartsTable,
+      filters: {'id': cartId},
+      limit: 1,
+    );
+    if (rows.isEmpty) return _loadAuth();
+    return _buildAuthView(rows.first);
+  }
+
+  Future<CartView> _buildAuthView(Map<String, dynamic> cartRow) async {
     final cart = Cart.fromMap(cartRow);
     final itemRows = await _database.list(
       table: _cartItemsTable,
@@ -153,7 +183,7 @@ class SupabaseCartRepository implements CartRepository {
         },
       );
     }
-    return _loadAuth();
+    return _loadAuthCart(cartId);
   }
 
   Future<CartView> _setQuantityAuth(String variantId, int quantity) async {
@@ -168,7 +198,7 @@ class SupabaseCartRepository implements CartRepository {
           matchValue: existing.id,
         );
       }
-      return _loadAuth();
+      return _loadAuthCart(cartId);
     }
     if (existing != null) {
       await _database.update(
@@ -190,7 +220,7 @@ class SupabaseCartRepository implements CartRepository {
         },
       );
     }
-    return _loadAuth();
+    return _loadAuthCart(cartId);
   }
 
   Future<Map<String, dynamic>> _getOrCreateActiveCartRow() async {
@@ -247,8 +277,11 @@ class SupabaseCartRepository implements CartRepository {
   }
 
   Future<String> _requireProfileId() async {
+    final cached = _profileId;
+    if (cached != null) return cached;
     final result = await _database.rpc(functionName: 'current_profile_id');
     if (result is String && result.isNotEmpty) {
+      _profileId = result;
       return result;
     }
     throw const Failure(message: 'Please sign in to use your cart.');
@@ -346,13 +379,26 @@ class SupabaseCartRepository implements CartRepository {
   Future<Map<String, String>> _titlesForVariants(
     List<String> variantIds,
   ) async {
-    final ids = variantIds.toSet().toList(growable: false);
+    final ids = variantIds.toSet();
     if (ids.isEmpty) return const {};
+
+    // Serve already-known titles from the cache; only fetch the misses.
+    final result = <String, String>{};
+    final missing = <String>[];
+    for (final id in ids) {
+      final cached = _titleCache[id];
+      if (cached != null) {
+        result[id] = cached;
+      } else {
+        missing.add(id);
+      }
+    }
+    if (missing.isEmpty) return result;
 
     final variantRows = await _database.list(
       table: _variantsTable,
       columns: 'id, product_id',
-      whereIn: {'id': List<Object>.from(ids)},
+      whereIn: {'id': List<Object>.from(missing)},
     );
     final productIdByVariant = <String, String>{};
     final productIds = <String>{};
@@ -364,7 +410,7 @@ class SupabaseCartRepository implements CartRepository {
         productIds.add(productId);
       }
     }
-    if (productIds.isEmpty) return const {};
+    if (productIds.isEmpty) return result;
 
     final productRows = await _database.list(
       table: _productsTable,
@@ -378,10 +424,12 @@ class SupabaseCartRepository implements CartRepository {
       if (productId != null && title != null) titleByProduct[productId] = title;
     }
 
-    final result = <String, String>{};
     productIdByVariant.forEach((variantId, productId) {
       final title = titleByProduct[productId];
-      if (title != null) result[variantId] = title;
+      if (title != null) {
+        result[variantId] = title;
+        _titleCache[variantId] = title; // remember for subsequent taps
+      }
     });
     return result;
   }

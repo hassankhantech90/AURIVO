@@ -7,6 +7,7 @@ import '../../../core/supabase/supabase_service.dart';
 import '../../authentication/providers/session_provider.dart';
 import '../data/guest_token_service.dart';
 import '../data/repositories/supabase_cart_repository.dart';
+import '../domain/entities/cart_item.dart';
 import '../domain/entities/cart_view.dart';
 import '../domain/repositories/cart_repository.dart';
 
@@ -65,6 +66,7 @@ final cartProvider = StateNotifierProvider<CartNotifier, CartState>((ref) {
       (s != null && s.isAuthenticated) ? s.user?.id : null;
   ref.listen<SessionState>(sessionProvider, (previous, next) {
     if (identity(previous) != identity(next)) {
+      ref.read(cartRepositoryProvider).clearSessionCache();
       notifier.reset();
     }
   });
@@ -76,16 +78,35 @@ class CartNotifier extends StateNotifier<CartState> {
 
   final CartRepository _repository;
 
+  // Monotonic token so that, when taps overlap, only the most recent mutation's
+  // authoritative result is applied (older in-flight results are discarded).
+  int _seq = 0;
+
   /// Clears the cached cart back to its initial state (no items, count 0).
   /// Invoked when the auth identity changes so no previous session's cart
   /// remains visible; the next [load] fetches the current session's cart.
   void reset() {
+    _seq++; // supersede any in-flight mutation so it can't repaint this reset
     state = const CartState();
   }
 
   Future<void> load() => _run(_repository.getCart);
 
   Future<void> addItem(String productVariantId, {int quantity = 1}) {
+    final cart = state.cart;
+    final existing = _lineFor(cart, productVariantId);
+    // Existing line: optimistically bump its quantity (we have its price). A
+    // brand-new line has no local price/title, so fall through to a normal load
+    // (now faster thanks to the repository caching).
+    if (cart != null && existing != null) {
+      return _optimistic(
+        _replaceQuantity(cart, productVariantId, existing.quantity + quantity),
+        () => _repository.addItem(
+          productVariantId: productVariantId,
+          quantity: quantity,
+        ),
+      );
+    }
     return _run(
       () => _repository.addItem(
         productVariantId: productVariantId,
@@ -95,7 +116,17 @@ class CartNotifier extends StateNotifier<CartState> {
   }
 
   Future<void> updateQuantity(String productVariantId, int quantity) {
-    return _run(
+    final cart = state.cart;
+    if (cart == null) {
+      return _run(
+        () => _repository.updateQuantity(
+          productVariantId: productVariantId,
+          quantity: quantity,
+        ),
+      );
+    }
+    return _optimistic(
+      _replaceQuantity(cart, productVariantId, quantity),
       () => _repository.updateQuantity(
         productVariantId: productVariantId,
         quantity: quantity,
@@ -104,24 +135,89 @@ class CartNotifier extends StateNotifier<CartState> {
   }
 
   Future<void> removeItem(String productVariantId) {
-    return _run(
+    final cart = state.cart;
+    if (cart == null) {
+      return _run(
+        () => _repository.removeItem(productVariantId: productVariantId),
+      );
+    }
+    return _optimistic(
+      _replaceQuantity(cart, productVariantId, 0),
       () => _repository.removeItem(productVariantId: productVariantId),
     );
   }
 
   Future<void> clear() => _run(_repository.clearCart);
 
+  /// Paints [optimistic] instantly, then reconciles with the authoritative
+  /// result from [action]. On failure it reverts to the pre-tap cart. Stale
+  /// results (superseded by a newer tap or a reset) are ignored.
+  Future<void> _optimistic(
+    CartView optimistic,
+    Future<CartView> Function() action,
+  ) async {
+    final previous = state;
+    final token = ++_seq;
+    state = CartState(status: CartStatus.success, cart: optimistic);
+    try {
+      final cart = await action();
+      if (token == _seq) state = CartState(status: CartStatus.success, cart: cart);
+    } catch (error) {
+      if (token == _seq) {
+        state = CartState(
+          status: CartStatus.failure,
+          cart: previous.cart,
+          message: error.toString(),
+        );
+      }
+    }
+  }
+
   Future<void> _run(Future<CartView> Function() action) async {
     // Keep the current cart visible while the mutation is in flight.
+    final token = ++_seq;
     state = state.copyWith(status: CartStatus.loading, clearMessage: true);
     try {
       final cart = await action();
-      state = CartState(status: CartStatus.success, cart: cart);
+      if (token == _seq) state = CartState(status: CartStatus.success, cart: cart);
     } catch (error) {
-      state = state.copyWith(
-        status: CartStatus.failure,
-        message: error.toString(),
-      );
+      if (token == _seq) {
+        state = state.copyWith(
+          status: CartStatus.failure,
+          message: error.toString(),
+        );
+      }
     }
+  }
+
+  CartItem? _lineFor(CartView? cart, String variantId) {
+    if (cart == null) return null;
+    for (final item in cart.items) {
+      if (item.productVariantId == variantId) return item;
+    }
+    return null;
+  }
+
+  /// Rebuilds [view] with [variantId]'s quantity set to [quantity] (line removed
+  /// when <= 0) and totals recomputed locally for an instant preview. The
+  /// database-authoritative totals replace these when the write returns.
+  CartView _replaceQuantity(CartView view, String variantId, int quantity) {
+    final items = <CartItem>[];
+    for (final item in view.items) {
+      if (item.productVariantId != variantId) {
+        items.add(item);
+      } else if (quantity > 0) {
+        items.add(item.copyWith(quantity: quantity));
+      }
+    }
+    final subtotal = items.fold<double>(0, (sum, item) => sum + item.lineTotal);
+    final grand = subtotal - view.cart.discountTotal;
+    return CartView(
+      cart: view.cart.copyWith(
+        subtotal: subtotal,
+        grandTotal: grand < 0 ? 0 : grand,
+      ),
+      items: items,
+    );
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:aurivo/core/supabase/supabase_auth_service.dart';
 import 'package:aurivo/core/supabase/supabase_service.dart';
 import 'package:aurivo/core/utils/failure.dart';
@@ -18,8 +20,24 @@ class _FakeCartRepository implements CartRepository {
   final Object? error;
   final Map<String, int> _items = {};
 
+  /// When set, mutations block on this until completed (to observe optimistic
+  /// state before the server returns).
+  Completer<void>? gate;
+
+  /// When true, mutations (not [getCart]) throw — for revert tests.
+  bool failMutations = false;
+  int clearCacheCalls = 0;
+
   @override
   bool get isAuthenticated => authenticated;
+
+  @override
+  void clearSessionCache() => clearCacheCalls++;
+
+  Future<void> _awaitMutation() async {
+    if (gate != null) await gate!.future;
+    if (failMutations) throw const Failure(message: 'sync failed');
+  }
 
   CartView _view() {
     final items = _items.entries
@@ -51,6 +69,7 @@ class _FakeCartRepository implements CartRepository {
     int quantity = 1,
   }) async {
     if (error != null) throw error!;
+    await _awaitMutation();
     _items[productVariantId] = (_items[productVariantId] ?? 0) + quantity;
     return _view();
   }
@@ -61,6 +80,7 @@ class _FakeCartRepository implements CartRepository {
     required int quantity,
   }) async {
     if (error != null) throw error!;
+    await _awaitMutation();
     if (quantity <= 0) {
       _items.remove(productVariantId);
     } else {
@@ -72,6 +92,7 @@ class _FakeCartRepository implements CartRepository {
   @override
   Future<CartView> removeItem({required String productVariantId}) async {
     if (error != null) throw error!;
+    await _awaitMutation();
     _items.remove(productVariantId);
     return _view();
   }
@@ -225,6 +246,51 @@ void main() {
       session.set(_authAs('user-A'));
 
       expect(container.read(cartProvider).itemCount, 4); // preserved
+    });
+  });
+
+  group('optimistic mutations', () {
+    test('updateQuantity applies before the server returns', () async {
+      final repo = _FakeCartRepository();
+      final container = _container(repo);
+      final notifier = container.read(cartProvider.notifier);
+      await notifier.addItem('v1', quantity: 2); // seed an existing line
+      expect(container.read(cartProvider).itemCount, 2);
+
+      repo.gate = Completer<void>();
+      final future = notifier.updateQuantity('v1', 5);
+      // Applied synchronously — before the gated server call resolves.
+      expect(container.read(cartProvider).itemCount, 5);
+
+      repo.gate!.complete();
+      await future;
+      expect(container.read(cartProvider).itemCount, 5);
+    });
+
+    test('a failed mutation reverts to the previous cart', () async {
+      final repo = _FakeCartRepository();
+      final container = _container(repo);
+      final notifier = container.read(cartProvider.notifier);
+      await notifier.addItem('v1', quantity: 2);
+
+      repo.failMutations = true;
+      await notifier.updateQuantity('v1', 9); // optimistic 9, then fails
+
+      final state = container.read(cartProvider);
+      expect(state.itemCount, 2); // reverted
+      expect(state.status, CartStatus.failure);
+    });
+
+    test('auth identity change clears the repository cache', () async {
+      final repo = _FakeCartRepository();
+      final session = _TestSession();
+      final container = _containerWithSession(repo, session);
+
+      session.set(_authAs('user-A'));
+      await container.read(cartProvider.notifier).addItem('v1');
+      session.set(_authAs('user-B'));
+
+      expect(repo.clearCacheCalls, greaterThanOrEqualTo(1));
     });
   });
 }

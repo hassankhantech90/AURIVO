@@ -31,11 +31,11 @@ class CartItem {
 
   double get lineTotal => unitPriceSnapshot * quantity;
 
-  CartItem copyWith({String? productTitle}) => CartItem(
+  CartItem copyWith({String? productTitle, int? quantity}) => CartItem(
     id: id,
     cartId: cartId,
     productVariantId: productVariantId,
-    quantity: quantity,
+    quantity: quantity ?? this.quantity,
     unitPriceSnapshot: unitPriceSnapshot,
     currency: currency,
     createdAt: createdAt,

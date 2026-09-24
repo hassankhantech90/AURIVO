@@ -49,6 +49,9 @@ class _FakeCartRepository implements CartRepository {
   }
 
   @override
+  void clearSessionCache() {}
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 

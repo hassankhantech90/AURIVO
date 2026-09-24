@@ -173,6 +173,9 @@ class _CountCartRepository implements CartRepository {
   );
 
   @override
+  void clearSessionCache() {}
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
