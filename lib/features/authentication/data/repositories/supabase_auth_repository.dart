@@ -62,11 +62,21 @@ class SupabaseAuthRepository implements AuthRepository {
       final normalizedEmail = email.trim();
       // Creates the Supabase Auth user only. Profile creation is a later
       // milestone and is intentionally not performed here.
-      await _authService.signUp(
+      final response = await _authService.signUp(
         email: normalizedEmail,
         password: password,
         data: {'full_name': fullName.trim(), 'phone': phone.trim()},
       );
+      // Anti-enumeration: with email confirmation on, signing up an already-
+      // registered (confirmed) email returns success with an EMPTY identities
+      // list and sends no email. Detect that and tell the user to sign in,
+      // instead of a misleading "account created / check your email".
+      final identities = response.user?.identities;
+      if (identities != null && identities.isEmpty) {
+        throw const EmailAlreadyRegisteredFailure(
+          message: 'This email is already registered. Please sign in.',
+        );
+      }
       _pendingEmail = normalizedEmail;
       _pendingFlow = AuthFlow.signup;
       return const AuthResult(

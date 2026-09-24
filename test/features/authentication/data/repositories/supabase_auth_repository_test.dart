@@ -18,6 +18,7 @@ class _StubAuthService extends SupabaseAuthService {
 
   String? lastSignInEmail;
   Map<String, dynamic>? lastSignUpData;
+  supabase.User? signUpUser; // when set, returned in the signUp response
   String? lastVerifyEmail;
   supabase.OtpType? lastVerifyType;
   bool resendSignupCalled = false;
@@ -44,7 +45,7 @@ class _StubAuthService extends SupabaseAuthService {
   }) async {
     if (signUpError != null) throw signUpError!;
     lastSignUpData = data;
-    return supabase.AuthResponse();
+    return supabase.AuthResponse(user: signUpUser);
   }
 
   @override
@@ -145,6 +146,29 @@ void main() {
         repository.signup(
           fullName: 'Aya Khan',
           email: 'aya@aurivo.pk',
+          phone: '03001234567',
+          password: 'Secret123!',
+        ),
+        throwsA(isA<EmailAlreadyRegisteredFailure>()),
+      );
+    });
+
+    test('an already-registered email (empty identities) is rejected', () async {
+      // Supabase anti-enumeration: signUp succeeds but returns a user with no
+      // identities and sends no email.
+      service.signUpUser = supabase.User(
+        id: 'existing-1',
+        appMetadata: const {},
+        userMetadata: const {},
+        aud: 'authenticated',
+        createdAt: '2026-01-01T00:00:00Z',
+        identities: const [],
+      );
+
+      await expectLater(
+        repository.signup(
+          fullName: 'Aya Khan',
+          email: 'existing@aurivo.pk',
           phone: '03001234567',
           password: 'Secret123!',
         ),
