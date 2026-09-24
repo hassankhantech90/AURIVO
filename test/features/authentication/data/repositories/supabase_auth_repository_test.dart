@@ -132,7 +132,7 @@ void main() {
 
       expect(service.lastSignUpData?['full_name'], 'Aya Khan');
       expect(service.lastSignUpData?['phone'], '03001234567');
-      expect(result.message, contains('Verify'));
+      expect(result.message, contains('Check your email'));
     });
 
     test('maps email already registered to a failure', () async {

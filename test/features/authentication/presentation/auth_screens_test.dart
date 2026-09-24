@@ -2,6 +2,7 @@ import 'package:aurivo/features/authentication/presentation/login_page.dart';
 import 'package:aurivo/features/authentication/presentation/signup_page.dart';
 import 'package:aurivo/features/authentication/presentation/forgot_password_page.dart';
 import 'package:aurivo/features/authentication/presentation/otp_page.dart';
+import 'package:aurivo/features/authentication/presentation/verify_email_page.dart';
 import 'package:aurivo/features/authentication/domain/entities/auth_flow.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -49,6 +50,19 @@ void main() {
 
       expect(find.byType(TextField), findsNWidgets(6));
       expect(find.text('Verify'), findsOneWidget);
+    });
+
+    testWidgets('VerifyEmailPage instructs to tap the link, no code field', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_wrap(const VerifyEmailPage()));
+      await tester.pump();
+
+      expect(find.text('Verify your email'), findsOneWidget);
+      expect(find.textContaining('verification link'), findsOneWidget);
+      expect(find.text('Go to sign in'), findsOneWidget);
+      // The signup flow is link-based now — no 6-digit code entry here.
+      expect(find.byType(TextField), findsNothing);
     });
   });
 }

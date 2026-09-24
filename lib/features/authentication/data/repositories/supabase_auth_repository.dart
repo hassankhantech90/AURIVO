@@ -69,7 +69,9 @@ class SupabaseAuthRepository implements AuthRepository {
       );
       _pendingEmail = normalizedEmail;
       _pendingFlow = AuthFlow.signup;
-      return const AuthResult(message: 'Account created. Verify your code.');
+      return const AuthResult(
+        message: 'Account created. Check your email to verify, then sign in.',
+      );
     } catch (error) {
       AuthDiagnostics.report(error, stage: 'signup');
       throw AuthFailureMapper.map(error);
@@ -119,7 +121,7 @@ class SupabaseAuthRepository implements AuthRepository {
       } else {
         await _authService.resendSignupOtp(email: email);
       }
-      return const AuthResult(message: 'A new code has been sent');
+      return const AuthResult(message: 'A new email has been sent.');
     } catch (error) {
       throw AuthFailureMapper.map(error);
     }

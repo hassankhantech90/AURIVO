@@ -145,8 +145,9 @@ class _SignupPageState extends ConsumerState<SignupPage> {
   void _handleAuthState(AuthState? previous, AuthState next) {
     if (next.status == AuthStatus.success && next.message != null) {
       LuxurySnackBars.success(context, next.message!);
-      ref.read(authProvider.notifier).startOtpCountdown();
-      context.go('${AppRoutes.otp}?flow=signup');
+      // Email confirmation is a link (not a code): send the user to the
+      // "check your email" screen, then they sign in once confirmed.
+      context.go(AppRoutes.verifyEmail);
       ref.read(authProvider.notifier).clearStatus();
     }
 

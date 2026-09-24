@@ -27,6 +27,7 @@ import '../../features/admin/presentation/admin_home_page.dart';
 import '../../features/admin/presentation/admin_products_page.dart';
 import '../../features/admin/presentation/admin_verifications_page.dart';
 import '../../features/authentication/presentation/splash_page.dart';
+import '../../features/authentication/presentation/verify_email_page.dart';
 import '../../features/cart/presentation/cart_page.dart';
 import '../../features/checkout/presentation/checkout_page.dart';
 import '../../features/checkout/providers/checkout_providers.dart';
@@ -100,6 +101,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               : AuthFlow.signup;
           return OtpPage(flow: flow);
         },
+      ),
+      _fadeRoute(
+        path: AppRoutes.verifyEmail,
+        name: 'verify-email',
+        builder: (context, state) => const VerifyEmailPage(),
       ),
       _fadeRoute(
         path: AppRoutes.resetPassword,
