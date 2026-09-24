@@ -35,11 +35,14 @@ void main() {
       expect(find.text('I accept the Terms & Conditions'), findsOneWidget);
     });
 
-    testWidgets('ForgotPasswordPage shows send code form', (tester) async {
+    testWidgets('ForgotPasswordPage points to support (no code form)', (
+      tester,
+    ) async {
       await tester.pumpWidget(_wrap(const ForgotPasswordPage()));
 
-      expect(find.text('Forgot Password'), findsOneWidget);
-      expect(find.text('Send Code'), findsOneWidget);
+      expect(find.text('Reset Password'), findsOneWidget);
+      expect(find.text('Back to sign in'), findsOneWidget);
+      expect(find.text('Send Code'), findsNothing);
     });
 
     testWidgets('OtpPage shows six text fields and verify button', (

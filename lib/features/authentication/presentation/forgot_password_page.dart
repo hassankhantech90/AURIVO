@@ -1,93 +1,51 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_routes.dart';
 import '../../../shared/design_system.dart';
-import '../domain/validators/auth_validators.dart';
-import '../providers/auth_provider.dart';
 import '../widgets/authentication_widgets.dart';
 
-class ForgotPasswordPage extends ConsumerStatefulWidget {
+/// Password reset is not self-service yet: a link-based reset needs deep-linking
+/// and a code-based reset needs custom SMTP (both deferred). For the pilot this
+/// screen points the user to support (an operator resets the password from the
+/// Supabase dashboard) rather than offering a flow that cannot complete.
+class ForgotPasswordPage extends StatelessWidget {
   const ForgotPasswordPage({super.key});
 
   @override
-  ConsumerState<ForgotPasswordPage> createState() => _ForgotPasswordPageState();
-}
-
-class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
-  final _formKey = GlobalKey<FormState>();
-  final _identifierController = TextEditingController();
-
-  // Validation stays off until the first failed submit, then switches to live
-  // revalidation so a corrected field clears/updates its error without needing
-  // a second Send Code tap.
-  AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
-
-  @override
-  void dispose() {
-    _identifierController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    ref.listen<AuthState>(authProvider, _handleAuthState);
-    final authState = ref.watch(authProvider);
-
     return AuthScaffold(
-      title: 'Forgot Password',
-      subtitle:
-          'Enter your email and we will send a verification code.',
-      child: Form(
-        key: _formKey,
-        autovalidateMode: _autovalidateMode,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            CustomTextField(
-              controller: _identifierController,
-              labelText: 'Email',
-              prefixIcon: Icons.contact_mail_outlined,
-              keyboardType: TextInputType.emailAddress,
-              validator: AuthValidators.email,
+      title: 'Reset Password',
+      subtitle: 'Password reset is handled by our team during the pilot.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Center(
+            child: Icon(
+              Icons.lock_reset_outlined,
+              size: 64,
+              color: AppColors.primaryGold,
             ),
-            const SizedBox(height: AppSpacing.lg),
-            PrimaryButton(
-              label: 'Send Code',
-              icon: Icons.send_outlined,
-              isLoading: authState.isLoading,
-              onPressed: authState.isLoading ? null : _submit,
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          Text(
+            'To reset your password, please contact AURIVO support and we '
+            'will help you regain access to your account.',
+            textAlign: TextAlign.center,
+            // Explicit on-light colour: inline Text built above the
+            // AuthScaffold light theme, on the white card.
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColors.charcoal),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          PrimaryButton(
+            label: 'Back to sign in',
+            icon: Icons.login,
+            onPressed: () => context.go(AppRoutes.login),
+          ),
+        ],
       ),
     );
-  }
-
-  Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) {
-      setState(() {
-        _autovalidateMode = AutovalidateMode.onUserInteraction;
-      });
-      return;
-    }
-
-    await ref
-        .read(authProvider.notifier)
-        .sendPasswordResetCode(_identifierController.text.trim());
-  }
-
-  void _handleAuthState(AuthState? previous, AuthState next) {
-    if (next.status == AuthStatus.success && next.message != null) {
-      LuxurySnackBars.success(context, next.message!);
-      ref.read(authProvider.notifier).startOtpCountdown();
-      context.go('${AppRoutes.otp}?flow=forgotPassword');
-      ref.read(authProvider.notifier).clearStatus();
-    }
-
-    if (next.status == AuthStatus.failure && next.message != null) {
-      LuxurySnackBars.error(context, next.message!);
-    }
   }
 }
