@@ -450,15 +450,14 @@ void main() {
   });
 
   group('avatar upload', () {
-    test('generates the deterministic object path', () {
-      expect(
-        SupabaseProfileRepository.avatarObjectPath('profile-1'),
-        'profile-1/avatar.jpg',
-      );
+    test('generates a unique per-upload object path', () {
+      final path = SupabaseProfileRepository.avatarObjectPath('profile-1');
+      expect(path, startsWith('profile-1/avatar_'));
+      expect(path, endsWith('.jpg'));
     });
 
     test(
-      'uploads to avatars/{id}/avatar.jpg and returns a public url',
+      'uploads under the profile folder and returns a matching public url',
       () async {
         db.onSelect = (table, filters) => [profileRow(avatarPath: null)];
 
@@ -468,9 +467,11 @@ void main() {
 
         expect(storage.uploads, hasLength(1));
         expect(storage.uploads.single['bucket'], 'avatars');
-        expect(storage.uploads.single['path'], 'profile-1/avatar.jpg');
+        final path = storage.uploads.single['path'] as String;
+        expect(path, startsWith('profile-1/avatar_'));
+        expect(path, endsWith('.jpg'));
         expect(storage.deletes, isEmpty); // nothing to replace
-        expect(url, 'https://cdn.test/avatars/profile-1/avatar.jpg');
+        expect(url, 'https://cdn.test/avatars/$path');
       },
     );
 

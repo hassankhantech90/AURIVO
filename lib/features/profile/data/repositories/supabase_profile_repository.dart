@@ -37,8 +37,11 @@ class SupabaseProfileRepository implements ProfileRepository {
   static const String _businessTable = 'business_profiles';
   static const String _sellerTable = 'seller_profiles';
 
-  /// Deterministic storage object path for a profile's avatar.
-  static String avatarObjectPath(String profileId) => '$profileId/avatar.jpg';
+  /// Storage object path for a profile's avatar. A per-upload token in the
+  /// filename makes the public URL change on every replacement, so clients
+  /// (whose image cache keys on the URL) never keep showing the old avatar.
+  static String avatarObjectPath(String profileId) =>
+      '$profileId/avatar_${DateTime.now().millisecondsSinceEpoch}.jpg';
 
   // Profile ----------------------------------------------------------------
 
