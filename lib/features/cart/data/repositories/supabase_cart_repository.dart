@@ -67,7 +67,7 @@ class SupabaseCartRepository implements CartRepository {
   }) async {
     try {
       if (isAuthenticated) {
-        return await _addAuth(productVariantId, quantity);
+        return await _addAuthRpc(productVariantId, quantity);
       }
       return await _addGuest(productVariantId, quantity);
     } catch (error) {
@@ -159,31 +159,36 @@ class SupabaseCartRepository implements CartRepository {
     );
   }
 
-  Future<CartView> _addAuth(String variantId, int quantity) async {
-    final cartRow = await _getOrCreateActiveCartRow();
-    final cartId = cartRow['id'] as String;
-    final existing = await _findAuthItem(cartId, variantId);
-    if (existing != null) {
-      await _database.update(
-        table: _cartItemsTable,
-        values: {'quantity': existing.quantity + quantity},
-        matchColumn: 'id',
-        matchValue: existing.id,
-      );
-    } else {
-      final price = await _variantPrice(variantId);
-      await _database.insert(
-        table: _cartItemsTable,
-        values: {
-          'cart_id': cartId,
-          'product_variant_id': variantId,
-          'quantity': quantity,
-          'unit_price_snapshot': price.$1,
-          'currency': price.$2,
-        },
+  /// Single round-trip add for an authenticated cart: the `cart_add_item`
+  /// SECURITY DEFINER RPC upserts the line and returns the fresh cart + items
+  /// (with titles) in one call, so a new-line add no longer chains several
+  /// queries. Totals remain database-authoritative.
+  Future<CartView> _addAuthRpc(String variantId, int quantity) async {
+    final result = await _database.rpc(
+      functionName: 'cart_add_item',
+      params: {'p_product_variant_id': variantId, 'p_quantity': quantity},
+    );
+    return _cartViewFromRpc(result);
+  }
+
+  CartView _cartViewFromRpc(Object? result) {
+    if (result is! Map) {
+      throw const Failure(
+        message: 'Could not update your cart. Please try again.',
       );
     }
-    return _loadAuthCart(cartId);
+    final map = Map<String, dynamic>.from(result);
+    final cart = Cart.fromMap(Map<String, dynamic>.from(map['cart'] as Map));
+    final itemsRaw = (map['items'] as List?) ?? const [];
+    final items = itemsRaw.map((entry) {
+      final row = Map<String, dynamic>.from(entry as Map);
+      final item = CartItem.fromMap(row);
+      final title = row['product_title'] as String?;
+      return (title != null && title.isNotEmpty)
+          ? item.copyWith(productTitle: title)
+          : item;
+    }).toList();
+    return CartView(cart: cart, items: items);
   }
 
   Future<CartView> _setQuantityAuth(String variantId, int quantity) async {

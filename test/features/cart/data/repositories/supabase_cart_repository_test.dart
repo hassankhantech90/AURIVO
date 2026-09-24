@@ -36,6 +36,17 @@ Map<String, dynamic> cartItemRow({
   'currency': 'PKR',
 };
 
+/// The JSON shape returned by the `cart_add_item` RPC: cart header + items.
+Map<String, dynamic> cartAddItemJson({int quantity = 2, String? title}) => {
+  'cart': cartRow(),
+  'items': [
+    {
+      ...cartItemRow(quantity: quantity),
+      'product_title': ?title,
+    },
+  ],
+};
+
 class _StubAuth extends SupabaseAuthService {
   _StubAuth(this._user) : super(supabaseService: const SupabaseService());
   final supabase.User? _user;
@@ -169,47 +180,21 @@ void main() {
       expect(view.isEmpty, isTrue);
     });
 
-    test('addItem inserts a line priced from the live variant', () async {
-      db.onList = (table, filters) {
-        switch (table) {
-          case 'carts':
-            return [cartRow()];
-          case 'cart_items':
-            // first call (find) empty; reload returns the new item
-            return db.inserted.any((i) => i['table'] == 'cart_items')
-                ? [cartItemRow()]
-                : const [];
-          case 'product_variants':
-            return [
-              {'id': 'var-1', 'price': 1500, 'currency': 'PKR'},
-            ];
-          default:
-            return const [];
-        }
-      };
+    test('addItem calls the cart_add_item RPC and returns its cart view', () async {
+      db.onRpc = (fn, params) =>
+          fn == 'cart_add_item' ? cartAddItemJson(quantity: 2, title: 'Gold Ring') : null;
       final repo = build(authenticated: true);
 
       final view = await repo.addItem(productVariantId: 'var-1', quantity: 2);
 
-      final insertedItem = db.inserted.firstWhere(
-        (i) => i['table'] == 'cart_items',
-      );
-      expect(insertedItem['unit_price_snapshot'], 1500);
-      expect(insertedItem['quantity'], 2);
-      expect(view.itemCount, 1);
-    });
-
-    test('addItem increments an existing line', () async {
-      db.onList = (table, filters) {
-        if (table == 'carts') return [cartRow()];
-        if (table == 'cart_items') return [cartItemRow(quantity: 1)];
-        return const [];
-      };
-      final repo = build(authenticated: true);
-
-      await repo.addItem(productVariantId: 'var-1', quantity: 2);
-
-      expect(db.updated.single['quantity'], 3); // 1 + 2
+      final call = db.rpcCalls.firstWhere((c) => c['fn'] == 'cart_add_item');
+      expect(call['p_product_variant_id'], 'var-1');
+      expect(call['p_quantity'], 2);
+      expect(view.itemCount, 2);
+      expect(view.items.single.productTitle, 'Gold Ring');
+      // The RPC owns the mutation — no direct cart_items writes from the client.
+      expect(db.inserted.any((i) => i['table'] == 'cart_items'), isFalse);
+      expect(db.updated, isEmpty);
     });
 
     test('updateQuantity to 0 deletes the line', () async {
@@ -235,8 +220,13 @@ void main() {
       expect(del['cart_id'], 'cart-1');
     });
 
-    test('addItem fails when the variant is unavailable', () async {
-      db.onList = (table, filters) => table == 'carts' ? [cartRow()] : const [];
+    test('addItem surfaces an unavailable-variant error from the RPC', () async {
+      db.onRpc = (fn, params) {
+        if (fn == 'cart_add_item') {
+          throw const Failure(message: 'This item is not available.');
+        }
+        return null;
+      };
       final repo = build(authenticated: true);
 
       await expectLater(
