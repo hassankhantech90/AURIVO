@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -155,15 +157,8 @@ class _ProductDetailView extends StatelessWidget {
         ],
         const SizedBox(height: AppSpacing.md),
         _SellerLink(sellerId: product.sellerId),
-        Wrap(
-          spacing: AppSpacing.sm,
-          runSpacing: AppSpacing.sm,
-          children: [
-            LuxuryTag(label: product.jewelleryType),
-            if (product.material != null) LuxuryTag(label: product.material!),
-            if (product.purity != null) LuxuryTag(label: product.purity!),
-          ],
-        ),
+        const SizedBox(height: AppSpacing.sm),
+        _Specifications(detail: detail),
         if (product.description != null) ...[
           const SizedBox(height: AppSpacing.lg),
           Text('Description', style: Theme.of(context).textTheme.titleMedium),
@@ -173,7 +168,18 @@ class _ProductDetailView extends StatelessWidget {
             style: Theme.of(context).textTheme.bodyMedium,
           ),
         ],
-        if (detail.variants.isNotEmpty) ...[
+        if (detail.variants.length == 1) ...[
+          // One variant: a single prominent Add to Cart (weight lives in specs).
+          const SizedBox(height: AppSpacing.lg),
+          SizedBox(
+            width: double.infinity,
+            child: PrimaryButton(
+              label: 'Add to Cart',
+              icon: Icons.add_shopping_cart,
+              onPressed: () => onAddToCart(detail.variants.first.id),
+            ),
+          ),
+        ] else if (detail.variants.length > 1) ...[
           const SizedBox(height: AppSpacing.lg),
           Text('Options', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: AppSpacing.sm),
@@ -189,6 +195,110 @@ class _ProductDetailView extends StatelessWidget {
         const SizedBox(height: AppSpacing.xl),
         ProductReviewsSection(productId: product.id),
       ],
+    );
+  }
+}
+
+/// Jewellery specification table (Type / Metal / Purity / Weight) built from the
+/// fields that exist today. Certification, making charges and dimensions are
+/// planned schema additions and will slot in as further rows.
+class _Specifications extends StatelessWidget {
+  const _Specifications({required this.detail});
+
+  final ProductDetail detail;
+
+  static String _cap(String s) =>
+      s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
+
+  @override
+  Widget build(BuildContext context) {
+    final product = detail.product;
+
+    // Weight lives on variants; show the single value or a range across them.
+    final weights = detail.variants
+        .map((v) => v.weightGrams)
+        .whereType<double>()
+        .toList();
+    String? weight;
+    if (weights.isNotEmpty) {
+      final lo = weights.reduce(math.min);
+      final hi = weights.reduce(math.max);
+      weight = lo == hi
+          ? '${lo.toStringAsFixed(2)} g'
+          : '${lo.toStringAsFixed(2)}–${hi.toStringAsFixed(2)} g';
+    }
+
+    final rows = <(IconData, String, String)>[
+      (Icons.category_outlined, 'Type', _cap(product.jewelleryType)),
+      if (product.material != null && product.material!.isNotEmpty)
+        (Icons.diamond_outlined, 'Metal', _cap(product.material!)),
+      if (product.purity != null && product.purity!.isNotEmpty)
+        (Icons.workspace_premium_outlined, 'Purity', product.purity!.toUpperCase()),
+      if (weight != null) (Icons.scale_outlined, 'Weight', weight),
+    ];
+    if (rows.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Specifications', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: AppSpacing.sm),
+        LuxuryCard(
+          padding: EdgeInsets.zero,
+          child: Column(
+            children: [
+              for (var i = 0; i < rows.length; i++) ...[
+                if (i > 0) const LuxuryDivider(height: 1),
+                _SpecRow(
+                  icon: rows[i].$1,
+                  label: rows[i].$2,
+                  value: rows[i].$3,
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SpecRow extends StatelessWidget {
+  const _SpecRow({required this.icon, required this.label, required this.value});
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: AppColors.primaryGold),
+          const SizedBox(width: AppSpacing.sm),
+          Text(
+            label,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColors.mediumGrey,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          // Bound + end-align so a long value can't overflow at large text scales.
+          Expanded(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: theme.textTheme.titleSmall,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -253,10 +253,10 @@ void main() {
       expect(find.text('PKR 159999.00'), findsWidgets); // compare price
       expect(find.text('4.6'), findsOneWidget); // rating summary
 
-      // Tags, description, seller, reviews.
-      expect(find.text('ring'), findsOneWidget);
-      expect(find.text('Gold'), findsOneWidget);
-      expect(find.text('22k'), findsOneWidget);
+      // Specifications, description, seller, reviews.
+      expect(find.text('Ring'), findsOneWidget); // Type spec row
+      expect(find.text('Gold'), findsOneWidget); // Metal spec row
+      expect(find.text('22K'), findsOneWidget); // Purity spec row (uppercased)
       expect(find.text('Description'), findsOneWidget);
       expect(find.textContaining('exquisite handcrafted'), findsOneWidget);
       expect(find.textContaining('Sold by Gold House'), findsOneWidget);
@@ -324,7 +324,7 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.text('Description'), findsNothing); // no description section
-      expect(find.text('ring'), findsOneWidget); // jewelleryType tag remains
+      expect(find.text('Ring'), findsOneWidget); // Type spec row remains
       final hero = tester.widget<NetworkImageWidget>(
         find.byType(NetworkImageWidget),
       );
