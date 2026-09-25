@@ -62,6 +62,7 @@ import '../../features/wholesale/presentation/wholesale_page.dart';
 import '../../features/wishlist/presentation/wishlist_page.dart';
 import '../theme/theme_exports.dart';
 import 'app_routes.dart';
+import 'main_shell.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -119,18 +120,48 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: 'passwordUpdated',
         builder: (context, state) => const PasswordUpdatedPage(),
       ),
-      _fadeRoute(
-        path: AppRoutes.home,
-        name: 'home',
-        builder: (context, state) => const HomePage(),
-      ),
-      _fadeRoute(
-        path: AppRoutes.explore,
-        name: 'explore',
-        builder: (context, state) => ExplorePage(
-          categoryId: state.uri.queryParameters['category'],
-          material: state.uri.queryParameters['material'],
-        ),
+      // The five primary destinations live in a persistent bottom-nav shell.
+      // Their pages switch instantly (no transition); every detail route below
+      // stays on the root navigator and opens full-screen over the shell.
+      ShellRoute(
+        builder: (context, state, child) =>
+            MainShell(location: state.uri.path, child: child),
+        routes: [
+          GoRoute(
+            path: AppRoutes.home,
+            name: 'home',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: HomePage()),
+          ),
+          GoRoute(
+            path: AppRoutes.explore,
+            name: 'explore',
+            pageBuilder: (context, state) => NoTransitionPage(
+              child: ExplorePage(
+                categoryId: state.uri.queryParameters['category'],
+                material: state.uri.queryParameters['material'],
+              ),
+            ),
+          ),
+          GoRoute(
+            path: AppRoutes.wholesale,
+            name: 'wholesale',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: WholesalePage()),
+          ),
+          GoRoute(
+            path: AppRoutes.orders,
+            name: 'orders',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: OrdersPage()),
+          ),
+          GoRoute(
+            path: AppRoutes.profile,
+            name: 'profile',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: ProfilePage()),
+          ),
+        ],
       ),
       _fadeRoute(
         path: AppRoutes.product,
@@ -154,20 +185,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             : AppRoutes.login,
       ),
       _fadeRoute(
-        path: AppRoutes.orders,
-        name: 'orders',
-        builder: (context, state) => const OrdersPage(),
-      ),
-      _fadeRoute(
         path: AppRoutes.orderDetail,
         name: 'orderDetail',
         builder: (context, state) =>
             OrderDetailPage(orderId: state.pathParameters['id'] ?? ''),
-      ),
-      _fadeRoute(
-        path: AppRoutes.profile,
-        name: 'profile',
-        builder: (context, state) => const ProfilePage(),
       ),
       _fadeRoute(
         path: AppRoutes.addresses,
@@ -249,11 +270,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: 'sellerRfqDetail',
         builder: (context, state) =>
             SellerRfqDetailPage(rfqId: state.pathParameters['id'] ?? ''),
-      ),
-      _fadeRoute(
-        path: AppRoutes.wholesale,
-        name: 'wholesale',
-        builder: (context, state) => const WholesalePage(),
       ),
       _fadeRoute(
         path: AppRoutes.rfqDetail,
