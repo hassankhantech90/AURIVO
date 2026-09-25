@@ -104,8 +104,8 @@ void main() {
     await _pumpExplore(tester, 320);
     expect(tester.takeException(), isNull);
     // The complete current-price amount is rendered (scaled, never truncated).
-    expect(find.text('PKR 129999.00'), findsWidgets);
+    expect(find.text('PKR 129,999'), findsWidgets);
     // The struck-through original price also remains present.
-    expect(find.text('PKR 159999.00'), findsWidgets);
+    expect(find.text('PKR 159,999'), findsWidgets);
   });
 }

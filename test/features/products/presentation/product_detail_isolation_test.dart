@@ -94,7 +94,7 @@ void main() {
     await tester.pump();
     await tester.pump();
     expect(find.text('PRODUCT_A'), findsWidgets);
-    expect(find.text('PKR 1111.00'), findsOneWidget);
+    expect(find.text('PKR 1,111'), findsOneWidget);
 
     // Navigate to B; its request is held open (loading).
     switcherKey.currentState!.show('B');
@@ -103,7 +103,7 @@ void main() {
 
     // While B loads, none of A's content leaks through B's page.
     expect(find.text('PRODUCT_A'), findsNothing);
-    expect(find.text('PKR 1111.00'), findsNothing);
+    expect(find.text('PKR 1,111'), findsNothing);
     expect(find.byType(LoadingIndicator), findsWidgets);
     expect(find.byType(NetworkImageWidget), findsNothing);
 
@@ -122,7 +122,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('PRODUCT_B'), findsWidgets);
-    expect(find.text('PKR 2222.00'), findsOneWidget);
+    expect(find.text('PKR 2,222'), findsOneWidget);
     expect(find.text('PRODUCT_A'), findsNothing);
     final hero = tester.widget<NetworkImageWidget>(
       find.byType(NetworkImageWidget),

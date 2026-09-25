@@ -241,7 +241,7 @@ void main() {
       expect(find.text('Coupon'), findsNothing);
       // Summary + CTA.
       expect(find.text('Total'), findsOneWidget);
-      expect(find.text('PKR 129999.00'), findsWidgets);
+      expect(find.text('PKR 129,999'), findsWidgets);
       expect(find.text('2 item(s)'), findsOneWidget);
       expect(find.text('Place order'), findsOneWidget);
     });
@@ -386,7 +386,7 @@ void main() {
 
         expect(tester.takeException(), isNull);
         expect(find.text('Place order'), findsOneWidget);
-        expect(find.text('PKR 129999.00'), findsWidgets);
+        expect(find.text('PKR 129,999'), findsWidgets);
         expect(find.text('Pay when your order arrives.'), findsOneWidget);
       });
     }

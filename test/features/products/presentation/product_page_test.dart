@@ -249,8 +249,8 @@ void main() {
         find.byType(NetworkImageWidget),
       );
       expect(hero.imageUrl, 'https://cdn.test/product-images/p1/hero.jpg');
-      expect(find.text('PKR 129999.00'), findsWidgets);
-      expect(find.text('PKR 159999.00'), findsWidgets); // compare price
+      expect(find.text('PKR 129,999'), findsWidgets);
+      expect(find.text('PKR 159,999'), findsWidgets); // compare price
       expect(find.text('4.6'), findsOneWidget); // rating summary
 
       // Specifications, description, seller, reviews.
@@ -293,9 +293,9 @@ void main() {
           ),
         ),
       );
-      expect(find.text('PKR 5000.00'), findsWidgets);
+      expect(find.text('PKR 5,000'), findsWidgets);
       // No compare/original amount rendered.
-      expect(find.text('PKR 159999.00'), findsNothing);
+      expect(find.text('PKR 159,999'), findsNothing);
     });
   });
 
@@ -558,10 +558,10 @@ void main() {
         expect(tester.takeException(), isNull);
 
         // Compare-price variant (v1): both amounts remain present.
-        expect(find.text('PKR 129999.00'), findsWidgets);
-        expect(find.text('PKR 159999.00'), findsWidgets);
+        expect(find.text('PKR 129,999'), findsWidgets);
+        expect(find.text('PKR 159,999'), findsWidgets);
         // Single-price variant (v2): its current price remains present.
-        expect(find.text('PKR 149999.00'), findsWidgets);
+        expect(find.text('PKR 149,999'), findsWidgets);
 
         // Weights and Add-to-Cart actions remain present for both variants.
         expect(find.text('5.50 g'), findsOneWidget);

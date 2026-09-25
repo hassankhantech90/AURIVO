@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 
 import '../../../../core/theme/theme_exports.dart';
+import '../../../../core/utils/money.dart';
 
 /// Small status badge for compact labels and counters.
 class LuxuryBadge extends StatelessWidget {
@@ -203,7 +204,7 @@ class PriceWidget extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Text(
-            '$currency ${price.toStringAsFixed(2)}',
+            formatMoney(price, currency: currency),
             style: Theme.of(
               context,
             ).textTheme.titleMedium?.copyWith(color: AppColors.jetBlack),
@@ -211,7 +212,7 @@ class PriceWidget extends StatelessWidget {
           if (originalPrice != null) ...[
             const SizedBox(width: AppSpacing.sm),
             Text(
-              '$currency ${originalPrice!.toStringAsFixed(2)}',
+              formatMoney(originalPrice!, currency: currency),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 decoration: TextDecoration.lineThrough,
               ),
