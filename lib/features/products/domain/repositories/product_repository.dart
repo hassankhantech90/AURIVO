@@ -14,6 +14,9 @@ abstract class ProductRepository {
   /// When [categoryIds] is provided it takes precedence over [categoryId] and
   /// matches products in ANY of the given categories; a non-null empty list
   /// yields no products. [categoryId] is kept for backward compatibility.
+  ///
+  /// [material] filters by the product's metal (e.g. 'Gold', 'Silver') and
+  /// composes with the other filters (AND).
   Future<List<Product>> getProducts({
     int limit = 20,
     int offset = 0,
@@ -21,6 +24,7 @@ abstract class ProductRepository {
     String? categoryId,
     List<String>? categoryIds,
     bool? featured,
+    String? material,
     ProductSort sort = ProductSort.newest,
   });
 

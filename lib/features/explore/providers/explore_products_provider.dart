@@ -39,14 +39,15 @@ class ExploreProductsNotifier
 
   /// Loads the catalogue for Explore. With [rootCategoryId] null this is the
   /// full newest catalogue; otherwise it filters to that root category's
-  /// visible subtree (root + all descendants).
-  Future<void> load({String? rootCategoryId}) {
+  /// visible subtree (root + all descendants). [material] filters by metal and
+  /// composes with the category filter (AND).
+  Future<void> load({String? rootCategoryId, String? material}) {
     return _runner.run(() async {
       if (rootCategoryId == null) {
-        return _products.getProducts();
+        return _products.getProducts(material: material);
       }
       final ids = await _categories.descendantCategoryIds(rootCategoryId);
-      return _products.getProducts(categoryIds: ids);
+      return _products.getProducts(categoryIds: ids, material: material);
     });
   }
 }

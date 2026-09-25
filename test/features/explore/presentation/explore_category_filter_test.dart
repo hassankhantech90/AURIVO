@@ -40,6 +40,7 @@ class _CatalogProductRepository implements ProductRepository {
   bool unfilteredRequested = false;
   int filteredCalls = 0;
   List<String>? lastCategoryIds;
+  String? lastMaterial;
 
   @override
   Future<List<Product>> getProducts({
@@ -49,8 +50,10 @@ class _CatalogProductRepository implements ProductRepository {
     String? categoryId,
     List<String>? categoryIds,
     bool? featured,
+    String? material,
     ProductSort sort = ProductSort.newest,
   }) async {
+    lastMaterial = material;
     if (categoryIds == null) {
       unfilteredRequested = true;
       return unfiltered;
@@ -118,6 +121,29 @@ void main() {
     expect(products.unfilteredRequested, isTrue);
     expect(products.lastCategoryIds, isNull); // no category-set filter
     expect(categories.resolvedRoots, isEmpty); // no subtree resolution
+  });
+
+  testWidgets('D2. a metal filter passes material and titles the surface', (
+    tester,
+  ) async {
+    _bigView(tester);
+    final products = _CatalogProductRepository(
+      unfiltered: [_product('GOLD')],
+    );
+    final categories = _TreeCategoryRepository(const {});
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: _overrides(products, categories),
+        child: const MaterialApp(home: ExplorePage(material: 'Gold')),
+      ),
+    );
+    await _settle(tester);
+
+    expect(products.lastMaterial, 'Gold'); // metal reaches the repository
+    expect(products.lastCategoryIds, isNull); // no category-set filter
+    expect(find.text('Gold'), findsOneWidget); // app-bar title is the metal
+    expect(find.text('Ring GOLD'), findsOneWidget);
   });
 
   testWidgets('E. filtered Explore resolves the subtree and filters products', (

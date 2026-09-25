@@ -67,6 +67,7 @@ class _FakeProductRepository implements ProductRepository {
     String? categoryId,
     List<String>? categoryIds,
     bool? featured,
+    String? material,
     ProductSort sort = ProductSort.newest,
   }) {
     getProductsCalls++;
@@ -237,7 +238,10 @@ Widget _home({required List<Override> overrides, ThemeData? theme}) {
       GoRoute(
         path: AppRoutes.explore,
         builder: (_, s) => Scaffold(
-          body: Text('EXPLORE_${s.uri.queryParameters['category'] ?? 'none'}'),
+          body: Text(
+            'EXPLORE_${s.uri.queryParameters['category'] ?? 'none'}'
+            '_${s.uri.queryParameters['material'] ?? 'none'}',
+          ),
         ),
       ),
       GoRoute(
@@ -422,6 +426,7 @@ void main() {
     testWidgets('failure shows an error with a Retry that reloads', (
       tester,
     ) async {
+      _bigView(tester);
       final products = _FakeProductRepository(error: Exception('prod down'));
       await tester.pumpWidget(
         _home(
@@ -600,7 +605,15 @@ void main() {
       await pumpHome(tester);
       await tapAndSettle(tester, find.text('Rings'));
       // The tapped category's id ('rings') is transmitted as ?category=.
-      expect(find.text('EXPLORE_rings'), findsOneWidget);
+      expect(find.text('EXPLORE_rings_none'), findsOneWidget);
+    });
+
+    testWidgets('metal tab -> /explore with the metal as ?material=', (
+      tester,
+    ) async {
+      await pumpHome(tester);
+      await tapAndSettle(tester, find.text('Gold'));
+      expect(find.text('EXPLORE_none_Gold'), findsOneWidget);
     });
 
     testWidgets('product card -> /product/:id with the product id', (

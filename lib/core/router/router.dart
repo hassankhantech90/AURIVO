@@ -127,8 +127,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       _fadeRoute(
         path: AppRoutes.explore,
         name: 'explore',
-        builder: (context, state) =>
-            ExplorePage(categoryId: state.uri.queryParameters['category']),
+        builder: (context, state) => ExplorePage(
+          categoryId: state.uri.queryParameters['category'],
+          material: state.uri.queryParameters['material'],
+        ),
       ),
       _fadeRoute(
         path: AppRoutes.product,

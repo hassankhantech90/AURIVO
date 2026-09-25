@@ -108,6 +108,10 @@ class _HomePageState extends ConsumerState<HomePage> {
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.lg),
           children: [
+            const SectionHeader(title: 'Shop by metal'),
+            const SizedBox(height: AppSpacing.md),
+            const _MetalTabs(),
+            const SizedBox(height: AppSpacing.xl),
             const SectionHeader(title: 'Shop by category'),
             const SizedBox(height: AppSpacing.md),
             SizedBox(height: 150, child: _categories(categories)),
@@ -231,6 +235,35 @@ class _BrandTitle extends StatelessWidget {
             ),
           ),
         ),
+      ],
+    );
+  }
+}
+
+/// The pilot's fixed metal taxonomy, surfaced as Home filter tabs. Each opens
+/// Explore filtered to that metal (mirrors the category-card → Explore flow).
+const _metals = ['Gold', 'Silver', 'Artificial'];
+
+/// Horizontal row of metal filter chips. Tapping a metal browses Explore
+/// filtered by that metal via a `material` query parameter.
+class _MetalTabs extends StatelessWidget {
+  const _MetalTabs();
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: AppSpacing.sm,
+      children: [
+        for (final metal in _metals)
+          LuxuryChip(
+            label: metal,
+            onTap: () => context.push(
+              Uri(
+                path: AppRoutes.explore,
+                queryParameters: {'material': metal},
+              ).toString(),
+            ),
+          ),
       ],
     );
   }

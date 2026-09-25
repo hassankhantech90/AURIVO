@@ -13,11 +13,15 @@ import '../providers/explore_products_provider.dart';
 /// [exploreProductsProvider] — a dedicated state independent of Home's
 /// productListProvider. When given a [categoryId] (a root category) it shows
 /// that category's whole visible subtree; otherwise the full newest catalogue.
+/// [material] narrows the grid to a single metal (e.g. from a Home metal tab).
 class ExplorePage extends ConsumerStatefulWidget {
-  const ExplorePage({super.key, this.categoryId});
+  const ExplorePage({super.key, this.categoryId, this.material});
 
   /// Root category to filter by (its subtree), or null for the full catalogue.
   final String? categoryId;
+
+  /// Metal to filter by (e.g. 'Gold', 'Silver'), or null for all metals.
+  final String? material;
 
   @override
   ConsumerState<ExplorePage> createState() => _ExplorePageState();
@@ -36,14 +40,15 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
     }
     return ref
         .read(exploreProductsProvider.notifier)
-        .load(rootCategoryId: widget.categoryId);
+        .load(rootCategoryId: widget.categoryId, material: widget.material);
   }
 
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(exploreProductsProvider);
     return Scaffold(
-      appBar: const LuxuryAppBar(title: 'Explore'),
+      // A metal filter names the surface (e.g. "Gold"); otherwise "Explore".
+      appBar: LuxuryAppBar(title: widget.material ?? 'Explore'),
       body: RefreshIndicator(onRefresh: _load, child: _body(state)),
     );
   }
@@ -62,11 +67,14 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
         final products = state.data ?? const [];
         if (products.isEmpty) {
           return ListView(
-            children: const [
-              SizedBox(height: 120),
+            children: [
+              const SizedBox(height: 120),
               EmptyStateWidget(
                 title: 'No products found',
-                message: 'The catalogue is empty right now.',
+                message: widget.material == null
+                    ? 'The catalogue is empty right now.'
+                    : 'No ${widget.material!.toLowerCase()} pieces yet — '
+                          'check back soon.',
               ),
             ],
           );

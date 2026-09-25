@@ -45,12 +45,14 @@ class SupabaseProductRepository implements ProductRepository {
     String? categoryId,
     List<String>? categoryIds,
     bool? featured,
+    String? material,
     ProductSort sort = ProductSort.newest,
   }) async {
     try {
       final filters = <String, Object?>{
         'brand_id': ?brandId,
         'featured': ?featured,
+        'material': ?material,
       };
       final whereIn = <String, List<Object>>{};
       // categoryIds (a category-set / subtree filter) takes precedence over the
