@@ -51,8 +51,8 @@ class _HomePageState extends ConsumerState<HomePage> {
 
     return Scaffold(
       appBar: LuxuryAppBar(
-        title: 'AURIVO',
-        largeTitle: true,
+        titleWidget: const _BrandTitle(),
+        toolbarHeight: 74,
         actions: [
           _CountBadgeIcon(
             tooltip: 'Cart',
@@ -62,20 +62,44 @@ class _HomePageState extends ConsumerState<HomePage> {
             count: ref.watch(cartProvider.select((s) => s.itemCount)),
             onPressed: () => context.push(AppRoutes.cart),
           ),
-          _CountBadgeIcon(
-            tooltip: 'Messages',
-            icon: Icons.chat_bubble_outline,
-            count: ref.watch(unreadChatCountProvider),
-            onPressed: () => context.push(AppRoutes.messages),
-          ),
           _NotificationsBell(
             count: ref.watch(unreadNotificationsCountProvider),
             onPressed: () => context.push(AppRoutes.notifications),
           ),
-          IconButton(
-            tooltip: 'Settings',
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () => context.push(AppRoutes.settings),
+          // Secondary destinations live in an overflow menu to keep the header
+          // clean (they move to the bottom nav when that lands).
+          PopupMenuButton<String>(
+            tooltip: 'More',
+            icon: const Icon(Icons.more_vert),
+            onSelected: (value) {
+              if (value == 'messages') {
+                context.push(AppRoutes.messages);
+              } else if (value == 'settings') {
+                context.push(AppRoutes.settings);
+              }
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem(
+                value: 'messages',
+                child: Row(
+                  children: [
+                    Icon(Icons.chat_bubble_outline),
+                    SizedBox(width: AppSpacing.md),
+                    Text('Messages'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'settings',
+                child: Row(
+                  children: [
+                    Icon(Icons.settings_outlined),
+                    SizedBox(width: AppSpacing.md),
+                    Text('Settings'),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -179,6 +203,37 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   Widget _productCard(Product product) => WishlistProductCard(product: product);
+}
+
+/// The AURIVO wordmark with the marketplace tagline, for the Home app bar.
+class _BrandTitle extends StatelessWidget {
+  const _BrandTitle();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('AURIVO', style: theme.textTheme.headlineSmall),
+        // Scale-down guard so the letter-spaced tagline never overflows next to
+        // the app-bar actions on narrow phones / large text scales.
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            'THE JEWELLERY MARKETPLACE',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: AppColors.mediumGrey,
+              letterSpacing: 2.2,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 /// Bell icon with an unread-count badge, linking to the notification centre.

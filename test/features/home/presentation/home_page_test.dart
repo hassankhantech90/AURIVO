@@ -317,9 +317,9 @@ void main() {
       expect(find.text('Rings'), findsOneWidget); // category card
       expect(find.text('Ring p1'), findsOneWidget); // featured product card
       expect(find.byTooltip('Cart'), findsOneWidget);
-      expect(find.byTooltip('Messages'), findsOneWidget);
       expect(find.byTooltip('Notifications'), findsOneWidget);
-      expect(find.byTooltip('Settings'), findsOneWidget);
+      // Messages + Settings moved into the overflow menu.
+      expect(find.byTooltip('More'), findsOneWidget);
     });
   });
 
@@ -483,13 +483,14 @@ void main() {
         _home(
           overrides: [
             ..._catalog(),
-            unreadChatCountProvider.overrideWithValue(5),
+            _cartCount(5),
             unreadNotificationsCountProvider.overrideWithValue(12),
           ],
         ),
       );
       await _settle(tester);
 
+      // Header carries two count badges: the cart and the notifications bell.
       expect(find.byType(Badge), findsNWidgets(2));
       expect(find.text('5'), findsOneWidget);
       expect(find.text('12'), findsOneWidget);
@@ -500,8 +501,8 @@ void main() {
         _home(
           overrides: [
             ..._catalog(),
-            unreadChatCountProvider.overrideWithValue(150),
-            unreadNotificationsCountProvider.overrideWithValue(0),
+            _cartCount(0),
+            unreadNotificationsCountProvider.overrideWithValue(150),
           ],
         ),
       );
@@ -610,9 +611,10 @@ void main() {
       expect(find.text('PRODUCT_p1'), findsOneWidget);
     });
 
-    testWidgets('Messages action -> /messages', (tester) async {
+    testWidgets('Messages action (overflow) -> /messages', (tester) async {
       await pumpHome(tester);
-      await tapAndSettle(tester, find.byTooltip('Messages'));
+      await tapAndSettle(tester, find.byTooltip('More'));
+      await tapAndSettle(tester, find.text('Messages'));
       expect(find.text('MESSAGES'), findsOneWidget);
     });
 
@@ -622,9 +624,10 @@ void main() {
       expect(find.text('NOTIFICATIONS'), findsOneWidget);
     });
 
-    testWidgets('Settings action -> /settings', (tester) async {
+    testWidgets('Settings action (overflow) -> /settings', (tester) async {
       await pumpHome(tester);
-      await tapAndSettle(tester, find.byTooltip('Settings'));
+      await tapAndSettle(tester, find.byTooltip('More'));
+      await tapAndSettle(tester, find.text('Settings'));
       expect(find.text('SETTINGS'), findsOneWidget);
     });
   });
@@ -646,9 +649,9 @@ void main() {
       await _settle(tester);
 
       expect(find.byTooltip('Cart'), findsOneWidget);
-      // Existing Chat + Notifications actions remain present.
-      expect(find.byTooltip('Messages'), findsOneWidget);
+      // Notifications icon + the overflow menu remain present.
       expect(find.byTooltip('Notifications'), findsOneWidget);
+      expect(find.byTooltip('More'), findsOneWidget);
 
       await tester.tap(find.byTooltip('Cart'));
       await tester.pump();

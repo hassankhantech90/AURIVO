@@ -8,15 +8,21 @@ class LuxuryAppBar extends StatelessWidget implements PreferredSizeWidget {
   const LuxuryAppBar({
     super.key,
     this.title,
+    this.titleWidget,
     this.largeTitle = false,
     this.showBackButton = false,
     this.actions,
     this.searchController,
     this.searchHint = 'Search',
     this.onSearchChanged,
+    this.toolbarHeight,
   });
 
   final String? title;
+
+  /// A custom title widget (e.g. a branded wordmark + tagline). Takes
+  /// precedence over [title] when provided.
+  final Widget? titleWidget;
   final bool largeTitle;
   final bool showBackButton;
   final List<Widget>? actions;
@@ -24,22 +30,31 @@ class LuxuryAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String searchHint;
   final ValueChanged<String>? onSearchChanged;
 
+  /// Explicit toolbar height (e.g. to fit a two-line branded title). When null
+  /// the default height is used, so existing app bars are unaffected.
+  final double? toolbarHeight;
+
   @override
-  Size get preferredSize =>
-      Size.fromHeight(searchController == null ? (largeTitle ? 96 : 64) : 116);
+  Size get preferredSize {
+    if (searchController != null) return const Size.fromHeight(116);
+    return Size.fromHeight(toolbarHeight ?? (largeTitle ? 96 : 64));
+  }
 
   @override
   Widget build(BuildContext context) {
     return AppBar(
       automaticallyImplyLeading: showBackButton,
-      title: title == null
-          ? null
-          : Text(
-              title!,
-              style: largeTitle
-                  ? Theme.of(context).textTheme.headlineMedium
-                  : Theme.of(context).textTheme.titleLarge,
-            ),
+      toolbarHeight: searchController == null ? toolbarHeight : null,
+      title:
+          titleWidget ??
+          (title == null
+              ? null
+              : Text(
+                  title!,
+                  style: largeTitle
+                      ? Theme.of(context).textTheme.headlineMedium
+                      : Theme.of(context).textTheme.titleLarge,
+                )),
       actions: actions,
       bottom: searchController == null
           ? null
