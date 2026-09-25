@@ -244,27 +244,33 @@ class _BrandTitle extends StatelessWidget {
 /// Explore filtered to that metal (mirrors the category-card → Explore flow).
 const _metals = ['Gold', 'Silver', 'Artificial'];
 
-/// Horizontal row of metal filter chips. Tapping a metal browses Explore
-/// filtered by that metal via a `material` query parameter.
-class _MetalTabs extends StatelessWidget {
+/// Full-width segmented control of metals. Tapping a metal highlights it and
+/// browses Explore filtered by that metal via a `material` query parameter.
+/// Gold is highlighted by default to match the target mockups.
+class _MetalTabs extends StatefulWidget {
   const _MetalTabs();
 
   @override
+  State<_MetalTabs> createState() => _MetalTabsState();
+}
+
+class _MetalTabsState extends State<_MetalTabs> {
+  int _selected = 0;
+
+  @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: AppSpacing.sm,
-      children: [
-        for (final metal in _metals)
-          LuxuryChip(
-            label: metal,
-            onTap: () => context.push(
-              Uri(
-                path: AppRoutes.explore,
-                queryParameters: {'material': metal},
-              ).toString(),
-            ),
-          ),
-      ],
+    return SegmentedTabs(
+      labels: _metals,
+      selectedIndex: _selected,
+      onSelected: (index) {
+        setState(() => _selected = index);
+        context.push(
+          Uri(
+            path: AppRoutes.explore,
+            queryParameters: {'material': _metals[index]},
+          ).toString(),
+        );
+      },
     );
   }
 }
