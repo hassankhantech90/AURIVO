@@ -114,7 +114,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             const SizedBox(height: AppSpacing.xl),
             const SectionHeader(title: 'Shop by category'),
             const SizedBox(height: AppSpacing.md),
-            SizedBox(height: 150, child: _categories(categories)),
+            SizedBox(height: 180, child: _categories(categories)),
             const SizedBox(height: AppSpacing.xl),
             const SectionHeader(title: 'Featured'),
             const SizedBox(height: AppSpacing.md),

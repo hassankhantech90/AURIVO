@@ -19,38 +19,35 @@ class CategoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Image on top, title on a white footer below — matching the target
+    // mockups. The image flexes to fill whatever height the cell leaves after
+    // the label, so the card never overflows in a fixed-height rail.
     return LuxuryCard(
       onTap: onTap,
       padding: EdgeInsets.zero,
-      child: Stack(
-        alignment: Alignment.bottomLeft,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AspectRatio(
-            aspectRatio: 1.35,
+          Expanded(
             child: NetworkImageWidget(
               imageUrl: imageUrl,
-              borderRadius: BorderRadius.circular(AppRadius.xl),
-            ),
-          ),
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(AppRadius.xl),
-                gradient: const LinearGradient(
-                  colors: [Colors.transparent, Color(0x99000000)],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(AppRadius.xl),
               ),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm,
+            ),
             child: Text(
               title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: Theme.of(
                 context,
-              ).textTheme.titleLarge?.copyWith(color: AppColors.pureWhite),
+              ).textTheme.titleSmall?.copyWith(color: AppColors.charcoal),
             ),
           ),
         ],
