@@ -13,7 +13,6 @@ class ProductCard extends StatelessWidget {
     required this.imageUrl,
     this.currency = 'USD',
     this.originalPrice,
-    this.rating,
     this.isFavourite = false,
     this.onTap,
     this.onFavouritePressed,
@@ -24,7 +23,6 @@ class ProductCard extends StatelessWidget {
   final String imageUrl;
   final String currency;
   final num? originalPrice;
-  final double? rating;
   final bool isFavourite;
   final VoidCallback? onTap;
   final VoidCallback? onFavouritePressed;
@@ -69,20 +67,16 @@ class ProductCard extends StatelessWidget {
               children: [
                 Text(
                   name,
-                  maxLines: 2,
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
-                const SizedBox(height: AppSpacing.sm),
+                const SizedBox(height: AppSpacing.xs),
                 PriceWidget(
                   price: price,
                   originalPrice: originalPrice,
                   currency: currency,
                 ),
-                if (rating != null) ...[
-                  const SizedBox(height: AppSpacing.sm),
-                  RatingWidget(rating: rating!),
-                ],
               ],
             ),
           ),

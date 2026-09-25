@@ -359,10 +359,12 @@ class FavouriteButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Saved state is a filled charcoal heart (the mockups' monochrome look);
+    // the filled/outline switch carries the meaning, not colour.
     return IconButton.filledTonal(
       onPressed: onPressed,
       icon: Icon(isFavourite ? Icons.favorite : Icons.favorite_border),
-      color: isFavourite ? AppColors.error : AppColors.jetBlack,
+      color: AppColors.jetBlack,
       style: IconButton.styleFrom(backgroundColor: AppColors.pureWhite),
     );
   }
