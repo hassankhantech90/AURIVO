@@ -149,7 +149,7 @@ void main() {
     expect(find.text('Ring GOLD'), findsOneWidget);
   });
 
-  testWidgets('D3. a search query passes through and titles the surface', (
+  testWidgets('D3. a route search query seeds the field and reaches the repo', (
     tester,
   ) async {
     _bigView(tester);
@@ -168,8 +168,34 @@ void main() {
 
     expect(products.lastSearch, 'ring'); // query reaches the repository
     expect(products.lastCategoryIds, isNull); // no category-set filter
-    expect(find.text('“ring”'), findsOneWidget); // app-bar title is the query
+    expect(find.text('Explore'), findsOneWidget); // title stays "Explore"
+    expect(find.text('ring'), findsOneWidget); // search field seeded with query
     expect(find.text('Ring MATCH'), findsOneWidget);
+  });
+
+  testWidgets('D4. submitting the search field refines the results', (
+    tester,
+  ) async {
+    _bigView(tester);
+    final products = _CatalogProductRepository(
+      unfiltered: [_product('MATCH')],
+    );
+    final categories = _TreeCategoryRepository(const {});
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: _overrides(products, categories),
+        child: const MaterialApp(home: ExplorePage()),
+      ),
+    );
+    await _settle(tester);
+    expect(products.lastSearch, isNull); // initial load had no query
+
+    await tester.enterText(find.byType(SearchBar), 'pendant');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await _settle(tester);
+
+    expect(products.lastSearch, 'pendant'); // refined query reaches the repo
   });
 
   testWidgets('E. filtered Explore resolves the subtree and filters products', (

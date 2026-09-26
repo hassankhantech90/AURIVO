@@ -33,10 +33,24 @@ class ExplorePage extends ConsumerStatefulWidget {
 }
 
 class _ExplorePageState extends ConsumerState<ExplorePage> {
+  late final TextEditingController _controller;
+
+  /// The live query, seeded from the route's [ExplorePage.search] and then
+  /// edited in place via the search field. Composes with the metal/category.
+  late String _query;
+
   @override
   void initState() {
     super.initState();
+    _query = widget.search?.trim() ?? '';
+    _controller = TextEditingController(text: _query);
     WidgetsBinding.instance.addPostFrameCallback((_) => _load());
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   Future<void> _load() {
@@ -48,30 +62,61 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
         .load(
           rootCategoryId: widget.categoryId,
           material: widget.material,
-          search: widget.search,
+          search: _query.isEmpty ? null : _query,
         );
+  }
+
+  /// Re-runs the catalogue query for a refined [value]; a no-op when the
+  /// trimmed query is unchanged, so resubmitting the same text is free.
+  void _runSearch(String value) {
+    final next = value.trim();
+    if (next == _query) return;
+    setState(() => _query = next);
+    _load();
   }
 
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(exploreProductsProvider);
     return Scaffold(
-      // A query or metal filter names the surface; otherwise "Explore".
-      appBar: LuxuryAppBar(title: _title),
-      body: RefreshIndicator(onRefresh: _load, child: _body(state)),
+      // A metal filter names the surface; otherwise "Explore". The live query
+      // lives in the search field below, not the title.
+      appBar: LuxuryAppBar(title: widget.material ?? 'Explore'),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.md,
+              AppSpacing.lg,
+              AppSpacing.md,
+            ),
+            child: ValueListenableBuilder<TextEditingValue>(
+              valueListenable: _controller,
+              builder: (context, value, _) => CustomSearchBar(
+                controller: _controller,
+                hintText: 'Search jewellery',
+                onSubmitted: _runSearch,
+                onClear: value.text.isEmpty
+                    ? null
+                    : () {
+                        _controller.clear();
+                        _runSearch('');
+                      },
+              ),
+            ),
+          ),
+          Expanded(
+            child: RefreshIndicator(onRefresh: _load, child: _body(state)),
+          ),
+        ],
+      ),
     );
   }
 
-  String get _title {
-    final query = widget.search?.trim();
-    if (query != null && query.isNotEmpty) return '“$query”';
-    return widget.material ?? 'Explore';
-  }
-
   String get _emptyMessage {
-    final query = widget.search?.trim();
-    if (query != null && query.isNotEmpty) {
-      return 'Nothing matched “$query”. Try a different search.';
+    if (_query.isNotEmpty) {
+      return 'Nothing matched “$_query”. Try a different search.';
     }
     if (widget.material != null) {
       return 'No ${widget.material!.toLowerCase()} pieces yet — '
