@@ -1,6 +1,6 @@
+import 'package:aurivo/core/theme/spacing.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/theme_exports.dart';
 import '../inputs/custom_search_bar.dart';
 
 /// Reusable AURIVO app bar supporting large, small, search, back, and action variants.
