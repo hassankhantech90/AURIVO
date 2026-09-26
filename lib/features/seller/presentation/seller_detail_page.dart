@@ -5,6 +5,7 @@ import '../../../shared/design_system.dart';
 import '../../authentication/providers/session_provider.dart';
 import '../../chat/presentation/widgets/message_seller_button.dart';
 import '../../profile/domain/entities/seller_profile.dart';
+import '../../wholesale/presentation/widgets/rfq_form_sheet.dart';
 import '../../wishlist/presentation/widgets/wishlist_product_card.dart';
 import '../../wishlist/providers/wishlist_providers.dart';
 import '../domain/entities/seller_storefront.dart';
@@ -78,7 +79,25 @@ class _StorefrontBody extends StatelessWidget {
       children: [
         _HeaderCard(seller: seller, storefront: storefront),
         const SizedBox(height: AppSpacing.md),
-        MessageSellerButton(sellerProfileId: seller.id, label: 'Message store'),
+        // Message + Request Quote, side by side (both hide for signed-out
+        // buyers, matching the storefront's existing message affordance).
+        Row(
+          children: [
+            Expanded(
+              child: MessageSellerButton(
+                sellerProfileId: seller.id,
+                label: 'Message',
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: _RequestQuoteButton(
+                sellerProfileId: seller.id,
+                storeName: seller.storeName,
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: AppSpacing.lg),
         Text('Products', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: AppSpacing.sm),
@@ -107,6 +126,36 @@ class _StorefrontBody extends StatelessWidget {
         const SizedBox(height: AppSpacing.xl),
         SellerReviewsSection(slug: slug, storefront: storefront),
       ],
+    );
+  }
+}
+
+/// "Request Quote" CTA for the storefront: opens the RFQ form pre-filled with
+/// this seller. Hidden for signed-out buyers (like [MessageSellerButton]); the
+/// buyer identity is resolved server-side on submit.
+class _RequestQuoteButton extends ConsumerWidget {
+  const _RequestQuoteButton({
+    required this.sellerProfileId,
+    required this.storeName,
+  });
+
+  final String sellerProfileId;
+  final String storeName;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isAuthenticated = ref.watch(
+      sessionProvider.select((s) => s.isAuthenticated),
+    );
+    if (!isAuthenticated) return const SizedBox.shrink();
+    return PrimaryButton(
+      label: 'Request Quote',
+      icon: Icons.request_quote_outlined,
+      onPressed: () => RfqFormSheet.show(
+        context,
+        sellerProfileId: sellerProfileId,
+        contextLabel: storeName,
+      ),
     );
   }
 }
