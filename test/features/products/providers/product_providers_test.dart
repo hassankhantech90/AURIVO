@@ -1,6 +1,7 @@
 import 'package:aurivo/core/utils/failure.dart';
 import 'package:aurivo/features/products/domain/entities/attribute.dart';
 import 'package:aurivo/features/products/domain/entities/brand.dart';
+import 'package:aurivo/features/products/domain/entities/price_tier.dart';
 import 'package:aurivo/features/products/domain/entities/product.dart';
 import 'package:aurivo/features/products/domain/entities/product_detail.dart';
 import 'package:aurivo/features/products/domain/entities/product_image.dart';
@@ -59,6 +60,12 @@ class _FakeProductRepository implements ProductRepository {
   Future<ProductDetail?> getProductDetail(String id) async {
     if (error != null) throw error!;
     return null;
+  }
+
+  @override
+  Future<List<PriceTier>> getProductPriceTiers(String productId) async {
+    if (error != null) throw error!;
+    return const [];
   }
 
   @override

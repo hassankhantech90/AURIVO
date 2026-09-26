@@ -1,5 +1,6 @@
 import '../entities/attribute.dart';
 import '../entities/brand.dart';
+import '../entities/price_tier.dart';
 import '../entities/product.dart';
 import '../entities/product_detail.dart';
 import '../entities/product_image.dart';
@@ -55,6 +56,10 @@ abstract class ProductRepository {
   Future<List<ProductImage>> getProductImages(String productId);
 
   Future<List<ProductVariant>> getProductVariants(String productId);
+
+  /// Wholesale price tiers for [productId], ascending by minimum quantity.
+  /// Empty when the product has no tiered pricing.
+  Future<List<PriceTier>> getProductPriceTiers(String productId);
 
   Future<List<Brand>> getBrands();
 

@@ -514,4 +514,33 @@ void main() {
       expect(await repo.getProducts(), isEmpty);
     });
   });
+
+  group('getProductPriceTiers', () {
+    test('queries the tiers table by product, ordered by min quantity', () async {
+      db.onList = (table, q) => table == 'product_price_tiers'
+          ? [
+              {
+                'id': 't1',
+                'product_id': 'p1',
+                'min_quantity': 10,
+                'unit_price': 82000,
+              },
+            ]
+          : const [];
+
+      final tiers = await repo.getProductPriceTiers('p1');
+
+      expect(tiers, hasLength(1));
+      expect(tiers.first.minQuantity, 10);
+      expect(tiers.first.unitPrice, 82000);
+      final q = db.queries.firstWhere((q) => q.table == 'product_price_tiers');
+      expect(q.filters['product_id'], 'p1');
+      expect(q.orderBy, 'min_quantity');
+    });
+
+    test('returns empty when the product has no tiers', () async {
+      db.onList = (table, q) => const [];
+      expect(await repo.getProductPriceTiers('p1'), isEmpty);
+    });
+  });
 }

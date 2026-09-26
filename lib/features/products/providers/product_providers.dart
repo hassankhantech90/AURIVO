@@ -7,6 +7,7 @@ import '../../../core/utils/failure.dart';
 import '../data/primary_image_resolver.dart';
 import '../data/repositories/supabase_product_repository.dart';
 import '../domain/entities/brand.dart';
+import '../domain/entities/price_tier.dart';
 import '../domain/entities/product.dart';
 import '../domain/entities/product_detail.dart';
 import '../domain/entities/product_sort.dart';
@@ -117,6 +118,15 @@ class ProductDetailNotifier extends StateNotifier<CatalogState<ProductDetail>> {
     });
   }
 }
+
+// Price tiers ----------------------------------------------------------------
+
+/// Wholesale price tiers for a product, scoped per id and auto-disposed. Empty
+/// for products without tiered pricing. Read-only — no notifier needed.
+final productPriceTiersProvider = FutureProvider.autoDispose
+    .family<List<PriceTier>, String>((ref, productId) {
+      return ref.watch(productRepositoryProvider).getProductPriceTiers(productId);
+    });
 
 // Brands ---------------------------------------------------------------------
 

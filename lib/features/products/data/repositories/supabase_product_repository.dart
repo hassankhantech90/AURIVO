@@ -1,6 +1,7 @@
 import '../../../../core/supabase/supabase_database_service.dart';
 import '../../domain/entities/attribute.dart';
 import '../../domain/entities/brand.dart';
+import '../../domain/entities/price_tier.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/entities/product_detail.dart';
 import '../../domain/entities/product_image.dart';
@@ -29,6 +30,7 @@ class SupabaseProductRepository implements ProductRepository {
   static const String _productCategoriesTable = 'product_categories';
   static const String _productImagesTable = 'product_images';
   static const String _productVariantsTable = 'product_variants';
+  static const String _productPriceTiersTable = 'product_price_tiers';
   static const String _brandsTable = 'brands';
   static const String _attributesTable = 'attributes';
   static const String _attributeValuesTable = 'attribute_values';
@@ -196,6 +198,20 @@ class SupabaseProductRepository implements ProductRepository {
         orderBy: 'price',
       );
       return rows.map(ProductVariant.fromMap).toList();
+    } catch (error) {
+      throw CatalogFailureMapper.map(error);
+    }
+  }
+
+  @override
+  Future<List<PriceTier>> getProductPriceTiers(String productId) async {
+    try {
+      final rows = await _database.list(
+        table: _productPriceTiersTable,
+        filters: {'product_id': productId},
+        orderBy: 'min_quantity',
+      );
+      return rows.map(PriceTier.fromMap).toList();
     } catch (error) {
       throw CatalogFailureMapper.map(error);
     }

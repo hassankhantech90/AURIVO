@@ -5,6 +5,7 @@ import 'package:aurivo/core/supabase/supabase_auth_service.dart';
 import 'package:aurivo/core/supabase/supabase_service.dart';
 import 'package:aurivo/core/utils/failure.dart';
 import 'package:aurivo/features/authentication/providers/session_provider.dart';
+import 'package:aurivo/features/products/domain/entities/price_tier.dart';
 import 'package:aurivo/features/products/domain/entities/product.dart';
 import 'package:aurivo/features/products/domain/entities/product_detail.dart';
 import 'package:aurivo/features/products/domain/entities/product_variant.dart';
@@ -47,13 +48,18 @@ class _DetailRepository implements ProductRepository {
     this.completer,
     this.failTimes = 0,
     this.returnNull = false,
+    this.tiers = const [],
   });
 
   final ProductDetail? detail;
   final Completer<ProductDetail?>? completer;
   int failTimes;
   final bool returnNull;
+  final List<PriceTier> tiers;
   int calls = 0;
+
+  @override
+  Future<List<PriceTier>> getProductPriceTiers(String id) async => tiers;
 
   @override
   Future<ProductDetail?> getProductDetail(String id) {
@@ -228,6 +234,62 @@ void main() {
 
       completer.complete(_richDetail()); // avoid a pending future
       await tester.pump();
+    });
+  });
+
+  group('wholesale pricing', () {
+    testWidgets('shows MOQ and tiered price breaks when present', (
+      tester,
+    ) async {
+      final detail = ProductDetail(
+        product: _richProduct().copyWith(minOrderQuantity: 10),
+        variants: _richDetail().variants,
+      );
+      await _pump(
+        tester,
+        _app(
+          overrides: _guestOverrides(
+            _DetailRepository(
+              detail: detail,
+              tiers: const [
+                PriceTier(
+                  id: 't1',
+                  productId: 'p1',
+                  minQuantity: 10,
+                  unitPrice: 120000,
+                ),
+                PriceTier(
+                  id: 't2',
+                  productId: 'p1',
+                  minQuantity: 50,
+                  unitPrice: 110000,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pump(); // tiers future resolves
+
+      expect(find.text('Wholesale'), findsOneWidget);
+      expect(find.text('Minimum order'), findsOneWidget);
+      expect(find.text('10 pieces'), findsOneWidget);
+      expect(find.text('10+ pieces'), findsOneWidget);
+      expect(find.text('PKR 120,000 each'), findsOneWidget);
+      expect(find.text('50+ pieces'), findsOneWidget);
+      expect(find.text('PKR 110,000 each'), findsOneWidget);
+    });
+
+    testWidgets('hides the wholesale block with no MOQ and no tiers', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        _app(overrides: _guestOverrides(_DetailRepository(detail: _richDetail()))),
+      );
+      await tester.pump();
+
+      expect(find.text('Wholesale'), findsNothing);
     });
   });
 

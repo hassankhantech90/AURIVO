@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_routes.dart';
+import '../../../core/utils/money.dart';
 import '../../../shared/design_system.dart';
 import '../../authentication/providers/session_provider.dart';
 import '../../cart/providers/cart_providers.dart';
@@ -13,6 +14,7 @@ import '../../seller/providers/seller_providers.dart';
 import '../../wholesale/presentation/widgets/rfq_form_sheet.dart';
 import '../../wishlist/providers/wishlist_providers.dart';
 import '../domain/entities/product.dart';
+import '../domain/entities/price_tier.dart';
 import '../domain/entities/product_detail.dart';
 import '../domain/entities/product_variant.dart';
 import '../providers/catalog_state.dart';
@@ -159,6 +161,7 @@ class _ProductDetailView extends StatelessWidget {
         _SellerLink(sellerId: product.sellerId),
         const SizedBox(height: AppSpacing.sm),
         _Specifications(detail: detail),
+        _WholesalePricing(product: product),
         if (product.description != null) ...[
           const SizedBox(height: AppSpacing.lg),
           Text('Description', style: Theme.of(context).textTheme.titleMedium),
@@ -254,6 +257,56 @@ class _Specifications extends StatelessWidget {
                   label: rows[i].$2,
                   value: rows[i].$3,
                 ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Wholesale block: minimum order quantity and any tiered "buy N+ at X each"
+/// price breaks. Renders nothing when the product has neither. Tiers load
+/// lazily via [productPriceTiersProvider]; MOQ comes from the product itself.
+class _WholesalePricing extends ConsumerWidget {
+  const _WholesalePricing({required this.product});
+
+  final Product product;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final moq = product.minOrderQuantity;
+    final showMoq = moq != null && moq > 1;
+    final tiers =
+        ref.watch(productPriceTiersProvider(product.id)).valueOrNull ??
+        const <PriceTier>[];
+
+    final rows = <(IconData, String, String)>[
+      if (showMoq)
+        (Icons.inventory_2_outlined, 'Minimum order', '$moq pieces'),
+      for (final tier in tiers)
+        (
+          Icons.local_offer_outlined,
+          '${tier.minQuantity}+ pieces',
+          '${formatMoney(tier.unitPrice, currency: product.currency)} each',
+        ),
+    ];
+    if (rows.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: AppSpacing.lg),
+        Text('Wholesale', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: AppSpacing.sm),
+        LuxuryCard(
+          padding: EdgeInsets.zero,
+          child: Column(
+            children: [
+              for (var i = 0; i < rows.length; i++) ...[
+                if (i > 0) const LuxuryDivider(height: 1),
+                _SpecRow(icon: rows[i].$1, label: rows[i].$2, value: rows[i].$3),
               ],
             ],
           ),
