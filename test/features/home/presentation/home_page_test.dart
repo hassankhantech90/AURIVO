@@ -329,6 +329,7 @@ void main() {
 
   group('B. category section states', () {
     testWidgets('loading shows the indicator', (tester) async {
+      _bigView(tester);
       final hang = Completer<List<Category>>();
       await tester.pumpWidget(
         _home(
@@ -394,6 +395,7 @@ void main() {
 
   group('C. featured section states', () {
     testWidgets('loading shows the indicator', (tester) async {
+      _bigView(tester);
       final hang = Completer<List<Product>>();
       await tester.pumpWidget(
         _home(
@@ -410,6 +412,7 @@ void main() {
     });
 
     testWidgets('empty shows the empty state', (tester) async {
+      _bigView(tester);
       await tester.pumpWidget(
         _home(
           overrides: _catalog(

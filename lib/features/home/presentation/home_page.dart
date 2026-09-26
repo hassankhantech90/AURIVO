@@ -15,6 +15,7 @@ import '../../products/providers/product_providers.dart';
 import '../../notifications/providers/notification_providers.dart';
 import '../../wishlist/presentation/widgets/wishlist_product_card.dart';
 import '../../wishlist/providers/wishlist_providers.dart';
+import 'widgets/home_hero_carousel.dart';
 
 /// Home surface: root categories and a featured products rail, wired to the
 /// catalog providers.
@@ -111,6 +112,8 @@ class _HomePageState extends ConsumerState<HomePage> {
             const SectionHeader(title: 'Shop by metal'),
             const SizedBox(height: AppSpacing.md),
             const _MetalTabs(),
+            const SizedBox(height: AppSpacing.xl),
+            HomeHeroCarousel(products: products.data ?? const []),
             const SizedBox(height: AppSpacing.xl),
             const SectionHeader(title: 'Shop by category'),
             const SizedBox(height: AppSpacing.md),
