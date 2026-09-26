@@ -46,6 +46,8 @@ class _StubDatabase extends SupabaseDatabaseService {
     String columns = '*',
     Map<String, Object?> filters = const {},
     Map<String, List<Object>> whereIn = const {},
+    String? ilikeColumn,
+    String? ilikeQuery,
     String? orderBy,
     bool ascending = true,
     int? limit,

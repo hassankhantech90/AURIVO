@@ -14,14 +14,19 @@ import '../providers/explore_products_provider.dart';
 /// productListProvider. When given a [categoryId] (a root category) it shows
 /// that category's whole visible subtree; otherwise the full newest catalogue.
 /// [material] narrows the grid to a single metal (e.g. from a Home metal tab).
+/// [search] narrows the grid to a title contains-match (e.g. from the Home
+/// search bar).
 class ExplorePage extends ConsumerStatefulWidget {
-  const ExplorePage({super.key, this.categoryId, this.material});
+  const ExplorePage({super.key, this.categoryId, this.material, this.search});
 
   /// Root category to filter by (its subtree), or null for the full catalogue.
   final String? categoryId;
 
   /// Metal to filter by (e.g. 'Gold', 'Silver'), or null for all metals.
   final String? material;
+
+  /// Free-text query to filter by (product title), or null for no query.
+  final String? search;
 
   @override
   ConsumerState<ExplorePage> createState() => _ExplorePageState();
@@ -40,17 +45,39 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
     }
     return ref
         .read(exploreProductsProvider.notifier)
-        .load(rootCategoryId: widget.categoryId, material: widget.material);
+        .load(
+          rootCategoryId: widget.categoryId,
+          material: widget.material,
+          search: widget.search,
+        );
   }
 
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(exploreProductsProvider);
     return Scaffold(
-      // A metal filter names the surface (e.g. "Gold"); otherwise "Explore".
-      appBar: LuxuryAppBar(title: widget.material ?? 'Explore'),
+      // A query or metal filter names the surface; otherwise "Explore".
+      appBar: LuxuryAppBar(title: _title),
       body: RefreshIndicator(onRefresh: _load, child: _body(state)),
     );
+  }
+
+  String get _title {
+    final query = widget.search?.trim();
+    if (query != null && query.isNotEmpty) return '“$query”';
+    return widget.material ?? 'Explore';
+  }
+
+  String get _emptyMessage {
+    final query = widget.search?.trim();
+    if (query != null && query.isNotEmpty) {
+      return 'Nothing matched “$query”. Try a different search.';
+    }
+    if (widget.material != null) {
+      return 'No ${widget.material!.toLowerCase()} pieces yet — '
+          'check back soon.';
+    }
+    return 'The catalogue is empty right now.';
   }
 
   Widget _body(CatalogState<List<Product>> state) {
@@ -71,10 +98,7 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
               const SizedBox(height: 120),
               EmptyStateWidget(
                 title: 'No products found',
-                message: widget.material == null
-                    ? 'The catalogue is empty right now.'
-                    : 'No ${widget.material!.toLowerCase()} pieces yet — '
-                          'check back soon.',
+                message: _emptyMessage,
               ),
             ],
           );

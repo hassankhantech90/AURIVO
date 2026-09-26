@@ -29,13 +29,19 @@ class SupabaseDatabaseService {
   /// `IN` filters (the plain [select] only supports equality filters).
   ///
   /// [columns] may include PostgREST embeds. [filters] are equality filters,
-  /// [whereIn] are `IN` filters. When [limit] is provided, results are ranged
-  /// starting at [offset] (defaults to 0). RLS still applies to every read.
+  /// [whereIn] are `IN` filters. When [ilikeColumn] and a non-empty
+  /// [ilikeQuery] are given, a case-insensitive `%query%` contains-match is
+  /// applied to that column (the query is passed as a bound value, so user
+  /// text cannot alter the filter grammar). When [limit] is provided, results
+  /// are ranged starting at [offset] (defaults to 0). RLS still applies to
+  /// every read.
   Future<List<Map<String, dynamic>>> list({
     required String table,
     String columns = '*',
     Map<String, Object?> filters = const {},
     Map<String, List<Object>> whereIn = const {},
+    String? ilikeColumn,
+    String? ilikeQuery,
     String? orderBy,
     bool ascending = true,
     int? limit,
@@ -48,6 +54,11 @@ class SupabaseDatabaseService {
       }
       for (final entry in whereIn.entries) {
         query = query.inFilter(entry.key, entry.value);
+      }
+      if (ilikeColumn != null &&
+          ilikeQuery != null &&
+          ilikeQuery.trim().isNotEmpty) {
+        query = query.ilike(ilikeColumn, '%${ilikeQuery.trim()}%');
       }
       if (orderBy != null) {
         query = query.order(orderBy, ascending: ascending);

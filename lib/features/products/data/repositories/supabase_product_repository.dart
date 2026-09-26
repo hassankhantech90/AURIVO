@@ -46,6 +46,7 @@ class SupabaseProductRepository implements ProductRepository {
     List<String>? categoryIds,
     bool? featured,
     String? material,
+    String? search,
     ProductSort sort = ProductSort.newest,
   }) async {
     try {
@@ -73,6 +74,8 @@ class SupabaseProductRepository implements ProductRepository {
         table: _productsTable,
         filters: filters,
         whereIn: whereIn,
+        ilikeColumn: 'title',
+        ilikeQuery: search,
         orderBy: orderBy,
         ascending: ascending,
         limit: limit,

@@ -140,6 +140,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               child: ExplorePage(
                 categoryId: state.uri.queryParameters['category'],
                 material: state.uri.queryParameters['material'],
+                search: state.uri.queryParameters['q'],
               ),
             ),
           ),

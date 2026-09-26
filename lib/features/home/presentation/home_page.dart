@@ -109,6 +109,8 @@ class _HomePageState extends ConsumerState<HomePage> {
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.lg),
           children: [
+            const _HomeSearchBar(),
+            const SizedBox(height: AppSpacing.xl),
             const SectionHeader(title: 'Shop by metal'),
             const SizedBox(height: AppSpacing.md),
             const _MetalTabs(),
@@ -239,6 +241,52 @@ class _BrandTitle extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Home search entry. Submitting a non-empty query opens Explore filtered to
+/// that query (`?q=`), mirroring the metal-tab → Explore flow. The field keeps
+/// its text so returning from results shows the last query.
+class _HomeSearchBar extends StatefulWidget {
+  const _HomeSearchBar();
+
+  @override
+  State<_HomeSearchBar> createState() => _HomeSearchBarState();
+}
+
+class _HomeSearchBarState extends State<_HomeSearchBar> {
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit(String value) {
+    final query = value.trim();
+    if (query.isEmpty) return;
+    context.push(
+      Uri(
+        path: AppRoutes.explore,
+        queryParameters: {'q': query},
+      ).toString(),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Rebuild as the text changes so the clear button appears only when there
+    // is something to clear.
+    return ValueListenableBuilder<TextEditingValue>(
+      valueListenable: _controller,
+      builder: (context, value, _) => CustomSearchBar(
+        controller: _controller,
+        hintText: 'Search jewellery, brands & makers',
+        onSubmitted: _submit,
+        onClear: value.text.isEmpty ? null : _controller.clear,
+      ),
     );
   }
 }

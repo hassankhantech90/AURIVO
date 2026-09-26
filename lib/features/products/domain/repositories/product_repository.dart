@@ -16,7 +16,8 @@ abstract class ProductRepository {
   /// yields no products. [categoryId] is kept for backward compatibility.
   ///
   /// [material] filters by the product's metal (e.g. 'Gold', 'Silver') and
-  /// composes with the other filters (AND).
+  /// composes with the other filters (AND). [search] is a case-insensitive
+  /// contains-match on the product title and composes with the other filters.
   Future<List<Product>> getProducts({
     int limit = 20,
     int offset = 0,
@@ -25,6 +26,7 @@ abstract class ProductRepository {
     List<String>? categoryIds,
     bool? featured,
     String? material,
+    String? search,
     ProductSort sort = ProductSort.newest,
   });
 

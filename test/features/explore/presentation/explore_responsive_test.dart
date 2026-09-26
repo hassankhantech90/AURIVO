@@ -24,6 +24,7 @@ class _FakeProductRepository implements ProductRepository {
     List<String>? categoryIds,
     bool? featured,
     String? material,
+    String? search,
     ProductSort sort = ProductSort.newest,
   }) async => products;
   @override

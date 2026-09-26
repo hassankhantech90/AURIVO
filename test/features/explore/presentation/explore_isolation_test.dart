@@ -34,6 +34,7 @@ class _RoutingProductRepository implements ProductRepository {
     List<String>? categoryIds,
     bool? featured,
     String? material,
+    String? search,
     ProductSort sort = ProductSort.newest,
   }) async {
     return featured == true ? this.featured : catalogue;

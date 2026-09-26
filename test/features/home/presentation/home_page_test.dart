@@ -68,6 +68,7 @@ class _FakeProductRepository implements ProductRepository {
     List<String>? categoryIds,
     bool? featured,
     String? material,
+    String? search,
     ProductSort sort = ProductSort.newest,
   }) {
     getProductsCalls++;
@@ -240,7 +241,8 @@ Widget _home({required List<Override> overrides, ThemeData? theme}) {
         builder: (_, s) => Scaffold(
           body: Text(
             'EXPLORE_${s.uri.queryParameters['category'] ?? 'none'}'
-            '_${s.uri.queryParameters['material'] ?? 'none'}',
+            '_${s.uri.queryParameters['material'] ?? 'none'}'
+            '_${s.uri.queryParameters['q'] ?? 'none'}',
           ),
         ),
       ),
@@ -608,7 +610,7 @@ void main() {
       await pumpHome(tester);
       await tapAndSettle(tester, find.text('Rings'));
       // The tapped category's id ('rings') is transmitted as ?category=.
-      expect(find.text('EXPLORE_rings_none'), findsOneWidget);
+      expect(find.text('EXPLORE_rings_none_none'), findsOneWidget);
     });
 
     testWidgets('metal tab -> /explore with the metal as ?material=', (
@@ -616,7 +618,28 @@ void main() {
     ) async {
       await pumpHome(tester);
       await tapAndSettle(tester, find.text('Gold'));
-      expect(find.text('EXPLORE_none_Gold'), findsOneWidget);
+      expect(find.text('EXPLORE_none_Gold_none'), findsOneWidget);
+    });
+
+    testWidgets('search submit -> /explore with the query as ?q=', (
+      tester,
+    ) async {
+      await pumpHome(tester);
+      await tester.enterText(find.byType(SearchBar), 'jhumka');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.text('EXPLORE_none_none_jhumka'), findsOneWidget);
+    });
+
+    testWidgets('blank search submit does not navigate', (tester) async {
+      await pumpHome(tester);
+      await tester.enterText(find.byType(SearchBar), '   ');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      // Still on Home; no Explore stub was pushed.
+      expect(find.textContaining('EXPLORE_'), findsNothing);
     });
 
     testWidgets('product card -> /product/:id with the product id', (
