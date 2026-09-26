@@ -198,6 +198,32 @@ void main() {
     expect(products.lastSearch, 'pendant'); // refined query reaches the repo
   });
 
+  testWidgets('D5. typing debounces, then live-searches after a pause', (
+    tester,
+  ) async {
+    _bigView(tester);
+    final products = _CatalogProductRepository(
+      unfiltered: [_product('MATCH')],
+    );
+    final categories = _TreeCategoryRepository(const {});
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: _overrides(products, categories),
+        child: const MaterialApp(home: ExplorePage()),
+      ),
+    );
+    await _settle(tester);
+    expect(products.lastSearch, isNull);
+
+    await tester.enterText(find.byType(SearchBar), 'ring');
+    await tester.pump(const Duration(milliseconds: 100)); // still within debounce
+    expect(products.lastSearch, isNull); // not yet fired
+
+    await tester.pump(const Duration(milliseconds: 400)); // past the debounce
+    expect(products.lastSearch, 'ring'); // live search fired once paused
+  });
+
   testWidgets('E. filtered Explore resolves the subtree and filters products', (
     tester,
   ) async {

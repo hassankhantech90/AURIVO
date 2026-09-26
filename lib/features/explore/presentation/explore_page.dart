@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -33,7 +35,11 @@ class ExplorePage extends ConsumerStatefulWidget {
 }
 
 class _ExplorePageState extends ConsumerState<ExplorePage> {
+  /// How long typing pauses before a live search fires.
+  static const Duration _debounceDelay = Duration(milliseconds: 350);
+
   late final TextEditingController _controller;
+  Timer? _debounce;
 
   /// The live query, seeded from the route's [ExplorePage.search] and then
   /// edited in place via the search field. Composes with the metal/category.
@@ -49,6 +55,7 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _controller.dispose();
     super.dispose();
   }
@@ -64,6 +71,20 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
           material: widget.material,
           search: _query.isEmpty ? null : _query,
         );
+  }
+
+  /// Debounces typing: schedules a live search once the user pauses. A new
+  /// keystroke cancels the pending run.
+  void _onQueryChanged(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(_debounceDelay, () => _runSearch(value));
+  }
+
+  /// Searches immediately (e.g. on Enter or clear), cancelling any pending
+  /// debounced run first.
+  void _submitSearch(String value) {
+    _debounce?.cancel();
+    _runSearch(value);
   }
 
   /// Re-runs the catalogue query for a refined [value]; a no-op when the
@@ -96,12 +117,13 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
               builder: (context, value, _) => CustomSearchBar(
                 controller: _controller,
                 hintText: 'Search jewellery',
-                onSubmitted: _runSearch,
+                onChanged: _onQueryChanged,
+                onSubmitted: _submitSearch,
                 onClear: value.text.isEmpty
                     ? null
                     : () {
                         _controller.clear();
-                        _runSearch('');
+                        _submitSearch('');
                       },
               ),
             ),
