@@ -52,6 +52,11 @@ class AppRoutes {
   /// Builds a concrete seller product-images location for [id].
   static String sellerProductImagesPath(String id) =>
       '/seller-studio/images/$id';
+  static const sellerProductTiers = '/seller-studio/tiers/:id';
+
+  /// Builds a concrete seller wholesale-tiers location for [id].
+  static String sellerProductTiersPath(String id) =>
+      '/seller-studio/tiers/$id';
   static const sellerRfqInbox = '/seller-studio/rfqs';
   static const sellerRfqDetail = '/seller-studio/rfqs/:id';
 

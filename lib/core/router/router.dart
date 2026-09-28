@@ -51,6 +51,7 @@ import '../../features/seller/presentation/seller_order_detail_page.dart';
 import '../../features/seller/presentation/seller_orders_page.dart';
 import '../../features/seller/presentation/seller_rfq_detail_page.dart';
 import '../../features/seller/presentation/seller_rfq_inbox_page.dart';
+import '../../features/seller/presentation/seller_tiers_page.dart';
 import '../../features/seller/presentation/seller_variants_page.dart';
 import '../../features/seller/presentation/store_settings_page.dart';
 import '../../features/settings/presentation/settings_page.dart';
@@ -249,6 +250,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: 'sellerProductImages',
         builder: (context, state) =>
             SellerImagesPage(productId: state.pathParameters['id'] ?? ''),
+      ),
+      _fadeRoute(
+        path: AppRoutes.sellerProductTiers,
+        name: 'sellerProductTiers',
+        builder: (context, state) =>
+            SellerTiersPage(productId: state.pathParameters['id'] ?? ''),
       ),
       _fadeRoute(
         path: AppRoutes.sellerOrders,
