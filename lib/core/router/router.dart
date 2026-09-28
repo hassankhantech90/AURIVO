@@ -65,9 +65,18 @@ import '../theme/theme_exports.dart';
 import 'app_routes.dart';
 import 'main_shell.dart';
 
+/// Root navigator (detail pages open here, full-screen over the shell) and the
+/// bottom-nav shell's own navigator. Giving the shell a dedicated navigator key
+/// keeps its tab pages out of the root navigator's page list, so pushing a
+/// detail route whose path sits under a tab (e.g. /profile/addresses) can never
+/// collide page keys with the shell page.
+final _rootNavigatorKey = GlobalKey<NavigatorState>();
+final _shellNavigatorKey = GlobalKey<NavigatorState>();
+
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: AppRoutes.splash,
+    navigatorKey: _rootNavigatorKey,
     routes: [
       _fadeRoute(
         path: AppRoutes.splash,
@@ -125,6 +134,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // Their pages switch instantly (no transition); every detail route below
       // stays on the root navigator and opens full-screen over the shell.
       ShellRoute(
+        navigatorKey: _shellNavigatorKey,
         builder: (context, state, child) =>
             MainShell(location: state.uri.path, child: child),
         routes: [

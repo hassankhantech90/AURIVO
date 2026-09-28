@@ -103,4 +103,50 @@ void main() {
     expect(find.text('PRODUCT'), findsOneWidget);
     expect(find.byType(LuxuryBottomNavigationBar), findsNothing);
   });
+
+  // Regression: pushing a detail route whose path sits under a tab
+  // (/profile/addresses under the /profile tab) must not crash with a
+  // duplicate page-key assertion. The shell's dedicated navigator key keeps
+  // its tab pages out of the root navigator's page list.
+  testWidgets('pushing a detail route under a tab path does not crash', (
+    tester,
+  ) async {
+    final rootKey = GlobalKey<NavigatorState>();
+    final shellKey = GlobalKey<NavigatorState>();
+    Page<void> page(String label) =>
+        NoTransitionPage(child: Scaffold(body: Text(label)));
+    final router = GoRouter(
+      navigatorKey: rootKey,
+      initialLocation: AppRoutes.profile,
+      routes: [
+        ShellRoute(
+          navigatorKey: shellKey,
+          builder: (context, state, child) =>
+              MainShell(location: state.uri.path, child: child),
+          routes: [
+            GoRoute(path: AppRoutes.home, pageBuilder: (_, _) => page('HOME')),
+            GoRoute(
+              path: AppRoutes.profile,
+              pageBuilder: (_, _) => page('PROFILE'),
+            ),
+          ],
+        ),
+        GoRoute(
+          path: AppRoutes.addresses, // '/profile/addresses' — shares the prefix
+          builder: (_, _) => const Scaffold(body: Text('ADDRESSES')),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpAndSettle();
+    expect(find.text('PROFILE'), findsOneWidget);
+
+    router.push(AppRoutes.addresses);
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('ADDRESSES'), findsOneWidget);
+  });
 }
