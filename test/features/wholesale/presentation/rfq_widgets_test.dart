@@ -12,13 +12,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
-Rfq _rfq({String id = 'rfq-1', int quantity = 10, String status = 'open'}) =>
-    Rfq.fromMap({
-      'id': id,
-      'buyer_profile_id': 'p1',
-      'quantity': quantity,
-      'status': status,
-    });
+Rfq _rfq({
+  String id = 'rfq-1',
+  int quantity = 10,
+  String status = 'open',
+  String? productId,
+}) => Rfq.fromMap({
+  'id': id,
+  'buyer_profile_id': 'p1',
+  'quantity': quantity,
+  'status': status,
+  'product_id': productId,
+});
 
 Quote _quote({String id = 'q1'}) => Quote.fromMap({
   'id': id,
@@ -67,6 +72,21 @@ class _FakeRfqRepository implements RFQRepository {
   @override
   Future<Rfq> cancelRfq(String rfqId) async =>
       _rfq(id: rfqId, status: 'cancelled');
+
+  int acceptCalls = 0;
+  String? lastAcceptQuoteId;
+  String? lastAcceptAddressId;
+
+  @override
+  Future<String> acceptQuote({
+    required String quoteId,
+    required String addressId,
+  }) async {
+    acceptCalls++;
+    lastAcceptQuoteId = quoteId;
+    lastAcceptAddressId = addressId;
+    return 'order-1';
+  }
 }
 
 Widget _wrap(Widget child, RFQRepository repo) {
@@ -121,6 +141,33 @@ void main() {
       expect(find.text('Cancel request'), findsNothing);
     },
   );
+
+  testWidgets('RfqDetailPage offers Accept on a live quote for a product RFQ', (
+    tester,
+  ) async {
+    final repo = _FakeRfqRepository(
+      detail: RfqDetail(
+        rfq: _rfq(productId: 'prod-1'),
+        quotes: [_quote()],
+      ),
+    );
+    await tester.pumpWidget(_wrap(const RfqDetailPage(rfqId: 'rfq-1'), repo));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Accept & order'), findsOneWidget);
+  });
+
+  testWidgets('RfqDetailPage hides Accept when the RFQ has no product', (
+    tester,
+  ) async {
+    final repo = _FakeRfqRepository(
+      detail: RfqDetail(rfq: _rfq(), quotes: [_quote()]),
+    );
+    await tester.pumpWidget(_wrap(const RfqDetailPage(rfqId: 'rfq-1'), repo));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Accept & order'), findsNothing);
+  });
 
   testWidgets('RfqFormSheet submits quantity + context and creates an RFQ', (
     tester,

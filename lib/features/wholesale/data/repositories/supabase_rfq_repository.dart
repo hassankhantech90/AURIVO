@@ -113,6 +113,23 @@ class SupabaseRfqRepository implements RFQRepository {
     }
   }
 
+  @override
+  Future<String> acceptQuote({
+    required String quoteId,
+    required String addressId,
+  }) async {
+    try {
+      final result = await _database.rpc(
+        functionName: 'accept_quote',
+        params: {'p_quote_id': quoteId, 'p_address_id': addressId},
+      );
+      if (result is String && result.isNotEmpty) return result;
+      throw const Failure(message: 'Could not create the order.');
+    } catch (error) {
+      throw RfqFailureMapper.map(error);
+    }
+  }
+
   Future<String> _requireProfileId() async {
     final result = await _database.rpc(functionName: 'current_profile_id');
     if (result is String && result.isNotEmpty) return result;

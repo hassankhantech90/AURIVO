@@ -151,4 +151,30 @@ class RfqDetailNotifier extends StateNotifier<RfqDataState<RfqDetail>> {
     });
     return succeeded && state.status == RfqViewStatus.success;
   }
+
+  /// Accepts [quoteId] and creates an order shipping to [addressId], then
+  /// reloads the RFQ. Returns the new order id on success, or null on failure
+  /// (the failure message is set on state for the caller to surface).
+  Future<String?> accept({
+    required String quoteId,
+    required String addressId,
+  }) async {
+    final previous = state;
+    state = state.copyWith(status: RfqViewStatus.loading, clearMessage: true);
+    final String orderId;
+    try {
+      orderId = await _repository.acceptQuote(
+        quoteId: quoteId,
+        addressId: addressId,
+      );
+    } catch (error) {
+      state = previous.copyWith(
+        status: RfqViewStatus.failure,
+        message: error.toString(),
+      );
+      return null;
+    }
+    await load();
+    return orderId;
+  }
 }

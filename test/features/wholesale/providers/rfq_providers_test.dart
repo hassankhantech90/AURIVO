@@ -20,6 +20,10 @@ class _FakeRfqRepository implements RFQRepository {
   int createCalls = 0;
   int cancelCalls = 0;
   int getRfqCalls = 0;
+  int acceptCalls = 0;
+  String? lastAcceptQuoteId;
+  String? lastAcceptAddressId;
+  Object? acceptError;
 
   @override
   Future<Rfq> createRfq({
@@ -55,6 +59,19 @@ class _FakeRfqRepository implements RFQRepository {
     cancelCalls++;
     status = 'cancelled';
     return _rfq(id: rfqId, status: status);
+  }
+
+  @override
+  Future<String> acceptQuote({
+    required String quoteId,
+    required String addressId,
+  }) async {
+    acceptCalls++;
+    lastAcceptQuoteId = quoteId;
+    lastAcceptAddressId = addressId;
+    if (acceptError != null) throw acceptError!;
+    status = 'accepted';
+    return 'order-1';
   }
 }
 
@@ -123,6 +140,46 @@ void main() {
         container.read(rfqDetailProvider('rfq-1')).data!.rfq.status,
         'cancelled',
       );
+    });
+
+    test('accept returns the order id and reloads the rfq', () async {
+      final repo = _FakeRfqRepository();
+      final container = _container(repo);
+      final notifier = container.read(rfqDetailProvider('rfq-1').notifier);
+      await notifier.load();
+
+      final orderId = await notifier.accept(
+        quoteId: 'q1',
+        addressId: 'addr-1',
+      );
+
+      expect(orderId, 'order-1');
+      expect(repo.acceptCalls, 1);
+      expect(repo.lastAcceptQuoteId, 'q1');
+      expect(repo.lastAcceptAddressId, 'addr-1');
+      expect(repo.getRfqCalls, 2); // load + reload after accept
+      expect(
+        container.read(rfqDetailProvider('rfq-1')).data!.rfq.status,
+        'accepted',
+      );
+    });
+
+    test('accept surfaces an error and leaves the rfq intact', () async {
+      final repo = _FakeRfqRepository()..acceptError = Exception('boom');
+      final container = _container(repo);
+      final notifier = container.read(rfqDetailProvider('rfq-1').notifier);
+      await notifier.load();
+
+      final orderId = await notifier.accept(
+        quoteId: 'q1',
+        addressId: 'addr-1',
+      );
+
+      expect(orderId, isNull);
+      expect(container.read(rfqDetailProvider('rfq-1')).status,
+          RfqViewStatus.failure);
+      // Detail is preserved so the page keeps showing the request.
+      expect(container.read(rfqDetailProvider('rfq-1')).data, isNotNull);
     });
   });
 }

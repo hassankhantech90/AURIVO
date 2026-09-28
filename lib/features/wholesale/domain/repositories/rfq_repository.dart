@@ -35,4 +35,13 @@ abstract class RFQRepository {
   /// Cancels [rfqId] (sets status to `cancelled`). RLS scopes the update to the
   /// owning buyer; the server remains authoritative.
   Future<Rfq> cancelRfq(String rfqId);
+
+  /// Accepts [quoteId] and creates a cash-on-delivery order shipping to
+  /// [addressId], returning the new order id. The server (`accept_quote`)
+  /// validates buyer ownership, quote/RFQ status, MOQ and stock, and marks the
+  /// quote and RFQ accepted (sibling quotes rejected).
+  Future<String> acceptQuote({
+    required String quoteId,
+    required String addressId,
+  });
 }

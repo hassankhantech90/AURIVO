@@ -4,13 +4,20 @@ import '../../../../shared/design_system.dart';
 import '../../domain/entities/quote.dart';
 import '../../domain/entities/rfq_status.dart';
 
-/// Read-only display of a seller's quote against an RFQ. The buyer app never
-/// mutates quotes and the schema has no "accepted quote" linkage, so this is
-/// purely informational (no accept/reject actions).
+/// Display of a seller's quote against an RFQ. When [onAccept] is provided the
+/// buyer can accept it, which converts the quote into an order; otherwise the
+/// tile is informational.
 class QuoteTile extends StatelessWidget {
-  const QuoteTile({super.key, required this.quote});
+  const QuoteTile({super.key, required this.quote, this.onAccept, this.busy = false});
 
   final Quote quote;
+
+  /// Called when the buyer accepts this quote. Null when the quote cannot be
+  /// accepted (wrong status, expired, RFQ closed, or not linked to a product).
+  final VoidCallback? onAccept;
+
+  /// Whether an accept is in flight (disables the button + shows a spinner).
+  final bool busy;
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +52,18 @@ class QuoteTile extends StatelessWidget {
           if (quote.message != null && quote.message!.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.xs),
             Text(quote.message!, style: theme.textTheme.bodyMedium),
+          ],
+          if (onAccept != null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            SizedBox(
+              width: double.infinity,
+              child: PrimaryButton(
+                label: 'Accept & order',
+                icon: Icons.check_circle_outline,
+                isLoading: busy,
+                onPressed: busy ? null : onAccept,
+              ),
+            ),
           ],
         ],
       ),

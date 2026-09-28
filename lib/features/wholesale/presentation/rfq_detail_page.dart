@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../core/router/app_routes.dart';
 import '../../../shared/design_system.dart';
 import '../../chat/presentation/widgets/message_seller_button.dart';
+import '../domain/entities/quote.dart';
 import '../domain/entities/rfq.dart';
 import '../domain/entities/rfq_detail.dart';
 import '../domain/entities/rfq_status.dart';
 import '../providers/rfq_providers.dart';
+import 'widgets/address_picker_sheet.dart';
 import 'widgets/quote_tile.dart';
 
-/// Read-only detail for a single RFQ: the request summary plus the quotes
-/// received. The buyer may cancel while the request is still active; quotes are
-/// display-only (no accept/reject — the schema has no accepted-quote linkage).
+/// Detail for a single RFQ: the request summary plus the quotes received. The
+/// buyer may cancel while the request is still active, and accept a live quote
+/// on a product-linked request — which converts it into an order.
 class RfqDetailPage extends ConsumerStatefulWidget {
   const RfqDetailPage({super.key, required this.rfqId});
 
@@ -23,6 +27,7 @@ class RfqDetailPage extends ConsumerStatefulWidget {
 
 class _RfqDetailPageState extends ConsumerState<RfqDetailPage> {
   bool _cancelling = false;
+  String? _acceptingQuoteId;
 
   @override
   void initState() {
@@ -32,6 +37,28 @@ class _RfqDetailPageState extends ConsumerState<RfqDetailPage> {
 
   Future<void> _load() =>
       ref.read(rfqDetailProvider(widget.rfqId).notifier).load();
+
+  Future<void> _accept(Quote quote) async {
+    final addressId = await AddressPickerSheet.show(context);
+    if (addressId == null || !mounted) return;
+
+    setState(() => _acceptingQuoteId = quote.id);
+    final orderId = await ref
+        .read(rfqDetailProvider(widget.rfqId).notifier)
+        .accept(quoteId: quote.id, addressId: addressId);
+    if (!mounted) return;
+    setState(() => _acceptingQuoteId = null);
+
+    if (orderId != null) {
+      LuxurySnackBars.success(context, 'Order placed from the accepted quote.');
+      context.push(AppRoutes.orderDetailPath(orderId));
+    } else {
+      final message =
+          ref.read(rfqDetailProvider(widget.rfqId)).message ??
+          'Could not accept the quote.';
+      LuxurySnackBars.error(context, message);
+    }
+  }
 
   Future<void> _confirmCancel() async {
     final confirmed = await LuxuryDialogs.showConfirmation(
@@ -80,6 +107,8 @@ class _RfqDetailPageState extends ConsumerState<RfqDetailPage> {
                   detail: detail,
                   cancelling: _cancelling,
                   onCancel: _confirmCancel,
+                  onAccept: _accept,
+                  acceptingQuoteId: _acceptingQuoteId,
                 ),
       },
     );
@@ -91,11 +120,25 @@ class _RfqDetailBody extends StatelessWidget {
     required this.detail,
     required this.cancelling,
     required this.onCancel,
+    required this.onAccept,
+    required this.acceptingQuoteId,
   });
 
   final RfqDetail detail;
   final bool cancelling;
   final VoidCallback onCancel;
+  final void Function(Quote quote) onAccept;
+  final String? acceptingQuoteId;
+
+  /// A live quote on a still-open, product-linked request can be accepted.
+  bool _canAccept(Rfq rfq, Quote quote) {
+    final validNow =
+        quote.validUntil == null || quote.validUntil!.isAfter(DateTime.now());
+    return rfq.productId != null &&
+        (rfq.status == RfqStatus.open || rfq.status == RfqStatus.quoted) &&
+        quote.status == QuoteStatus.sent &&
+        validNow;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -158,7 +201,11 @@ class _RfqDetailBody extends StatelessWidget {
           )
         else
           for (final quote in detail.quotes) ...[
-            QuoteTile(quote: quote),
+            QuoteTile(
+              quote: quote,
+              onAccept: _canAccept(rfq, quote) ? () => onAccept(quote) : null,
+              busy: acceptingQuoteId == quote.id,
+            ),
             const LuxuryDivider(),
           ],
         if (rfq.isCancellable) ...[
