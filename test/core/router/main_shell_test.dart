@@ -129,11 +129,20 @@ void main() {
               path: AppRoutes.profile,
               pageBuilder: (_, _) => page('PROFILE'),
             ),
+            GoRoute(
+              path: AppRoutes.orders,
+              pageBuilder: (_, _) => page('ORDERS'),
+            ),
           ],
         ),
         GoRoute(
           path: AppRoutes.addresses, // '/profile/addresses' — shares the prefix
           builder: (_, _) => const Scaffold(body: Text('ADDRESSES')),
+        ),
+        GoRoute(
+          path: AppRoutes.orderDetail, // '/orders/:id' — shares the prefix
+          builder: (_, s) =>
+              Scaffold(body: Text('ORDER_${s.pathParameters['id']}')),
         ),
       ],
     );
@@ -143,10 +152,18 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('PROFILE'), findsOneWidget);
 
+    // A static detail route under the /profile tab.
     router.push(AppRoutes.addresses);
     await tester.pumpAndSettle();
-
     expect(tester.takeException(), isNull);
     expect(find.text('ADDRESSES'), findsOneWidget);
+
+    // A path-parameterised detail route under the /orders tab.
+    router.go(AppRoutes.orders);
+    await tester.pumpAndSettle();
+    router.push(AppRoutes.orderDetailPath('abc'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.text('ORDER_abc'), findsOneWidget);
   });
 }
