@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/router/app_routes.dart';
 import '../../../shared/design_system.dart';
 import '../../authentication/providers/session_provider.dart';
+import '../../profile/providers/profile_providers.dart';
 import '../providers/rfq_providers.dart';
 import 'widgets/rfq_card.dart';
 import 'widgets/rfq_form_sheet.dart';
@@ -68,12 +69,16 @@ class _WholesalePageState extends ConsumerState<WholesalePage> {
         icon: const Icon(Icons.add),
         label: const Text('New request'),
       ),
-      body: RefreshIndicator(
-        onRefresh: _load,
-        child: switch (state.status) {
-          RfqViewStatus.initial || RfqViewStatus.loading
-              when state.data == null =>
-            const Center(child: LoadingIndicator()),
+      body: Column(
+        children: [
+          const _BusinessVerificationBanner(),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _load,
+              child: switch (state.status) {
+                RfqViewStatus.initial || RfqViewStatus.loading
+                    when state.data == null =>
+                  const Center(child: LoadingIndicator()),
           RfqViewStatus.failure when state.data == null => ListView(
             children: [
               const SizedBox(height: 80),
@@ -110,7 +115,60 @@ class _WholesalePageState extends ConsumerState<WholesalePage> {
                       );
                     },
                   ),
-        },
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Prompts the buyer to register/verify a business for wholesale. Hidden once
+/// the business is verified.
+class _BusinessVerificationBanner extends ConsumerWidget {
+  const _BusinessVerificationBanner();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(myBusinessProfileProvider);
+    final business = async.valueOrNull;
+    if (async.isLoading || business?.verificationStatus == 'verified') {
+      return const SizedBox.shrink();
+    }
+    final (message, cta) = switch (business?.verificationStatus) {
+      'pending' => ('Your business is under review for wholesale access.', 'View status'),
+      'rejected' => ('Business verification was declined. Tap for details.', 'View status'),
+      _ => ('Register your business to unlock wholesale pricing & quotes.', 'Get verified'),
+    };
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.lg,
+        0,
+      ),
+      child: LuxuryCard(
+        onTap: () => context.push(AppRoutes.businessAccount),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.business_center_outlined,
+              color: AppColors.primaryGold,
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Text(message, style: Theme.of(context).textTheme.bodyMedium),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Text(
+              cta,
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                color: AppColors.deepGold,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

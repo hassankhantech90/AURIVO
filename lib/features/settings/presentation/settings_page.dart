@@ -81,6 +81,13 @@ class SettingsPage extends ConsumerWidget {
               trailing: const Icon(Icons.chevron_right),
               onTap: () => context.push(AppRoutes.profile),
             ),
+            ListTile(
+              leading: const Icon(Icons.business_center_outlined),
+              title: const Text('Business account'),
+              subtitle: const Text('Register for wholesale'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push(AppRoutes.businessAccount),
+            ),
             // Seller Studio entry — shown only when the user has a seller store.
             if (ref.watch(mySellerProfileIdProvider).valueOrNull != null)
               ListTile(

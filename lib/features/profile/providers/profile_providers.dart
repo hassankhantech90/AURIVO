@@ -227,6 +227,20 @@ class AddressesNotifier extends StateNotifier<ProfileDataState<List<Address>>> {
 
 // Business profile -----------------------------------------------------------
 
+/// The current buyer's business profile, or null when they have not registered
+/// one. Auto-disposed; invalidate after creating/updating to refresh.
+final myBusinessProfileProvider = FutureProvider.autoDispose<BusinessProfile?>((
+  ref,
+) {
+  return ref.watch(profileRepositoryProvider).getBusinessProfile();
+});
+
+/// True once the buyer has a verified business (unlocks wholesale features).
+final isVerifiedBusinessProvider = Provider.autoDispose<bool>((ref) {
+  return ref.watch(myBusinessProfileProvider).valueOrNull?.verificationStatus ==
+      'verified';
+});
+
 final businessProfileProvider =
     StateNotifierProvider<
       BusinessProfileNotifier,

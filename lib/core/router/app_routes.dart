@@ -25,6 +25,7 @@ class AppRoutes {
   static String orderDetailPath(String id) => '/orders/$id';
   static const profile = '/profile';
   static const addresses = '/profile/addresses';
+  static const businessAccount = '/business';
   static const wishlist = '/wishlist';
   static const seller = '/seller';
   static const sellerDetail = '/seller/:slug';
