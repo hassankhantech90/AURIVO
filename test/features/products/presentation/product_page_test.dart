@@ -12,7 +12,10 @@ import 'package:aurivo/features/products/domain/entities/product_variant.dart';
 import 'package:aurivo/features/products/domain/repositories/product_repository.dart';
 import 'package:aurivo/features/products/presentation/product_page.dart';
 import 'package:aurivo/features/products/providers/product_providers.dart';
+import 'package:aurivo/features/profile/domain/entities/business_profile.dart';
 import 'package:aurivo/features/profile/domain/entities/seller_profile.dart';
+import 'package:aurivo/features/profile/domain/repositories/profile_repository.dart';
+import 'package:aurivo/features/profile/providers/profile_providers.dart';
 import 'package:aurivo/features/reviews/presentation/widgets/product_reviews_section.dart';
 import 'package:aurivo/features/seller/providers/seller_providers.dart';
 import 'package:aurivo/features/wishlist/domain/entities/wishlist_item.dart';
@@ -72,6 +75,21 @@ class _DetailRepository implements ProductRepository {
     if (returnNull) return Future<ProductDetail?>.value(null);
     return Future<ProductDetail?>.value(detail);
   }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _VerifiedBusinessRepo implements ProfileRepository {
+  @override
+  Future<BusinessProfile?> getBusinessProfile() async => const BusinessProfile(
+    id: 'b1',
+    profileId: 'p1',
+    businessName: 'Nex Jewel',
+    contactPerson: 'Ali',
+    contactPhone: '03001234567',
+    verificationStatus: 'verified',
+  );
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -530,12 +548,14 @@ void main() {
             wishlistRepositoryProvider.overrideWithValue(
               _RecordingWishlistRepository(),
             ),
+            profileRepositoryProvider.overrideWithValue(_VerifiedBusinessRepo()),
             sessionProvider.overrideWith((ref) => _AuthedSession()),
           ],
         ),
       );
 
       await tester.tap(find.text('Request a Quote'));
+      await tester.pump(); // resolve the verified-business gate
       await tester.pump(); // start the modal sheet animation
       await tester.pump(const Duration(milliseconds: 400)); // sheet settled
 

@@ -7,6 +7,7 @@ import '../../../shared/design_system.dart';
 import '../../authentication/providers/session_provider.dart';
 import '../../profile/providers/profile_providers.dart';
 import '../providers/rfq_providers.dart';
+import 'wholesale_access.dart';
 import 'widgets/rfq_card.dart';
 import 'widgets/rfq_form_sheet.dart';
 
@@ -34,6 +35,8 @@ class _WholesalePageState extends ConsumerState<WholesalePage> {
   Future<void> _load() => ref.read(myRfqsProvider.notifier).load();
 
   Future<void> _newRequest() async {
+    if (!await ensureVerifiedBusiness(context, ref)) return;
+    if (!mounted) return;
     final saved = await RfqFormSheet.show(context);
     if (saved == true && mounted) {
       // The form creates through myRfqsProvider, which reloads the list.

@@ -5,6 +5,7 @@ import '../../../shared/design_system.dart';
 import '../../authentication/providers/session_provider.dart';
 import '../../chat/presentation/widgets/message_seller_button.dart';
 import '../../profile/domain/entities/seller_profile.dart';
+import '../../wholesale/presentation/wholesale_access.dart';
 import '../../wholesale/presentation/widgets/rfq_form_sheet.dart';
 import '../../wishlist/presentation/widgets/wishlist_product_card.dart';
 import '../../wishlist/providers/wishlist_providers.dart';
@@ -151,11 +152,15 @@ class _RequestQuoteButton extends ConsumerWidget {
     return PrimaryButton(
       label: 'Request Quote',
       icon: Icons.request_quote_outlined,
-      onPressed: () => RfqFormSheet.show(
-        context,
-        sellerProfileId: sellerProfileId,
-        contextLabel: storeName,
-      ),
+      onPressed: () async {
+        if (!await ensureVerifiedBusiness(context, ref)) return;
+        if (!context.mounted) return;
+        RfqFormSheet.show(
+          context,
+          sellerProfileId: sellerProfileId,
+          contextLabel: storeName,
+        );
+      },
     );
   }
 }

@@ -11,6 +11,7 @@ import '../../authentication/providers/session_provider.dart';
 import '../../cart/providers/cart_providers.dart';
 import '../../reviews/presentation/widgets/product_reviews_section.dart';
 import '../../seller/providers/seller_providers.dart';
+import '../../wholesale/presentation/wholesale_access.dart';
 import '../../wholesale/presentation/widgets/rfq_form_sheet.dart';
 import '../../wishlist/providers/wishlist_providers.dart';
 import '../domain/entities/product.dart';
@@ -371,11 +372,13 @@ class _RequestQuoteButton extends ConsumerWidget {
       width: double.infinity,
       child: LuxuryOutlinedButton(
         label: 'Request a Quote',
-        onPressed: () {
+        onPressed: () async {
           if (!isAuthenticated) {
             context.push(AppRoutes.login);
             return;
           }
+          if (!await ensureVerifiedBusiness(context, ref)) return;
+          if (!context.mounted) return;
           RfqFormSheet.show(
             context,
             productId: product.id,
