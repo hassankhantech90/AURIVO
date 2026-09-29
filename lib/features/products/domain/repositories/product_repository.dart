@@ -19,6 +19,8 @@ abstract class ProductRepository {
   /// [material] filters by the product's metal (e.g. 'Gold', 'Silver') and
   /// composes with the other filters (AND). [search] is a case-insensitive
   /// contains-match on the product title and composes with the other filters.
+  /// When [wholesaleOnly] is true, only products that offer wholesale (tiered)
+  /// pricing are returned; it composes with the other filters.
   Future<List<Product>> getProducts({
     int limit = 20,
     int offset = 0,
@@ -28,6 +30,7 @@ abstract class ProductRepository {
     bool? featured,
     String? material,
     String? search,
+    bool wholesaleOnly = false,
     ProductSort sort = ProductSort.newest,
   });
 

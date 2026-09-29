@@ -58,6 +58,8 @@ class _FakeProductRepository implements ProductRepository {
   final Object? error;
   final Completer<List<Product>>? hang;
   int getProductsCalls = 0;
+  bool? lastFeatured;
+  bool lastWholesaleOnly = false;
 
   @override
   Future<List<Product>> getProducts({
@@ -69,9 +71,12 @@ class _FakeProductRepository implements ProductRepository {
     bool? featured,
     String? material,
     String? search,
+    bool wholesaleOnly = false,
     ProductSort sort = ProductSort.newest,
   }) {
     getProductsCalls++;
+    lastFeatured = featured;
+    lastWholesaleOnly = wholesaleOnly;
     if (hang != null) return hang!.future;
     if (error != null) return Future<List<Product>>.error(error!);
     return Future<List<Product>>.value(products);
@@ -348,6 +353,7 @@ void main() {
     });
 
     testWidgets('empty shows the empty text', (tester) async {
+      _bigView(tester);
       await tester.pumpWidget(
         _home(
           overrides: _catalog(
@@ -362,6 +368,7 @@ void main() {
     });
 
     testWidgets('failure shows the error text and no Retry', (tester) async {
+      _bigView(tester);
       await tester.pumpWidget(
         _home(
           overrides: _catalog(
@@ -799,6 +806,41 @@ void main() {
       expect(find.text('AURIVO'), findsOneWidget);
       expect(find.text('Shop by category'), findsOneWidget);
       expect(find.text('Featured'), findsOneWidget);
+    });
+  });
+
+  group('I. retail/wholesale toggle', () {
+    testWidgets('defaults to retail, loading featured products', (
+      tester,
+    ) async {
+      _bigView(tester);
+      final products = _FakeProductRepository(products: [_product('p1')]);
+      await tester.pumpWidget(
+        _home(overrides: _catalog(products: products)),
+      );
+      await _settle(tester);
+
+      expect(find.text('Featured'), findsOneWidget);
+      expect(find.text('Wholesale picks'), findsNothing);
+      expect(products.lastFeatured, isTrue);
+      expect(products.lastWholesaleOnly, isFalse);
+    });
+
+    testWidgets('switching to Wholesale reloads wholesale-only and relabels', (
+      tester,
+    ) async {
+      _bigView(tester);
+      final products = _FakeProductRepository(products: [_product('p1')]);
+      await tester.pumpWidget(
+        _home(overrides: _catalog(products: products)),
+      );
+      await _settle(tester);
+
+      await tester.tap(find.text('Wholesale'));
+      await _settle(tester);
+
+      expect(find.text('Wholesale picks'), findsOneWidget);
+      expect(products.lastWholesaleOnly, isTrue);
     });
   });
 }

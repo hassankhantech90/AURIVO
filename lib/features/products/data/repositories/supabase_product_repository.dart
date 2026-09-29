@@ -49,6 +49,7 @@ class SupabaseProductRepository implements ProductRepository {
     bool? featured,
     String? material,
     String? search,
+    bool wholesaleOnly = false,
     ProductSort sort = ProductSort.newest,
   }) async {
     try {
@@ -57,19 +58,26 @@ class SupabaseProductRepository implements ProductRepository {
         'featured': ?featured,
         'material': ?material,
       };
-      final whereIn = <String, List<Object>>{};
-      // categoryIds (a category-set / subtree filter) takes precedence over the
-      // single categoryId; they are never combined.
+      // A single `id` IN-filter, composed from the category subtree and/or the
+      // wholesale-eligible set. categoryIds takes precedence over categoryId.
+      List<Object>? idFilter;
       if (categoryIds != null) {
         if (categoryIds.isEmpty) return const [];
-        final ids = await _productIdsInCategories(categoryIds);
-        if (ids.isEmpty) return const [];
-        whereIn['id'] = ids;
+        idFilter = await _productIdsInCategories(categoryIds);
+        if (idFilter.isEmpty) return const [];
       } else if (categoryId != null) {
-        final ids = await _productIdsInCategory(categoryId);
-        if (ids.isEmpty) return const [];
-        whereIn['id'] = ids;
+        idFilter = await _productIdsInCategory(categoryId);
+        if (idFilter.isEmpty) return const [];
       }
+      if (wholesaleOnly) {
+        final wholesaleIds = await _wholesaleProductIds();
+        if (wholesaleIds.isEmpty) return const [];
+        idFilter = idFilter == null
+            ? wholesaleIds
+            : idFilter.where(wholesaleIds.contains).toList();
+        if (idFilter.isEmpty) return const [];
+      }
+      final whereIn = <String, List<Object>>{'id': ?idFilter};
 
       final (orderBy, ascending) = _sortOrder(sort);
       final rows = await _database.list(
@@ -289,6 +297,20 @@ class SupabaseProductRepository implements ProductRepository {
       table: _productCategoriesTable,
       columns: 'product_id',
       whereIn: {'category_id': List<Object>.from(categoryIds)},
+    );
+    return rows
+        .map((row) => row['product_id'])
+        .whereType<Object>()
+        .toSet()
+        .toList(growable: false);
+  }
+
+  /// Unique product ids that have at least one wholesale price tier. RLS on
+  /// `product_price_tiers` limits this to tiers of visible (approved) products.
+  Future<List<Object>> _wholesaleProductIds() async {
+    final rows = await _database.list(
+      table: _productPriceTiersTable,
+      columns: 'product_id',
     );
     return rows
         .map((row) => row['product_id'])

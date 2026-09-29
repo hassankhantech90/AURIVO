@@ -12,6 +12,7 @@ import '../../chat/providers/chat_providers.dart';
 import '../../products/domain/entities/product.dart';
 import '../../products/providers/catalog_state.dart';
 import '../../products/providers/product_providers.dart';
+import '../../products/providers/shopping_mode.dart';
 import '../../notifications/providers/notification_providers.dart';
 import '../../wishlist/presentation/widgets/wishlist_product_card.dart';
 import '../../wishlist/providers/wishlist_providers.dart';
@@ -41,14 +42,24 @@ class _HomePageState extends ConsumerState<HomePage> {
     }
     await Future.wait([
       ref.read(categoriesProvider.notifier).loadRoots(),
-      ref.read(productListProvider.notifier).loadFeatured(),
+      _loadProducts(),
     ]);
+  }
+
+  /// Loads the product rail for the active shopping mode: featured retail
+  /// products, or the wholesale (tier-priced) catalogue.
+  Future<void> _loadProducts() {
+    final notifier = ref.read(productListProvider.notifier);
+    return ref.read(shoppingModeProvider) == ShoppingMode.wholesale
+        ? notifier.loadWholesale()
+        : notifier.loadFeatured();
   }
 
   @override
   Widget build(BuildContext context) {
     final categories = ref.watch(categoriesProvider);
     final products = ref.watch(productListProvider);
+    final mode = ref.watch(shoppingModeProvider);
 
     return Scaffold(
       appBar: LuxuryAppBar(
@@ -109,6 +120,17 @@ class _HomePageState extends ConsumerState<HomePage> {
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.lg),
           children: [
+            SegmentedTabs(
+              labels: const ['Retail', 'Wholesale'],
+              selectedIndex: mode.index,
+              onSelected: (index) {
+                final next = ShoppingMode.values[index];
+                if (next == mode) return;
+                ref.read(shoppingModeProvider.notifier).state = next;
+                _loadProducts();
+              },
+            ),
+            const SizedBox(height: AppSpacing.lg),
             const _HomeSearchBar(),
             const SizedBox(height: AppSpacing.xl),
             const SectionHeader(title: 'Shop by metal'),
@@ -121,7 +143,11 @@ class _HomePageState extends ConsumerState<HomePage> {
             const SizedBox(height: AppSpacing.md),
             SizedBox(height: 180, child: _categories(categories)),
             const SizedBox(height: AppSpacing.xl),
-            const SectionHeader(title: 'Featured'),
+            SectionHeader(
+              title: mode == ShoppingMode.wholesale
+                  ? 'Wholesale picks'
+                  : 'Featured',
+            ),
             const SizedBox(height: AppSpacing.md),
             _featured(products),
           ],

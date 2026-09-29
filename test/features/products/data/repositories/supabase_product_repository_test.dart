@@ -513,6 +513,34 @@ void main() {
       db.onList = (table, q) => const [];
       expect(await repo.getProducts(), isEmpty);
     });
+
+    test('wholesaleOnly filters products to those with price tiers', () async {
+      db.onList = (table, q) => table == 'product_price_tiers'
+          ? [
+              {'product_id': 'p1'},
+              {'product_id': 'p1'}, // duplicate is de-duped
+              {'product_id': 'p2'},
+            ]
+          : [productRow(id: 'p1')];
+
+      final products = await repo.getProducts(wholesaleOnly: true);
+
+      expect(products.map((p) => p.id), ['p1']);
+      final tierQuery = db.queries.firstWhere(
+        (q) => q.table == 'product_price_tiers',
+      );
+      expect(tierQuery.columns, 'product_id');
+      final productsQuery = db.queries.firstWhere((q) => q.table == 'products');
+      expect(productsQuery.whereIn['id'], containsAll(<Object>['p1', 'p2']));
+    });
+
+    test('wholesaleOnly returns empty (no product query) with no tiers', () async {
+      db.onList = (table, q) =>
+          table == 'product_price_tiers' ? const [] : [productRow()];
+
+      expect(await repo.getProducts(wholesaleOnly: true), isEmpty);
+      expect(db.queries.any((q) => q.table == 'products'), isFalse);
+    });
   });
 
   group('getProductPriceTiers', () {

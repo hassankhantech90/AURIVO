@@ -38,6 +38,7 @@ class _FakeProductRepository implements ProductRepository {
     bool? featured,
     String? material,
     String? search,
+    bool wholesaleOnly = false,
     ProductSort sort = ProductSort.newest,
   }) async {
     if (error != null) throw error!;

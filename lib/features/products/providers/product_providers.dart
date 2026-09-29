@@ -73,6 +73,14 @@ class ProductListNotifier extends StateNotifier<CatalogState<List<Product>>> {
       () => _repository.getProducts(limit: limit, featured: true),
     );
   }
+
+  /// Products that offer wholesale (tiered) pricing, for the Home wholesale
+  /// browsing mode.
+  Future<void> loadWholesale({int limit = 20}) {
+    return _runner.run(
+      () => _repository.getProducts(limit: limit, wholesaleOnly: true),
+    );
+  }
 }
 
 // Product detail -------------------------------------------------------------
