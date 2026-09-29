@@ -88,6 +88,7 @@ class AppRoutes {
   // Admin console (gated on the `admin` role via has_role).
   static const admin = '/admin';
   static const adminVerifications = '/admin/verifications';
+  static const adminBusinessVerifications = '/admin/business-verifications';
   static const adminProducts = '/admin/products';
   static const adminCatalog = '/admin/catalog';
   static const adminCategories = '/admin/catalog/categories';

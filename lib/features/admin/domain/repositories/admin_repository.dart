@@ -1,3 +1,4 @@
+import '../../../profile/domain/entities/business_profile.dart';
 import '../../../profile/domain/entities/seller_profile.dart';
 import '../../../seller/domain/entities/seller_product.dart';
 
@@ -17,6 +18,17 @@ abstract class AdminRepository {
   /// Sets a store's verification status (`verified` / `rejected` / `suspended`).
   Future<void> setSellerVerification({
     required String sellerId,
+    required String status,
+  });
+
+  /// Business (B2B) buyer profiles awaiting verification
+  /// (`verification_status = 'pending'`).
+  Future<List<BusinessProfile>> getPendingBusinesses();
+
+  /// Sets a business profile's verification status
+  /// (`verified` / `rejected` / `suspended`).
+  Future<void> setBusinessVerification({
+    required String businessId,
     required String status,
   });
 

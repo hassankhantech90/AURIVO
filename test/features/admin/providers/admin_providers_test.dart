@@ -4,6 +4,7 @@ import 'package:aurivo/core/utils/failure.dart';
 import 'package:aurivo/features/admin/domain/repositories/admin_repository.dart';
 import 'package:aurivo/features/admin/providers/admin_providers.dart';
 import 'package:aurivo/features/authentication/providers/session_provider.dart';
+import 'package:aurivo/features/profile/domain/entities/business_profile.dart';
 import 'package:aurivo/features/profile/domain/entities/seller_profile.dart';
 import 'package:aurivo/features/seller/domain/entities/seller_product.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -66,7 +67,29 @@ class _FakeRepo implements AdminRepository {
   }) async {
     productStatuses.add('$productId:$status');
   }
+
+  final List<String> businessVerifications = [];
+
+  @override
+  Future<List<BusinessProfile>> getPendingBusinesses() async =>
+      [_business('m'), _business('n')];
+
+  @override
+  Future<void> setBusinessVerification({
+    required String businessId,
+    required String status,
+  }) async {
+    businessVerifications.add('$businessId:$status');
+  }
 }
+
+BusinessProfile _business(String id) => BusinessProfile(
+  id: id,
+  profileId: 'p-$id',
+  businessName: 'Biz $id',
+  contactPerson: 'Person $id',
+  contactPhone: '03001234567',
+);
 
 class _ThrowingRepo extends _FakeRepo {
   @override
@@ -175,6 +198,25 @@ void main() {
     expect(err, isNull);
     expect(repo.verifications, ['a:verified']);
     expect(container.read(pendingSellersProvider).data.map((s) => s.id), ['b']);
+  });
+
+  test('pendingBusinesses load then approve removes from the queue', () async {
+    final repo = _FakeRepo();
+    final container = _container(repo);
+    final notifier = container.read(pendingBusinessesProvider.notifier);
+    await notifier.load();
+    expect(
+      container.read(pendingBusinessesProvider).data.map((b) => b.id),
+      ['m', 'n'],
+    );
+
+    final err = await notifier.setVerification('m', 'verified');
+    expect(err, isNull);
+    expect(repo.businessVerifications, ['m:verified']);
+    expect(
+      container.read(pendingBusinessesProvider).data.map((b) => b.id),
+      ['n'],
+    );
   });
 
   test('pendingProducts load then reject removes from the queue', () async {

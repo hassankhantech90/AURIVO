@@ -2,6 +2,7 @@ import 'package:aurivo/features/admin/domain/repositories/admin_repository.dart'
 import 'package:aurivo/features/admin/presentation/admin_products_page.dart';
 import 'package:aurivo/features/admin/presentation/admin_verifications_page.dart';
 import 'package:aurivo/features/admin/providers/admin_providers.dart';
+import 'package:aurivo/features/profile/domain/entities/business_profile.dart';
 import 'package:aurivo/features/profile/domain/entities/seller_profile.dart';
 import 'package:aurivo/features/seller/domain/entities/seller_product.dart';
 import 'package:aurivo/shared/design_system.dart';
@@ -58,6 +59,27 @@ class _FakeRepo implements AdminRepository {
     required String status,
   }) async {
     productStatuses.add('$productId:$status');
+  }
+
+  final List<String> businessVerifications = [];
+
+  @override
+  Future<List<BusinessProfile>> getPendingBusinesses() async => [
+    BusinessProfile(
+      id: 'm',
+      profileId: 'pm',
+      businessName: 'Biz M',
+      contactPerson: 'Person M',
+      contactPhone: '03001234567',
+    ),
+  ];
+
+  @override
+  Future<void> setBusinessVerification({
+    required String businessId,
+    required String status,
+  }) async {
+    businessVerifications.add('$businessId:$status');
   }
 }
 

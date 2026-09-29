@@ -57,6 +57,17 @@ class _AdminMenu extends StatelessWidget {
         LuxuryCard(
           padding: EdgeInsets.zero,
           child: ListTile(
+            leading: const Icon(Icons.business_center_outlined),
+            title: const Text('Business verifications'),
+            subtitle: const Text('Review B2B buyers awaiting verification'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.adminBusinessVerifications),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        LuxuryCard(
+          padding: EdgeInsets.zero,
+          child: ListTile(
             leading: const Icon(Icons.inventory_2_outlined),
             title: const Text('Product moderation'),
             subtitle: const Text('Approve or reject submitted products'),

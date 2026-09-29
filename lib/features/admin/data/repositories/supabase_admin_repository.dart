@@ -1,4 +1,5 @@
 import '../../../../core/supabase/supabase_database_service.dart';
+import '../../../profile/domain/entities/business_profile.dart';
 import '../../../profile/domain/entities/seller_profile.dart';
 import '../../../seller/domain/entities/seller_product.dart';
 import '../../domain/repositories/admin_repository.dart';
@@ -14,6 +15,7 @@ class SupabaseAdminRepository implements AdminRepository {
   final SupabaseDatabaseService _database;
 
   static const String _sellerProfilesTable = 'seller_profiles';
+  static const String _businessProfilesTable = 'business_profiles';
   static const String _productsTable = 'products';
 
   @override
@@ -54,6 +56,37 @@ class SupabaseAdminRepository implements AdminRepository {
         values: {'verification_status': status},
         matchColumn: 'id',
         matchValue: sellerId,
+      );
+    } catch (error) {
+      throw AdminFailureMapper.map(error);
+    }
+  }
+
+  @override
+  Future<List<BusinessProfile>> getPendingBusinesses() async {
+    try {
+      final rows = await _database.list(
+        table: _businessProfilesTable,
+        filters: {'verification_status': 'pending'},
+        orderBy: 'created_at',
+      );
+      return rows.map(BusinessProfile.fromMap).toList();
+    } catch (error) {
+      throw AdminFailureMapper.map(error);
+    }
+  }
+
+  @override
+  Future<void> setBusinessVerification({
+    required String businessId,
+    required String status,
+  }) async {
+    try {
+      await _database.update(
+        table: _businessProfilesTable,
+        values: {'verification_status': status},
+        matchColumn: 'id',
+        matchValue: businessId,
       );
     } catch (error) {
       throw AdminFailureMapper.map(error);

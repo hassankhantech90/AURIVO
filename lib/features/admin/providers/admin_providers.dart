@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/supabase/supabase_database_service.dart';
 import '../../../core/supabase/supabase_service.dart';
 import '../../authentication/providers/session_provider.dart';
+import '../../profile/domain/entities/business_profile.dart';
 import '../../profile/domain/entities/seller_profile.dart';
 import '../../seller/domain/entities/seller_product.dart';
 import '../data/repositories/supabase_admin_repository.dart';
@@ -97,6 +98,54 @@ class PendingSellersNotifier
       );
       state = state.copyWith(
         data: state.data.where((s) => s.id != sellerId).toList(),
+      );
+      return null;
+    } catch (error) {
+      return error.toString();
+    }
+  }
+}
+
+// Business verification queue -------------------------------------------------
+
+final pendingBusinessesProvider =
+    StateNotifierProvider<
+      PendingBusinessesNotifier,
+      AdminListState<BusinessProfile>
+    >((ref) {
+      return PendingBusinessesNotifier(ref.watch(adminRepositoryProvider));
+    });
+
+class PendingBusinessesNotifier
+    extends StateNotifier<AdminListState<BusinessProfile>> {
+  PendingBusinessesNotifier(this._repository)
+    : super(const AdminListState<BusinessProfile>());
+
+  final AdminRepository _repository;
+
+  Future<void> load() async {
+    state = state.copyWith(status: AdminStatus.loading, clearMessage: true);
+    try {
+      final businesses = await _repository.getPendingBusinesses();
+      state = AdminListState(status: AdminStatus.success, data: businesses);
+    } catch (error) {
+      state = state.copyWith(
+        status: AdminStatus.failure,
+        message: error.toString(),
+      );
+    }
+  }
+
+  /// Approves (`verified`) or rejects a business, then drops it from the queue.
+  /// Returns null on success or a user-facing error message.
+  Future<String?> setVerification(String businessId, String status) async {
+    try {
+      await _repository.setBusinessVerification(
+        businessId: businessId,
+        status: status,
+      );
+      state = state.copyWith(
+        data: state.data.where((b) => b.id != businessId).toList(),
       );
       return null;
     } catch (error) {

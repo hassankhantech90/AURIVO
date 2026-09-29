@@ -13,6 +13,7 @@ import '../../features/authentication/presentation/password_updated_page.dart';
 import '../../features/authentication/presentation/reset_password_page.dart';
 import '../../features/authentication/presentation/signup_page.dart';
 import '../../features/admin/presentation/admin_attribute_values_page.dart';
+import '../../features/admin/presentation/admin_business_verifications_page.dart';
 import '../../features/admin/presentation/admin_attributes_page.dart';
 import '../../features/admin/presentation/admin_brands_page.dart';
 import '../../features/admin/presentation/admin_catalog_home_page.dart';
@@ -347,6 +348,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.adminVerifications,
         name: 'adminVerifications',
         builder: (context, state) => const AdminVerificationsPage(),
+      ),
+      _fadeRoute(
+        path: AppRoutes.adminBusinessVerifications,
+        name: 'adminBusinessVerifications',
+        builder: (context, state) => const AdminBusinessVerificationsPage(),
       ),
       _fadeRoute(
         path: AppRoutes.adminProducts,
