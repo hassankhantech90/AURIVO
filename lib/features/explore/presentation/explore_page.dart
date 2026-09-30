@@ -10,6 +10,7 @@ import '../../products/providers/catalog_state.dart';
 import '../../wishlist/presentation/widgets/wishlist_product_card.dart';
 import '../../wishlist/providers/wishlist_providers.dart';
 import '../providers/explore_products_provider.dart';
+import 'widgets/explore_filter_sheet.dart';
 
 /// Explore surface: the public product catalogue grid, wired to
 /// [exploreProductsProvider] — a dedicated state independent of Home's
@@ -45,12 +46,36 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
   /// edited in place via the search field. Composes with the metal/category.
   late String _query;
 
+  /// Sort + metal + price/purity, seeded with the route's metal and edited
+  /// through the filter sheet.
+  late ExploreRefinement _refinement;
+
   @override
   void initState() {
     super.initState();
     _query = widget.search?.trim() ?? '';
+    _refinement = ExploreRefinement(material: widget.material);
     _controller = TextEditingController(text: _query);
     WidgetsBinding.instance.addPostFrameCallback((_) => _load());
+  }
+
+  /// The router may reuse this state when only the query string changes (e.g.
+  /// a different Home metal tab): re-seed from the new route and reload.
+  @override
+  void didUpdateWidget(covariant ExplorePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.categoryId == widget.categoryId &&
+        oldWidget.material == widget.material &&
+        oldWidget.search == widget.search) {
+      return;
+    }
+    _debounce?.cancel();
+    _query = widget.search?.trim() ?? '';
+    _controller.text = _query;
+    _refinement = ExploreRefinement(material: widget.material);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _load();
+    });
   }
 
   @override
@@ -68,9 +93,18 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
         .read(exploreProductsProvider.notifier)
         .load(
           rootCategoryId: widget.categoryId,
-          material: widget.material,
+          material: _refinement.material,
           search: _query.isEmpty ? null : _query,
+          sort: _refinement.sort,
+          filters: _refinement.filters,
         );
+  }
+
+  Future<void> _openFilters() async {
+    final next = await ExploreFilterSheet.show(context, _refinement);
+    if (next == null || !mounted) return;
+    setState(() => _refinement = next);
+    _load();
   }
 
   /// Debounces typing: schedules a live search once the user pauses. A new
@@ -102,7 +136,7 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
     return Scaffold(
       // A metal filter names the surface; otherwise "Explore". The live query
       // lives in the search field below, not the title.
-      appBar: LuxuryAppBar(title: widget.material ?? 'Explore'),
+      appBar: LuxuryAppBar(title: _refinement.material ?? 'Explore'),
       body: Column(
         children: [
           Padding(
@@ -112,20 +146,31 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
               AppSpacing.lg,
               AppSpacing.md,
             ),
-            child: ValueListenableBuilder<TextEditingValue>(
-              valueListenable: _controller,
-              builder: (context, value, _) => CustomSearchBar(
-                controller: _controller,
-                hintText: 'Search jewellery, brands & makers',
-                onChanged: _onQueryChanged,
-                onSubmitted: _submitSearch,
-                onClear: value.text.isEmpty
-                    ? null
-                    : () {
-                        _controller.clear();
-                        _submitSearch('');
-                      },
-              ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: ValueListenableBuilder<TextEditingValue>(
+                    valueListenable: _controller,
+                    builder: (context, value, _) => CustomSearchBar(
+                      controller: _controller,
+                      hintText: 'Search jewellery, brands & makers',
+                      onChanged: _onQueryChanged,
+                      onSubmitted: _submitSearch,
+                      onClear: value.text.isEmpty
+                          ? null
+                          : () {
+                              _controller.clear();
+                              _submitSearch('');
+                            },
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                _FiltersButton(
+                  activeCount: _refinement.activeCount,
+                  onPressed: _openFilters,
+                ),
+              ],
             ),
           ),
           Expanded(
@@ -140,8 +185,11 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
     if (_query.isNotEmpty) {
       return 'Nothing matched “$_query”. Try a different search.';
     }
-    if (widget.material != null) {
-      return 'No ${widget.material!.toLowerCase()} pieces yet — '
+    if (_refinement.activeCount > (_refinement.material != null ? 1 : 0)) {
+      return 'Nothing matches these filters. Try widening them.';
+    }
+    if (_refinement.material != null) {
+      return 'No ${_refinement.material!.toLowerCase()} pieces yet — '
           'check back soon.';
     }
     return 'The catalogue is empty right now.';
@@ -183,5 +231,25 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
               WishlistProductCard(product: products[index]),
         );
     }
+  }
+}
+
+/// Opens the sort & filter sheet; shows the active-refinement count as a badge
+/// (only when there is one).
+class _FiltersButton extends StatelessWidget {
+  const _FiltersButton({required this.activeCount, required this.onPressed});
+
+  final int activeCount;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final button = IconButton.outlined(
+      tooltip: 'Sort & filter',
+      icon: const Icon(Icons.tune),
+      onPressed: onPressed,
+    );
+    if (activeCount == 0) return button;
+    return Badge(label: Text('$activeCount'), child: button);
   }
 }

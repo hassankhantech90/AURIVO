@@ -1,4 +1,5 @@
 import 'package:aurivo/core/utils/failure.dart';
+import 'package:aurivo/features/products/domain/entities/catalog_filters.dart';
 import 'package:aurivo/features/products/domain/entities/attribute.dart';
 import 'package:aurivo/features/products/domain/entities/brand.dart';
 import 'package:aurivo/features/products/domain/entities/price_tier.dart';
@@ -40,6 +41,7 @@ class _FakeProductRepository implements ProductRepository {
     String? search,
     bool wholesaleOnly = false,
     ProductSort sort = ProductSort.newest,
+    CatalogFilters filters = const CatalogFilters(),
   }) async {
     if (error != null) throw error!;
     return products;

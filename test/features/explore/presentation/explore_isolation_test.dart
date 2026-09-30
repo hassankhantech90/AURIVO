@@ -5,6 +5,7 @@ import 'package:aurivo/features/categories/providers/category_providers.dart';
 import 'package:aurivo/features/explore/presentation/explore_page.dart';
 import 'package:aurivo/features/explore/providers/explore_products_provider.dart';
 import 'package:aurivo/features/home/presentation/home_page.dart';
+import 'package:aurivo/features/products/domain/entities/catalog_filters.dart';
 import 'package:aurivo/features/products/domain/entities/product.dart';
 import 'package:aurivo/features/products/domain/entities/product_sort.dart';
 import 'package:aurivo/features/products/domain/repositories/product_repository.dart';
@@ -37,6 +38,7 @@ class _RoutingProductRepository implements ProductRepository {
     String? search,
     bool wholesaleOnly = false,
     ProductSort sort = ProductSort.newest,
+    CatalogFilters filters = const CatalogFilters(),
   }) async {
     return featured == true ? this.featured : catalogue;
   }

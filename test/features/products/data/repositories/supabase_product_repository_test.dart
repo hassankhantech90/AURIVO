@@ -5,6 +5,7 @@ import 'package:aurivo/core/supabase/supabase_storage_service.dart';
 import 'package:aurivo/core/utils/failure.dart';
 import 'package:aurivo/features/products/data/primary_image_resolver.dart';
 import 'package:aurivo/features/products/data/repositories/supabase_product_repository.dart';
+import 'package:aurivo/features/products/domain/entities/catalog_filters.dart';
 import 'package:aurivo/features/products/domain/entities/product_sort.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -587,6 +588,51 @@ void main() {
       expect(db.rpcCalls, isEmpty);
       final productsQuery = db.queries.firstWhere((q) => q.table == 'products');
       expect(productsQuery.whereIn.containsKey('id'), isFalse);
+    });
+
+    test('price/purity filters go through filter_product_ids', () async {
+      db.onRpc = (fn) => [
+        {'product_id': 'p1'},
+      ];
+      db.onList = (table, q) => [productRow(id: 'p1')];
+
+      await repo.getProducts(
+        filters: const CatalogFilters(
+          minPrice: 25000,
+          maxPrice: 100000,
+          purity: ' 22k ',
+        ),
+      );
+
+      expect(db.rpcCalls, ['filter_product_ids']);
+      expect(db.rpcParams.single, {
+        'p_min_price': 25000,
+        'p_max_price': 100000,
+        'p_purity': '22k',
+      });
+      final productsQuery = db.queries.firstWhere((q) => q.table == 'products');
+      expect(productsQuery.whereIn['id'], ['p1']);
+    });
+
+    test('ids and jewellery type restrict the product query', () async {
+      db.onList = (table, q) => [productRow(id: 'p2')];
+
+      await repo.getProducts(
+        filters: const CatalogFilters(ids: ['p2', 'p3'], jewelleryType: 'ring'),
+      );
+
+      expect(db.rpcCalls, isEmpty);
+      final productsQuery = db.queries.firstWhere((q) => q.table == 'products');
+      expect(productsQuery.whereIn['id'], ['p2', 'p3']);
+      expect(productsQuery.filters['jewellery_type'], 'ring');
+    });
+
+    test('empty ids list short-circuits to no results', () async {
+      expect(
+        await repo.getProducts(filters: const CatalogFilters(ids: [])),
+        isEmpty,
+      );
+      expect(db.queries, isEmpty);
     });
 
     test('search composes with the category filter (intersection)', () async {

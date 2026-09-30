@@ -1,6 +1,7 @@
 import 'package:aurivo/features/categories/domain/repositories/category_repository.dart';
 import 'package:aurivo/features/categories/providers/category_providers.dart';
 import 'package:aurivo/features/explore/presentation/explore_page.dart';
+import 'package:aurivo/features/products/domain/entities/catalog_filters.dart';
 import 'package:aurivo/features/products/domain/entities/product.dart';
 import 'package:aurivo/features/products/domain/entities/product_sort.dart';
 import 'package:aurivo/features/products/domain/repositories/product_repository.dart';
@@ -27,6 +28,7 @@ class _FakeProductRepository implements ProductRepository {
     String? search,
     bool wholesaleOnly = false,
     ProductSort sort = ProductSort.newest,
+    CatalogFilters filters = const CatalogFilters(),
   }) async => products;
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);

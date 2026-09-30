@@ -2,7 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../categories/domain/repositories/category_repository.dart';
 import '../../categories/providers/category_providers.dart';
+import '../../products/domain/entities/catalog_filters.dart';
 import '../../products/domain/entities/product.dart';
+import '../../products/domain/entities/product_sort.dart';
 import '../../products/domain/repositories/product_repository.dart';
 import '../../products/providers/catalog_state.dart';
 import '../../products/providers/product_providers.dart';
@@ -38,20 +40,33 @@ class ExploreProductsNotifier
   late final CatalogRunner<List<Product>> _runner;
 
   /// Loads the catalogue for Explore. With [rootCategoryId] null this is the
-  /// full newest catalogue; otherwise it filters to that root category's
-  /// visible subtree (root + all descendants). [material] filters by metal and
-  /// [search] is a title contains-match; both compose with the category filter
-  /// (AND).
-  Future<void> load({String? rootCategoryId, String? material, String? search}) {
+  /// full catalogue; otherwise it filters to that root category's visible
+  /// subtree (root + all descendants). [material] filters by metal, [search]
+  /// matches title/brand/maker and [filters] adds price range / purity; all
+  /// compose with the category filter (AND). [sort] orders the results.
+  Future<void> load({
+    String? rootCategoryId,
+    String? material,
+    String? search,
+    ProductSort sort = ProductSort.newest,
+    CatalogFilters filters = const CatalogFilters(),
+  }) {
     return _runner.run(() async {
       if (rootCategoryId == null) {
-        return _products.getProducts(material: material, search: search);
+        return _products.getProducts(
+          material: material,
+          search: search,
+          sort: sort,
+          filters: filters,
+        );
       }
       final ids = await _categories.descendantCategoryIds(rootCategoryId);
       return _products.getProducts(
         categoryIds: ids,
         material: material,
         search: search,
+        sort: sort,
+        filters: filters,
       );
     });
   }

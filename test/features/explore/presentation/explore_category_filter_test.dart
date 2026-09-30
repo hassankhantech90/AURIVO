@@ -1,6 +1,7 @@
 import 'package:aurivo/features/categories/domain/repositories/category_repository.dart';
 import 'package:aurivo/features/categories/providers/category_providers.dart';
 import 'package:aurivo/features/explore/presentation/explore_page.dart';
+import 'package:aurivo/features/products/domain/entities/catalog_filters.dart';
 import 'package:aurivo/features/products/domain/entities/product.dart';
 import 'package:aurivo/features/products/domain/entities/product_sort.dart';
 import 'package:aurivo/features/products/domain/repositories/product_repository.dart';
@@ -42,6 +43,8 @@ class _CatalogProductRepository implements ProductRepository {
   List<String>? lastCategoryIds;
   String? lastMaterial;
   String? lastSearch;
+  ProductSort? lastSort;
+  CatalogFilters? lastFilters;
 
   @override
   Future<List<Product>> getProducts({
@@ -55,9 +58,12 @@ class _CatalogProductRepository implements ProductRepository {
     String? search,
     bool wholesaleOnly = false,
     ProductSort sort = ProductSort.newest,
+    CatalogFilters filters = const CatalogFilters(),
   }) async {
     lastMaterial = material;
     lastSearch = search;
+    lastSort = sort;
+    lastFilters = filters;
     if (categoryIds == null) {
       unfilteredRequested = true;
       return unfiltered;
@@ -103,6 +109,13 @@ List<Override> _overrides(
   categoryRepositoryProvider.overrideWithValue(categories),
 ];
 
+/// Lets a modal sheet open/close; the grid has endless animations, so
+/// pumpAndSettle would never settle.
+Future<void> _sheet(WidgetTester tester) async {
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 600));
+}
+
 void main() {
   testWidgets('D. direct Explore loads the unfiltered catalogue', (
     tester,
@@ -125,6 +138,48 @@ void main() {
     expect(products.unfilteredRequested, isTrue);
     expect(products.lastCategoryIds, isNull); // no category-set filter
     expect(categories.resolvedRoots, isEmpty); // no subtree resolution
+  });
+
+  testWidgets('D1. the filter sheet applies sort, metal, purity and price', (
+    tester,
+  ) async {
+    _bigView(tester);
+    final products = _CatalogProductRepository(unfiltered: [_product('A')]);
+    final categories = _TreeCategoryRepository(const {});
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: _overrides(products, categories),
+        child: const MaterialApp(home: ExplorePage()),
+      ),
+    );
+    await _settle(tester);
+
+    await tester.tap(find.byTooltip('Sort & filter'));
+    await _sheet(tester);
+    await tester.tap(find.text('Price: low to high'));
+    await tester.tap(find.text('Silver'));
+    await tester.tap(find.text('925'));
+    await tester.tap(find.text('25k – 100k'));
+    await tester.pump();
+    await tester.tap(find.text('Apply'));
+    await _sheet(tester);
+
+    expect(products.lastSort, ProductSort.priceLowToHigh);
+    expect(products.lastMaterial, 'Silver');
+    expect(products.lastFilters!.purity, '925');
+    expect(products.lastFilters!.minPrice, 25000);
+    expect(products.lastFilters!.maxPrice, 100000);
+    expect(find.text('4'), findsOneWidget); // active-filter badge
+
+    // Reset clears everything.
+    await tester.tap(find.byTooltip('Sort & filter'));
+    await _sheet(tester);
+    await tester.tap(find.text('Reset'));
+    await _sheet(tester);
+    expect(products.lastSort, ProductSort.newest);
+    expect(products.lastMaterial, isNull);
+    expect(products.lastFilters!.isEmpty, isTrue);
   });
 
   testWidgets('D2. a metal filter passes material and titles the surface', (

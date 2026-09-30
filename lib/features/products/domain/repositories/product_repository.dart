@@ -1,5 +1,6 @@
 import '../entities/attribute.dart';
 import '../entities/brand.dart';
+import '../entities/catalog_filters.dart';
 import '../entities/price_tier.dart';
 import '../entities/product.dart';
 import '../entities/product_detail.dart';
@@ -32,6 +33,7 @@ abstract class ProductRepository {
     String? search,
     bool wholesaleOnly = false,
     ProductSort sort = ProductSort.newest,
+    CatalogFilters filters = const CatalogFilters(),
   });
 
   Future<Product?> getProductById(String id);

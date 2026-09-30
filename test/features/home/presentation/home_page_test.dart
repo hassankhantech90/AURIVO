@@ -20,6 +20,7 @@ import 'package:aurivo/features/home/presentation/home_page.dart';
 import 'package:aurivo/features/notifications/domain/entities/app_notification.dart';
 import 'package:aurivo/features/notifications/domain/repositories/notification_repository.dart';
 import 'package:aurivo/features/notifications/providers/notification_providers.dart';
+import 'package:aurivo/features/products/domain/entities/catalog_filters.dart';
 import 'package:aurivo/features/products/domain/entities/product.dart';
 import 'package:aurivo/features/products/domain/entities/product_sort.dart';
 import 'package:aurivo/features/products/domain/repositories/product_repository.dart';
@@ -73,6 +74,7 @@ class _FakeProductRepository implements ProductRepository {
     String? search,
     bool wholesaleOnly = false,
     ProductSort sort = ProductSort.newest,
+    CatalogFilters filters = const CatalogFilters(),
   }) {
     getProductsCalls++;
     lastFeatured = featured;

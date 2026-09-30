@@ -1,6 +1,7 @@
 import '../../../../core/supabase/supabase_database_service.dart';
 import '../../domain/entities/attribute.dart';
 import '../../domain/entities/brand.dart';
+import '../../domain/entities/catalog_filters.dart';
 import '../../domain/entities/price_tier.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/entities/product_detail.dart';
@@ -51,12 +52,14 @@ class SupabaseProductRepository implements ProductRepository {
     String? search,
     bool wholesaleOnly = false,
     ProductSort sort = ProductSort.newest,
+    CatalogFilters filters = const CatalogFilters(),
   }) async {
     try {
-      final filters = <String, Object?>{
+      final equals = <String, Object?>{
         'brand_id': ?brandId,
         'featured': ?featured,
         'material': ?material,
+        'jewellery_type': ?filters.jewelleryType,
       };
       // A single `id` IN-filter, composed from the category subtree, the
       // wholesale-eligible set and/or the search matches (title, brand or
@@ -87,12 +90,28 @@ class SupabaseProductRepository implements ProductRepository {
             : idFilter.where(searchIds.contains).toList();
         if (idFilter.isEmpty) return const [];
       }
+      if (filters.hasPriceOrPurity) {
+        final matched = await _filterProductIds(filters);
+        if (matched.isEmpty) return const [];
+        idFilter = idFilter == null
+            ? matched
+            : idFilter.where(matched.contains).toList();
+        if (idFilter.isEmpty) return const [];
+      }
+      if (filters.ids != null) {
+        final wanted = List<Object>.from(filters.ids!);
+        if (wanted.isEmpty) return const [];
+        idFilter = idFilter == null
+            ? wanted
+            : idFilter.where(wanted.contains).toList();
+        if (idFilter.isEmpty) return const [];
+      }
       final whereIn = <String, List<Object>>{'id': ?idFilter};
 
       final (orderBy, ascending) = _sortOrder(sort);
       final rows = await _database.list(
         table: _productsTable,
-        filters: filters,
+        filters: equals,
         whereIn: whereIn,
         orderBy: orderBy,
         ascending: ascending,
@@ -342,6 +361,26 @@ class SupabaseProductRepository implements ProductRepository {
     final rows = await _database.rpc(
       functionName: 'search_product_ids',
       params: {'p_query': query},
+    );
+    return (rows as List? ?? const [])
+        .whereType<Map>()
+        .map((row) => row['product_id'])
+        .whereType<Object>()
+        .toSet()
+        .toList(growable: false);
+  }
+
+  /// Unique ids of visible products within the price range / purity of
+  /// [filters], via the `filter_product_ids` RPC (runs as the caller).
+  Future<List<Object>> _filterProductIds(CatalogFilters filters) async {
+    final purity = filters.purity?.trim();
+    final rows = await _database.rpc(
+      functionName: 'filter_product_ids',
+      params: {
+        'p_min_price': filters.minPrice,
+        'p_max_price': filters.maxPrice,
+        'p_purity': (purity == null || purity.isEmpty) ? null : purity,
+      },
     );
     return (rows as List? ?? const [])
         .whereType<Map>()
