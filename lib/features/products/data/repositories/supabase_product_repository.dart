@@ -58,8 +58,9 @@ class SupabaseProductRepository implements ProductRepository {
         'featured': ?featured,
         'material': ?material,
       };
-      // A single `id` IN-filter, composed from the category subtree and/or the
-      // wholesale-eligible set. categoryIds takes precedence over categoryId.
+      // A single `id` IN-filter, composed from the category subtree, the
+      // wholesale-eligible set and/or the search matches (title, brand or
+      // maker). categoryIds takes precedence over categoryId.
       List<Object>? idFilter;
       if (categoryIds != null) {
         if (categoryIds.isEmpty) return const [];
@@ -77,6 +78,15 @@ class SupabaseProductRepository implements ProductRepository {
             : idFilter.where(wholesaleIds.contains).toList();
         if (idFilter.isEmpty) return const [];
       }
+      final query = search?.trim() ?? '';
+      if (query.isNotEmpty) {
+        final searchIds = await _searchProductIds(query);
+        if (searchIds.isEmpty) return const [];
+        idFilter = idFilter == null
+            ? searchIds
+            : idFilter.where(searchIds.contains).toList();
+        if (idFilter.isEmpty) return const [];
+      }
       final whereIn = <String, List<Object>>{'id': ?idFilter};
 
       final (orderBy, ascending) = _sortOrder(sort);
@@ -84,8 +94,6 @@ class SupabaseProductRepository implements ProductRepository {
         table: _productsTable,
         filters: filters,
         whereIn: whereIn,
-        ilikeColumn: 'title',
-        ilikeQuery: search,
         orderBy: orderBy,
         ascending: ascending,
         limit: limit,
@@ -319,6 +327,22 @@ class SupabaseProductRepository implements ProductRepository {
   /// themselves are readable only by verified businesses.
   Future<List<Object>> _wholesaleProductIds() async {
     final rows = await _database.rpc(functionName: 'wholesale_product_ids');
+    return (rows as List? ?? const [])
+        .whereType<Map>()
+        .map((row) => row['product_id'])
+        .whereType<Object>()
+        .toSet()
+        .toList(growable: false);
+  }
+
+  /// Unique ids of visible products whose title, brand name or maker (store
+  /// name) contains [query]. The `search_product_ids` RPC runs as the caller,
+  /// so RLS still decides what is visible, and escapes LIKE wildcards.
+  Future<List<Object>> _searchProductIds(String query) async {
+    final rows = await _database.rpc(
+      functionName: 'search_product_ids',
+      params: {'p_query': query},
+    );
     return (rows as List? ?? const [])
         .whereType<Map>()
         .map((row) => row['product_id'])

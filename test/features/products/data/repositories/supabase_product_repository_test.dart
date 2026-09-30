@@ -104,6 +104,7 @@ class _StubDatabase extends SupabaseDatabaseService {
 
   dynamic Function(String functionName)? onRpc;
   final List<String> rpcCalls = [];
+  final List<Map<String, dynamic>> rpcParams = [];
 
   @override
   Future<dynamic> rpc({
@@ -112,6 +113,7 @@ class _StubDatabase extends SupabaseDatabaseService {
   }) async {
     if (throwError != null) throw throwError!;
     rpcCalls.add(functionName);
+    rpcParams.add(params);
     return onRpc?.call(functionName);
   }
 }
@@ -551,6 +553,58 @@ void main() {
 
       expect(await repo.getProducts(wholesaleOnly: true), isEmpty);
       expect(db.queries.any((q) => q.table == 'products'), isFalse);
+    });
+
+    test('search matches via the title/brand/maker RPC, trimmed', () async {
+      db.onRpc = (fn) => [
+        {'product_id': 'p1'},
+        {'product_id': 'p2'},
+      ];
+      db.onList = (table, q) => [productRow(id: 'p1'), productRow(id: 'p2')];
+
+      final products = await repo.getProducts(search: '  gold house ');
+
+      expect(products.map((p) => p.id), ['p1', 'p2']);
+      expect(db.rpcCalls, ['search_product_ids']);
+      expect(db.rpcParams.single, {'p_query': 'gold house'});
+      final productsQuery = db.queries.firstWhere((q) => q.table == 'products');
+      expect(productsQuery.whereIn['id'], ['p1', 'p2']);
+    });
+
+    test('search with no matches skips the product query', () async {
+      db.onRpc = (fn) => const [];
+      db.onList = (table, q) => [productRow()];
+
+      expect(await repo.getProducts(search: 'nothing'), isEmpty);
+      expect(db.queries.any((q) => q.table == 'products'), isFalse);
+    });
+
+    test('blank search is ignored (no RPC, no id filter)', () async {
+      db.onList = (table, q) => [productRow()];
+
+      await repo.getProducts(search: '   ');
+
+      expect(db.rpcCalls, isEmpty);
+      final productsQuery = db.queries.firstWhere((q) => q.table == 'products');
+      expect(productsQuery.whereIn.containsKey('id'), isFalse);
+    });
+
+    test('search composes with the category filter (intersection)', () async {
+      db.onRpc = (fn) => [
+        {'product_id': 'p1'},
+        {'product_id': 'p3'},
+      ];
+      db.onList = (table, q) => table == 'product_categories'
+          ? [
+              {'product_id': 'p1'},
+              {'product_id': 'p2'},
+            ]
+          : [productRow(id: 'p1')];
+
+      await repo.getProducts(categoryId: 'c1', search: 'ring');
+
+      final productsQuery = db.queries.firstWhere((q) => q.table == 'products');
+      expect(productsQuery.whereIn['id'], ['p1']);
     });
   });
 

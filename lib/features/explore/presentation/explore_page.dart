@@ -116,7 +116,7 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
               valueListenable: _controller,
               builder: (context, value, _) => CustomSearchBar(
                 controller: _controller,
-                hintText: 'Search jewellery',
+                hintText: 'Search jewellery, brands & makers',
                 onChanged: _onQueryChanged,
                 onSubmitted: _submitSearch,
                 onClear: value.text.isEmpty
