@@ -56,9 +56,17 @@ class _FakeSellerRepository implements SellerRepository {
 }
 
 class _FakeSellerReviewRepository implements SellerReviewRepository {
-  _FakeSellerReviewRepository({this.approved = const [], this.mine});
+  _FakeSellerReviewRepository({
+    this.approved = const [],
+    this.mine,
+    this.canReview = false,
+  });
   List<SellerReview> approved;
   SellerReview? mine;
+  final bool canReview;
+
+  @override
+  Future<bool> canReviewSeller(String sellerProfileId) async => canReview;
 
   int createCalls = 0;
   int updateCalls = 0;
@@ -167,6 +175,22 @@ void main() {
       expect(state.status, SellerViewStatus.success);
       expect(state.data!.averageRating, 4.0);
       expect(state.data!.reviewCount, 2);
+      expect(state.data!.canWrite, isFalse); // no delivered order, no review
+    });
+
+    test('a buyer with a delivered order from the store may review', () async {
+      final container = _container(
+        seller: _FakeSellerRepository(seller: _seller()),
+        reviews: _FakeSellerReviewRepository(canReview: true),
+      );
+
+      await container
+          .read(sellerStorefrontProvider('gold-house').notifier)
+          .load();
+
+      final data = container.read(sellerStorefrontProvider('gold-house')).data!;
+      expect(data.canReview, isTrue);
+      expect(data.canWrite, isTrue);
     });
 
     test('load fails when the store is not visible', () async {

@@ -23,9 +23,13 @@ abstract class ReviewRepository {
   /// they have none or are not signed in.
   Future<ProductReview?> getMyReviewForProduct(String productId);
 
-  /// Creates a review for [productId]. Pass [orderItemId] when the review is
-  /// written from a purchased order item so the trigger can set
-  /// `verified_purchase`. [rating] must be 1–5.
+  /// The current user's delivered order item for [productId] that a review
+  /// can be written against, or null (not signed in / never received it).
+  Future<String?> reviewableOrderItemId(String productId);
+
+  /// Creates a review for [productId]. [orderItemId] must be the reviewer's
+  /// delivered order item for the product — the server rejects reviews
+  /// without one. [rating] must be 1–5.
   Future<ProductReview> createReview({
     required String productId,
     String? orderItemId,

@@ -13,6 +13,7 @@ class SellerStorefront {
     this.products = const [],
     this.approvedReviews = const [],
     this.myReview,
+    this.canReview = false,
   });
 
   final SellerProfile seller;
@@ -21,6 +22,13 @@ class SellerStorefront {
 
   /// The current user's own review for this seller (any status), or null.
   final SellerReview? myReview;
+
+  /// Whether the current user has a delivered order from this store — only
+  /// such buyers may write a store review (Requirements Doc §3).
+  final bool canReview;
+
+  /// True when the user may write a new review or edit their existing one.
+  bool get canWrite => hasMyReview || canReview;
 
   int get productCount => products.length;
   bool get hasProducts => products.isNotEmpty;

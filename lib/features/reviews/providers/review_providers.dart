@@ -15,21 +15,31 @@ final reviewRepositoryProvider = Provider<ReviewRepository>((ref) {
   );
 });
 
-/// Aggregate read shape for a product's reviews section: the approved reviews
-/// plus the current user's own review (if any). The average is computed on the
-/// client from the loaded approved reviews — the DB rating aggregate is not
-/// maintained and is intentionally not relied upon.
+/// Aggregate read shape for a product's reviews section: the approved reviews,
+/// the current user's own review (if any), and the delivered order item they
+/// may review against. The average is computed on the client from the loaded
+/// approved reviews.
 class ProductReviewsView {
-  const ProductReviewsView({this.approved = const [], this.myReview});
+  const ProductReviewsView({
+    this.approved = const [],
+    this.myReview,
+    this.eligibleOrderItemId,
+  });
 
   final List<ProductReview> approved;
   final ProductReview? myReview;
+
+  /// Only buyers who received this product may review it (Requirements Doc
+  /// §3); null when the user has no delivered order item for it.
+  final String? eligibleOrderItemId;
 
   int get reviewCount => approved.length;
 
   bool get hasApproved => approved.isNotEmpty;
 
   bool get hasMyReview => myReview != null;
+
+  bool get canWrite => hasMyReview || eligibleOrderItemId != null;
 
   /// Average of the loaded approved reviews (0 when there are none).
   double get averageRating {
@@ -126,7 +136,14 @@ class ProductReviewsNotifier
     return _runner.run(() async {
       final approved = await _repository.getApprovedReviews(_productId);
       final myReview = await _repository.getMyReviewForProduct(_productId);
-      return ProductReviewsView(approved: approved, myReview: myReview);
+      final eligibleOrderItemId = myReview == null
+          ? await _repository.reviewableOrderItemId(_productId)
+          : null;
+      return ProductReviewsView(
+        approved: approved,
+        myReview: myReview,
+        eligibleOrderItemId: eligibleOrderItemId,
+      );
     });
   }
 

@@ -25,13 +25,23 @@ class _FakeReviewRepository implements ReviewRepository {
     this.approved = const [],
     this.mine,
     this.createError,
+    this.eligibleItem,
   });
 
   List<ProductReview> approved;
   ProductReview? mine;
   final Object? createError;
+  final String? eligibleItem;
 
   int createCalls = 0;
+  int eligibilityCalls = 0;
+  String? lastOrderItemId;
+
+  @override
+  Future<String?> reviewableOrderItemId(String productId) async {
+    eligibilityCalls++;
+    return eligibleItem;
+  }
   int updateCalls = 0;
   int deleteCalls = 0;
 
@@ -54,6 +64,7 @@ class _FakeReviewRepository implements ReviewRepository {
     String? comment,
   }) async {
     createCalls++;
+    lastOrderItemId = orderItemId;
     if (createError != null) throw createError!;
     final created = _review(id: 'new', rating: rating, status: 'pending');
     mine = created;
@@ -126,6 +137,33 @@ void main() {
       expect(state.status, ReviewViewStatus.success);
       expect(state.data!.reviewCount, 2);
       expect(state.data!.hasMyReview, isTrue);
+      expect(state.data!.canWrite, isTrue); // can edit their own review
+      expect(repo.eligibilityCalls, 0); // not needed once they have a review
+    });
+
+    test('a buyer with a delivered item may write, and it is linked', () async {
+      final repo = _FakeReviewRepository(eligibleItem: 'item-9');
+      final container = _container(repo);
+      final notifier = container.read(productReviewsProvider('prod-1').notifier);
+
+      await notifier.load();
+      final view = container.read(productReviewsProvider('prod-1')).data!;
+      expect(view.eligibleOrderItemId, 'item-9');
+      expect(view.canWrite, isTrue);
+
+      await notifier.submit(orderItemId: view.eligibleOrderItemId, rating: 5);
+      expect(repo.lastOrderItemId, 'item-9');
+    });
+
+    test('a user who has not received the item cannot write', () async {
+      final repo = _FakeReviewRepository();
+      final container = _container(repo);
+
+      await container.read(productReviewsProvider('prod-1').notifier).load();
+
+      final view = container.read(productReviewsProvider('prod-1')).data!;
+      expect(view.eligibleOrderItemId, isNull);
+      expect(view.canWrite, isFalse);
     });
 
     test('submit create calls createReview then reloads', () async {

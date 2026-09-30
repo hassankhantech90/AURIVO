@@ -42,6 +42,9 @@ class _FakeReviewRepository implements ReviewRepository {
   Future<ProductReview?> getMyReviewForProduct(String productId) async => null;
 
   @override
+  Future<String?> reviewableOrderItemId(String productId) async => null;
+
+  @override
   Future<ProductReview> createReview({
     required String productId,
     String? orderItemId,

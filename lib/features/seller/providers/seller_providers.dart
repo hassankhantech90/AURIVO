@@ -163,11 +163,13 @@ class SellerStorefrontNotifier
       final products = await _seller.getSellerProducts(seller.id);
       final approved = await _reviews.getApprovedReviews(seller.id);
       final mine = await _reviews.getMyReview(seller.id);
+      final canReview = mine == null && await _reviews.canReviewSeller(seller.id);
       return SellerStorefront(
         seller: seller,
         products: products,
         approvedReviews: approved,
         myReview: mine,
+        canReview: canReview,
       );
     });
   }

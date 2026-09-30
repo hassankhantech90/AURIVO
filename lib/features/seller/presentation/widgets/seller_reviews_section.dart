@@ -54,19 +54,26 @@ class SellerReviewsSection extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: AppSpacing.sm),
-        SizedBox(
-          width: double.infinity,
-          child: LuxuryOutlinedButton(
-            label: !isAuthenticated
-                ? 'Sign in to write a review'
-                : (storefront.hasMyReview
-                      ? 'Edit your review'
-                      : 'Write a review'),
-            onPressed: !isAuthenticated
-                ? () => context.push(AppRoutes.login)
-                : () => _openForm(context, ref),
+        if (isAuthenticated && !storefront.canWrite)
+          Text(
+            'Store reviews can be written once an order from this store is '
+            'delivered.',
+            style: theme.textTheme.bodySmall,
+          )
+        else
+          SizedBox(
+            width: double.infinity,
+            child: LuxuryOutlinedButton(
+              label: !isAuthenticated
+                  ? 'Sign in to write a review'
+                  : (storefront.hasMyReview
+                        ? 'Edit your review'
+                        : 'Write a review'),
+              onPressed: !isAuthenticated
+                  ? () => context.push(AppRoutes.login)
+                  : () => _openForm(context, ref),
+            ),
           ),
-        ),
         if (myReview != null && !myReview.isApproved) ...[
           const SizedBox(height: AppSpacing.sm),
           Text('Your review', style: theme.textTheme.titleSmall),

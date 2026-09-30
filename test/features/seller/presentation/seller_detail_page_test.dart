@@ -55,6 +55,9 @@ class _FakeReviewRepository implements SellerReviewRepository {
   Future<SellerReview?> getMyReview(String sellerProfileId) async => null;
 
   @override
+  Future<bool> canReviewSeller(String sellerProfileId) async => false;
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 

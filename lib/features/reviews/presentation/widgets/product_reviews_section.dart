@@ -38,6 +38,7 @@ class _ProductReviewsSectionState extends ConsumerState<ProductReviewsSection> {
     await ReviewFormSheet.show(
       context,
       productId: widget.productId,
+      orderItemId: view?.eligibleOrderItemId,
       initialReview: view?.myReview,
     );
     // The form submits through productReviewsProvider, which reloads the
@@ -80,6 +81,7 @@ class _ProductReviewsSectionState extends ConsumerState<ProductReviewsSection> {
           _WriteAction(
             isAuthenticated: isAuthenticated,
             hasMyReview: view?.hasMyReview ?? false,
+            canWrite: view?.canWrite ?? false,
             onWrite: _openForm,
             onSignIn: () => context.push(AppRoutes.login),
           ),
@@ -117,12 +119,14 @@ class _WriteAction extends StatelessWidget {
   const _WriteAction({
     required this.isAuthenticated,
     required this.hasMyReview,
+    required this.canWrite,
     required this.onWrite,
     required this.onSignIn,
   });
 
   final bool isAuthenticated;
   final bool hasMyReview;
+  final bool canWrite;
   final VoidCallback onWrite;
   final VoidCallback onSignIn;
 
@@ -135,6 +139,12 @@ class _WriteAction extends StatelessWidget {
           label: 'Sign in to write a review',
           onPressed: onSignIn,
         ),
+      );
+    }
+    if (!canWrite) {
+      return Text(
+        'Reviews can be written once your order of this piece is delivered.',
+        style: Theme.of(context).textTheme.bodySmall,
       );
     }
     return SizedBox(

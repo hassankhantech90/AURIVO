@@ -62,6 +62,21 @@ class SupabaseReviewRepository implements ReviewRepository {
   }
 
   @override
+  Future<String?> reviewableOrderItemId(String productId) async {
+    try {
+      final profileId = await _currentProfileId();
+      if (profileId == null) return null;
+      final result = await _database.rpc(
+        functionName: 'reviewable_order_item',
+        params: {'p_product_id': productId},
+      );
+      return result is String && result.isNotEmpty ? result : null;
+    } catch (error) {
+      throw ReviewFailureMapper.map(error);
+    }
+  }
+
+  @override
   Future<ProductReview> createReview({
     required String productId,
     String? orderItemId,

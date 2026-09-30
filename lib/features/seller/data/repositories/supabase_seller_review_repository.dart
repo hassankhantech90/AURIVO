@@ -45,6 +45,21 @@ class SupabaseSellerReviewRepository implements SellerReviewRepository {
   }
 
   @override
+  Future<bool> canReviewSeller(String sellerProfileId) async {
+    try {
+      final profileId = await _currentProfileId();
+      if (profileId == null) return false;
+      final result = await _database.rpc(
+        functionName: 'can_review_seller',
+        params: {'p_seller_profile_id': sellerProfileId},
+      );
+      return result == true;
+    } catch (error) {
+      throw SellerFailureMapper.map(error);
+    }
+  }
+
+  @override
   Future<SellerReview?> getMyReview(String sellerProfileId) async {
     try {
       final profileId = await _currentProfileId();

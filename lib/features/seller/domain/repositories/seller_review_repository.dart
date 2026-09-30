@@ -23,6 +23,10 @@ abstract class SellerReviewRepository {
   /// if they have none or are not signed in.
   Future<SellerReview?> getMyReview(String sellerProfileId);
 
+  /// Whether the current user has a delivered order from [sellerProfileId]
+  /// (required to write a store review). False when not signed in.
+  Future<bool> canReviewSeller(String sellerProfileId);
+
   /// Creates a review for [sellerProfileId]. [rating] must be 1–5. The trigger
   /// determines `verified_purchase` from the buyer's delivered/completed orders
   /// with this seller — no order reference is passed by the client.

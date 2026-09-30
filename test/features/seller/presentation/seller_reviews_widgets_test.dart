@@ -69,6 +69,9 @@ class _FakeSellerReviewRepository implements SellerReviewRepository {
   Future<SellerReview?> getMyReview(String sellerProfileId) async => null;
 
   @override
+  Future<bool> canReviewSeller(String sellerProfileId) async => false;
+
+  @override
   Future<SellerReview> createReview({
     required String sellerProfileId,
     required int rating,
