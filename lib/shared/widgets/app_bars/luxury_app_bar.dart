@@ -16,6 +16,7 @@ class LuxuryAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.searchHint = 'Search',
     this.onSearchChanged,
     this.toolbarHeight,
+    this.bottom,
   });
 
   final String? title;
@@ -34,10 +35,17 @@ class LuxuryAppBar extends StatelessWidget implements PreferredSizeWidget {
   /// the default height is used, so existing app bars are unaffected.
   final double? toolbarHeight;
 
+  /// Optional strip pinned under the toolbar (e.g. a mode toggle). Ignored
+  /// when [searchController] is set, which owns the bottom slot.
+  final PreferredSizeWidget? bottom;
+
   @override
   Size get preferredSize {
     if (searchController != null) return const Size.fromHeight(116);
-    return Size.fromHeight(toolbarHeight ?? (largeTitle ? 96 : 64));
+    return Size.fromHeight(
+      (toolbarHeight ?? (largeTitle ? 96 : 64)) +
+          (bottom?.preferredSize.height ?? 0),
+    );
   }
 
   @override
@@ -57,7 +65,7 @@ class LuxuryAppBar extends StatelessWidget implements PreferredSizeWidget {
                 )),
       actions: actions,
       bottom: searchController == null
-          ? null
+          ? bottom
           : PreferredSize(
               preferredSize: const Size.fromHeight(56),
               child: Padding(
