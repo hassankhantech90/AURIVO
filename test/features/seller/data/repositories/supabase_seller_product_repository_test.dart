@@ -171,6 +171,35 @@ void main() {
     },
   );
 
+  test('createProduct sends disclosure fields (blank text cleared)', () async {
+    _wireSeller(db);
+    await repo.createProduct(
+      const ProductDraft(
+        title: 'Bridal set',
+        slug: 'bridal-set',
+        jewelleryType: 'set',
+        basePrice: 500000,
+        certification: '  PSQCA hallmark ',
+        makingCharges: 25000,
+        dimensions: '   ',
+        isReturnable: false,
+        isMadeToOrder: true,
+        leadTimeDays: 21,
+        advancePaymentPercent: 30,
+      ),
+    );
+
+    final row = db.inserted.firstWhere((v) => v['_table'] == 'products');
+    expect(row['certification'], 'PSQCA hallmark');
+    expect(row['making_charges'], 25000);
+    expect(row.containsKey('dimensions'), isTrue);
+    expect(row['dimensions'], isNull); // blank → cleared, not skipped
+    expect(row['is_returnable'], isFalse);
+    expect(row['is_made_to_order'], isTrue);
+    expect(row['lead_time_days'], 21);
+    expect(row['advance_payment_percent'], 30);
+  });
+
   test('createProduct requires a seller store', () async {
     db.onList = (table, filters) => const []; // no seller profile
     await expectLater(

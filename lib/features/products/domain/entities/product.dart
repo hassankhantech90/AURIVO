@@ -26,6 +26,13 @@ class Product {
     this.minOrderQuantity,
     this.ratingAverage = 0,
     this.ratingCount = 0,
+    this.certification,
+    this.makingCharges,
+    this.dimensions,
+    this.isReturnable = true,
+    this.isMadeToOrder = false,
+    this.leadTimeDays,
+    this.advancePaymentPercent,
     this.createdAt,
     this.updatedAt,
     this.primaryImageUrl,
@@ -50,6 +57,16 @@ class Product {
   final int? minOrderQuantity;
   final double ratingAverage;
   final int ratingCount;
+
+  // Disclosure fields (Requirements Doc §3).
+  final String? certification;
+  final double? makingCharges;
+  final String? dimensions;
+  final bool isReturnable;
+  final bool isMadeToOrder;
+  final int? leadTimeDays;
+  final int? advancePaymentPercent;
+
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -81,6 +98,17 @@ class Product {
           : parseInt(map['min_order_quantity']),
       ratingAverage: parseDouble(map['rating_average']),
       ratingCount: parseInt(map['rating_count']),
+      certification: map['certification'] as String?,
+      makingCharges: parseDoubleOrNull(map['making_charges']),
+      dimensions: map['dimensions'] as String?,
+      isReturnable: map['is_returnable'] as bool? ?? true,
+      isMadeToOrder: map['is_made_to_order'] as bool? ?? false,
+      leadTimeDays: map['lead_time_days'] == null
+          ? null
+          : parseInt(map['lead_time_days']),
+      advancePaymentPercent: map['advance_payment_percent'] == null
+          ? null
+          : parseInt(map['advance_payment_percent']),
       createdAt: parseTimestamp(map['created_at']),
       updatedAt: parseTimestamp(map['updated_at']),
     );
@@ -108,6 +136,13 @@ class Product {
     int? minOrderQuantity,
     double? ratingAverage,
     int? ratingCount,
+    String? certification,
+    double? makingCharges,
+    String? dimensions,
+    bool? isReturnable,
+    bool? isMadeToOrder,
+    int? leadTimeDays,
+    int? advancePaymentPercent,
     DateTime? createdAt,
     DateTime? updatedAt,
     String? primaryImageUrl,
@@ -132,6 +167,14 @@ class Product {
       minOrderQuantity: minOrderQuantity ?? this.minOrderQuantity,
       ratingAverage: ratingAverage ?? this.ratingAverage,
       ratingCount: ratingCount ?? this.ratingCount,
+      certification: certification ?? this.certification,
+      makingCharges: makingCharges ?? this.makingCharges,
+      dimensions: dimensions ?? this.dimensions,
+      isReturnable: isReturnable ?? this.isReturnable,
+      isMadeToOrder: isMadeToOrder ?? this.isMadeToOrder,
+      leadTimeDays: leadTimeDays ?? this.leadTimeDays,
+      advancePaymentPercent:
+          advancePaymentPercent ?? this.advancePaymentPercent,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       primaryImageUrl: primaryImageUrl ?? this.primaryImageUrl,

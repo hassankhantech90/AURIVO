@@ -164,6 +164,7 @@ class _ProductDetailView extends StatelessWidget {
         const SizedBox(height: AppSpacing.sm),
         _Specifications(detail: detail),
         _WholesalePricing(product: product),
+        _PurchaseTerms(product: product),
         if (product.description != null) ...[
           const SizedBox(height: AppSpacing.lg),
           Text('Description', style: Theme.of(context).textTheme.titleMedium),
@@ -240,6 +241,16 @@ class _Specifications extends StatelessWidget {
       if (product.purity != null && product.purity!.isNotEmpty)
         (Icons.workspace_premium_outlined, 'Purity', product.purity!.toUpperCase()),
       if (weight != null) (Icons.scale_outlined, 'Weight', weight),
+      if (product.dimensions != null && product.dimensions!.isNotEmpty)
+        (Icons.straighten_outlined, 'Dimensions', product.dimensions!),
+      if (product.certification != null && product.certification!.isNotEmpty)
+        (Icons.verified_outlined, 'Certification', product.certification!),
+      if (product.makingCharges != null)
+        (
+          Icons.handyman_outlined,
+          'Making charges',
+          formatMoney(product.makingCharges!, currency: product.currency),
+        ),
     ];
     if (rows.isEmpty) return const SizedBox.shrink();
 
@@ -335,6 +346,64 @@ class _WholesalePricing extends ConsumerWidget {
                       value: rows[i].$3,
                     ),
                   ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Return terms and, for made-to-order pieces, lead time and advance-payment
+/// policy — shown before checkout as the Requirements Doc (§3) requires.
+class _PurchaseTerms extends StatelessWidget {
+  const _PurchaseTerms({required this.product});
+
+  final Product product;
+
+  @override
+  Widget build(BuildContext context) {
+    final advance = product.advancePaymentPercent;
+    final rows = <(IconData, String, String)>[
+      if (product.isMadeToOrder) ...[
+        (
+          Icons.schedule_outlined,
+          'Made to order',
+          product.leadTimeDays == null
+              ? 'Crafted after purchase'
+              : 'Ready in ${product.leadTimeDays} days',
+        ),
+        if (advance != null && advance > 0)
+          (Icons.payments_outlined, 'Advance payment', '$advance% at order'),
+      ],
+      (
+        Icons.assignment_return_outlined,
+        'Returns',
+        product.isReturnable
+            ? 'Returnable under AURIVO policy'
+            : product.isMadeToOrder
+            ? 'Custom piece — no cancellation or returns'
+            : 'Not returnable',
+      ),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: AppSpacing.lg),
+        Text(
+          'Delivery & returns',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        LuxuryCard(
+          padding: EdgeInsets.zero,
+          child: Column(
+            children: [
+              for (var i = 0; i < rows.length; i++) ...[
+                if (i > 0) const LuxuryDivider(height: 1),
+                _SpecRow(icon: rows[i].$1, label: rows[i].$2, value: rows[i].$3),
               ],
             ],
           ),

@@ -338,6 +338,60 @@ void main() {
     });
   });
 
+  group('disclosures', () {
+    testWidgets('shows certification, making charges, dimensions and returns', (
+      tester,
+    ) async {
+      final detail = ProductDetail(
+        product: _richProduct().copyWith(
+          certification: 'PSQCA hallmark',
+          makingCharges: 12500,
+          dimensions: '18 mm × 12 mm',
+        ),
+        variants: _richDetail().variants,
+      );
+      await _pump(
+        tester,
+        _app(overrides: _guestOverrides(_DetailRepository(detail: detail))),
+      );
+
+      expect(find.text('Certification'), findsOneWidget);
+      expect(find.text('PSQCA hallmark'), findsOneWidget);
+      expect(find.text('Making charges'), findsOneWidget);
+      expect(find.text('PKR 12,500'), findsOneWidget);
+      expect(find.text('18 mm × 12 mm'), findsOneWidget);
+      expect(find.text('Delivery & returns'), findsOneWidget);
+      expect(find.text('Returnable under AURIVO policy'), findsOneWidget);
+      expect(find.text('Made to order'), findsNothing);
+    });
+
+    testWidgets('made-to-order shows lead time, advance and no returns', (
+      tester,
+    ) async {
+      final detail = ProductDetail(
+        product: _richProduct().copyWith(
+          isMadeToOrder: true,
+          leadTimeDays: 21,
+          advancePaymentPercent: 30,
+          isReturnable: false,
+        ),
+        variants: _richDetail().variants,
+      );
+      await _pump(
+        tester,
+        _app(overrides: _guestOverrides(_DetailRepository(detail: detail))),
+      );
+
+      expect(find.text('Made to order'), findsOneWidget);
+      expect(find.text('Ready in 21 days'), findsOneWidget);
+      expect(find.text('30% at order'), findsOneWidget);
+      expect(
+        find.text('Custom piece — no cancellation or returns'),
+        findsOneWidget,
+      );
+    });
+  });
+
   group('success content', () {
     testWidgets('renders the core product detail', (tester) async {
       await _pump(

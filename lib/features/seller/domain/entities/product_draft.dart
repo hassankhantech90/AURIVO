@@ -20,6 +20,13 @@ class ProductDraft {
     this.minOrderQuantity,
     this.featured = false,
     this.categoryIds = const [],
+    this.certification,
+    this.makingCharges,
+    this.dimensions,
+    this.isReturnable = true,
+    this.isMadeToOrder = false,
+    this.leadTimeDays,
+    this.advancePaymentPercent,
   });
 
   final String title;
@@ -38,4 +45,14 @@ class ProductDraft {
   final int? minOrderQuantity;
   final bool featured;
   final List<String> categoryIds;
+
+  // Disclosure fields. Unlike the optional text fields above, these are sent
+  // even when empty so a seller can clear them.
+  final String? certification;
+  final double? makingCharges;
+  final String? dimensions;
+  final bool isReturnable;
+  final bool isMadeToOrder;
+  final int? leadTimeDays;
+  final int? advancePaymentPercent;
 }

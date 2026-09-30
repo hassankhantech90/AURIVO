@@ -30,10 +30,21 @@ class _SellerProductEditPageState extends ConsumerState<SellerProductEditPage> {
   final _comparePrice = TextEditingController();
   final _description = TextEditingController();
   final _minOrderQuantity = TextEditingController();
+  final _purity = TextEditingController();
+  final _certification = TextEditingController();
+  final _makingCharges = TextEditingController();
+  final _dimensions = TextEditingController();
+  final _leadTimeDays = TextEditingController();
+  final _advancePercent = TextEditingController();
 
   String _currency = 'PKR';
   String? _gender;
   String? _brandId;
+  String? _material;
+  bool _returnable = true;
+  bool _madeToOrder = false;
+
+  static const _materials = ['Gold', 'Silver', 'Artificial'];
   final Set<String> _categoryIds = {};
 
   bool _loading = false;
@@ -59,6 +70,12 @@ class _SellerProductEditPageState extends ConsumerState<SellerProductEditPage> {
       _comparePrice,
       _description,
       _minOrderQuantity,
+      _purity,
+      _certification,
+      _makingCharges,
+      _dimensions,
+      _leadTimeDays,
+      _advancePercent,
     ]) {
       c.dispose();
     }
@@ -81,6 +98,15 @@ class _SellerProductEditPageState extends ConsumerState<SellerProductEditPage> {
       _currency = p.currency;
       _gender = p.gender;
       _brandId = p.brandId;
+      _material = p.material;
+      _purity.text = p.purity ?? '';
+      _certification.text = p.certification ?? '';
+      _makingCharges.text = p.makingCharges?.toString() ?? '';
+      _dimensions.text = p.dimensions ?? '';
+      _returnable = p.isReturnable;
+      _madeToOrder = p.isMadeToOrder;
+      _leadTimeDays.text = p.leadTimeDays?.toString() ?? '';
+      _advancePercent.text = p.advancePaymentPercent?.toString() ?? '';
       _categoryIds
         ..clear()
         ..addAll(detail.categoryIds);
@@ -120,6 +146,26 @@ class _SellerProductEditPageState extends ConsumerState<SellerProductEditPage> {
       setState(() => _error = 'Please provide a valid product URL (slug).');
       return;
     }
+    final makingCharges = _makingCharges.text.trim().isEmpty
+        ? null
+        : double.tryParse(_makingCharges.text.trim());
+    if (_makingCharges.text.trim().isNotEmpty &&
+        (makingCharges == null || makingCharges < 0)) {
+      setState(() => _error = 'Making charges must be a positive amount.');
+      return;
+    }
+    final leadTimeDays = int.tryParse(_leadTimeDays.text.trim());
+    final advancePercent = int.tryParse(_advancePercent.text.trim());
+    if (_madeToOrder && (leadTimeDays == null || leadTimeDays <= 0)) {
+      setState(
+        () => _error = 'Made-to-order items need a lead time in days.',
+      );
+      return;
+    }
+    if (advancePercent != null && (advancePercent < 0 || advancePercent > 100)) {
+      setState(() => _error = 'Advance payment must be between 0 and 100%.');
+      return;
+    }
 
     final draft = ProductDraft(
       title: title,
@@ -133,6 +179,16 @@ class _SellerProductEditPageState extends ConsumerState<SellerProductEditPage> {
       brandId: _brandId,
       minOrderQuantity: int.tryParse(_minOrderQuantity.text.trim()),
       categoryIds: _categoryIds.toList(),
+      material: _material,
+      purity: _purity.text,
+      certification: _certification.text,
+      makingCharges: makingCharges,
+      dimensions: _dimensions.text,
+      isReturnable: _returnable,
+      isMadeToOrder: _madeToOrder,
+      // Lead time / advance only mean something for made-to-order items.
+      leadTimeDays: _madeToOrder ? leadTimeDays : null,
+      advancePaymentPercent: _madeToOrder ? advancePercent : null,
     );
 
     setState(() {
@@ -158,6 +214,80 @@ class _SellerProductEditPageState extends ConsumerState<SellerProductEditPage> {
         _error = error;
       });
     }
+  }
+
+  /// Metal, purity and the buyer disclosures the marketplace requires for
+  /// precious-metal and made-to-order items (Requirements Doc §3).
+  List<Widget> _complianceFields(BuildContext context) {
+    final materials = [
+      ..._materials,
+      if (_material != null && !_materials.contains(_material)) _material!,
+    ];
+    return [
+      Text('Details & compliance', style: Theme.of(context).textTheme.titleSmall),
+      const SizedBox(height: AppSpacing.sm),
+      DropdownButtonFormField<String?>(
+        initialValue: _material,
+        decoration: const InputDecoration(labelText: 'Metal'),
+        items: [
+          const DropdownMenuItem(value: null, child: Text('Not set')),
+          for (final m in materials) DropdownMenuItem(value: m, child: Text(m)),
+        ],
+        onChanged: (v) => setState(() => _material = v),
+      ),
+      const SizedBox(height: AppSpacing.md),
+      CustomTextField(
+        controller: _purity,
+        labelText: 'Purity / karat (optional)',
+        hintText: 'e.g. 22k, 925',
+      ),
+      const SizedBox(height: AppSpacing.md),
+      CustomTextField(
+        controller: _certification,
+        labelText: 'Certification (optional)',
+        hintText: 'e.g. PSQCA hallmark, GIA report no.',
+      ),
+      const SizedBox(height: AppSpacing.md),
+      CustomTextField(
+        controller: _makingCharges,
+        labelText: 'Making charges (optional)',
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      ),
+      const SizedBox(height: AppSpacing.md),
+      CustomTextField(
+        controller: _dimensions,
+        labelText: 'Dimensions (optional)',
+        hintText: 'e.g. 18 mm × 12 mm, chain 45 cm',
+      ),
+      SwitchListTile(
+        contentPadding: EdgeInsets.zero,
+        title: const Text('Returnable'),
+        subtitle: const Text('Buyers may return it under the AURIVO policy'),
+        value: _returnable,
+        onChanged: (v) => setState(() => _returnable = v),
+      ),
+      SwitchListTile(
+        contentPadding: EdgeInsets.zero,
+        title: const Text('Made to order'),
+        subtitle: const Text('Crafted after purchase, with a lead time'),
+        value: _madeToOrder,
+        onChanged: (v) => setState(() => _madeToOrder = v),
+      ),
+      if (_madeToOrder) ...[
+        const SizedBox(height: AppSpacing.sm),
+        CustomTextField(
+          controller: _leadTimeDays,
+          labelText: 'Lead time (days)',
+          keyboardType: TextInputType.number,
+        ),
+        const SizedBox(height: AppSpacing.md),
+        CustomTextField(
+          controller: _advancePercent,
+          labelText: 'Advance payment % (optional)',
+          keyboardType: TextInputType.number,
+        ),
+      ],
+    ];
   }
 
   @override
@@ -279,6 +409,8 @@ class _SellerProductEditPageState extends ConsumerState<SellerProductEditPage> {
                   minLines: 3,
                   maxLines: 8,
                 ),
+                const SizedBox(height: AppSpacing.lg),
+                ..._complianceFields(context),
                 const SizedBox(height: AppSpacing.lg),
                 Text(
                   'Categories',

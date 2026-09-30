@@ -224,6 +224,13 @@ class SupabaseSellerProductRepository implements SellerProductRepository {
       'purity': ?_clean(d.purity),
       'gender': ?d.gender,
       'occasion': ?_clean(d.occasion),
+      'certification': _clean(d.certification),
+      'making_charges': d.makingCharges,
+      'dimensions': _clean(d.dimensions),
+      'is_returnable': d.isReturnable,
+      'is_made_to_order': d.isMadeToOrder,
+      'lead_time_days': d.leadTimeDays,
+      'advance_payment_percent': d.advancePaymentPercent,
     };
   }
 
