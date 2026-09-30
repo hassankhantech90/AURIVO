@@ -64,6 +64,10 @@ abstract class ProductRepository {
   /// Empty when the product has no tiered pricing.
   Future<List<PriceTier>> getProductPriceTiers(String productId);
 
+  /// Ids of visible products that offer wholesale tiers — ids only, readable
+  /// by everyone (the tier prices themselves are verified-business only).
+  Future<Set<String>> getWholesaleProductIds();
+
   Future<List<Brand>> getBrands();
 
   Future<Brand?> getBrandById(String id);

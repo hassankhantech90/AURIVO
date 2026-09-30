@@ -226,6 +226,15 @@ class SupabaseProductRepository implements ProductRepository {
   }
 
   @override
+  Future<Set<String>> getWholesaleProductIds() async {
+    try {
+      return (await _wholesaleProductIds()).whereType<String>().toSet();
+    } catch (error) {
+      throw CatalogFailureMapper.map(error);
+    }
+  }
+
+  @override
   Future<List<Brand>> getBrands() async {
     try {
       final rows = await _database.list(table: _brandsTable, orderBy: 'name');
@@ -305,14 +314,13 @@ class SupabaseProductRepository implements ProductRepository {
         .toList(growable: false);
   }
 
-  /// Unique product ids that have at least one wholesale price tier. RLS on
-  /// `product_price_tiers` limits this to tiers of visible (approved) products.
+  /// Unique ids of visible products that have at least one wholesale price
+  /// tier. Uses the `wholesale_product_ids` RPC (ids only) because tier rows
+  /// themselves are readable only by verified businesses.
   Future<List<Object>> _wholesaleProductIds() async {
-    final rows = await _database.list(
-      table: _productPriceTiersTable,
-      columns: 'product_id',
-    );
-    return rows
+    final rows = await _database.rpc(functionName: 'wholesale_product_ids');
+    return (rows as List? ?? const [])
+        .whereType<Map>()
         .map((row) => row['product_id'])
         .whereType<Object>()
         .toSet()

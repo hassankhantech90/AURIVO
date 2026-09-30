@@ -70,6 +70,12 @@ class _FakeProductRepository implements ProductRepository {
   }
 
   @override
+  Future<Set<String>> getWholesaleProductIds() async {
+    if (error != null) throw error!;
+    return const {};
+  }
+
+  @override
   Future<List<Product>> getProductsByCategory(
     String categoryId, {
     int limit = 20,

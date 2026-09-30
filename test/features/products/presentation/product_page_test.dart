@@ -52,6 +52,7 @@ class _DetailRepository implements ProductRepository {
     this.failTimes = 0,
     this.returnNull = false,
     this.tiers = const [],
+    this.wholesaleIds = const {},
   });
 
   final ProductDetail? detail;
@@ -59,10 +60,18 @@ class _DetailRepository implements ProductRepository {
   int failTimes;
   final bool returnNull;
   final List<PriceTier> tiers;
+  final Set<String> wholesaleIds;
   int calls = 0;
+  int tierCalls = 0;
 
   @override
-  Future<List<PriceTier>> getProductPriceTiers(String id) async => tiers;
+  Future<List<PriceTier>> getProductPriceTiers(String id) async {
+    tierCalls++;
+    return tiers;
+  }
+
+  @override
+  Future<Set<String>> getWholesaleProductIds() async => wholesaleIds;
 
   @override
   Future<ProductDetail?> getProductDetail(String id) {
@@ -256,37 +265,34 @@ void main() {
   });
 
   group('wholesale pricing', () {
-    testWidgets('shows MOQ and tiered price breaks when present', (
+    const tiers = [
+      PriceTier(id: 't1', productId: 'p1', minQuantity: 10, unitPrice: 120000),
+      PriceTier(id: 't2', productId: 'p1', minQuantity: 50, unitPrice: 110000),
+    ];
+    ProductDetail moqDetail() => ProductDetail(
+      product: _richProduct().copyWith(minOrderQuantity: 10),
+      variants: _richDetail().variants,
+    );
+
+    testWidgets('verified business sees MOQ and tiered price breaks', (
       tester,
     ) async {
-      final detail = ProductDetail(
-        product: _richProduct().copyWith(minOrderQuantity: 10),
-        variants: _richDetail().variants,
-      );
       await _pump(
         tester,
         _app(
-          overrides: _guestOverrides(
-            _DetailRepository(
-              detail: detail,
-              tiers: const [
-                PriceTier(
-                  id: 't1',
-                  productId: 'p1',
-                  minQuantity: 10,
-                  unitPrice: 120000,
-                ),
-                PriceTier(
-                  id: 't2',
-                  productId: 'p1',
-                  minQuantity: 50,
-                  unitPrice: 110000,
-                ),
-              ],
+          overrides: [
+            ..._guestOverrides(
+              _DetailRepository(
+                detail: moqDetail(),
+                tiers: tiers,
+                wholesaleIds: {'p1'},
+              ),
             ),
-          ),
+            profileRepositoryProvider.overrideWithValue(_VerifiedBusinessRepo()),
+          ],
         ),
       );
+      await tester.pump(); // business profile resolves
       await tester.pump(); // tiers future resolves
 
       expect(find.text('Wholesale'), findsOneWidget);
@@ -296,6 +302,27 @@ void main() {
       expect(find.text('PKR 120,000 each'), findsOneWidget);
       expect(find.text('50+ pieces'), findsOneWidget);
       expect(find.text('PKR 110,000 each'), findsOneWidget);
+      expect(find.text('Verified businesses only'), findsNothing);
+    });
+
+    testWidgets('non-verified visitor sees MOQ but prices are locked', (
+      tester,
+    ) async {
+      final repo = _DetailRepository(
+        detail: moqDetail(),
+        tiers: tiers,
+        wholesaleIds: {'p1'},
+      );
+      await _pump(tester, _app(overrides: _guestOverrides(repo)));
+      await tester.pump();
+
+      expect(find.text('Wholesale'), findsOneWidget);
+      expect(find.text('10 pieces'), findsOneWidget);
+      expect(find.text('Wholesale prices'), findsOneWidget);
+      expect(find.text('Verified businesses only'), findsOneWidget);
+      expect(find.text('PKR 120,000 each'), findsNothing);
+      expect(find.text('10+ pieces'), findsNothing);
+      expect(repo.tierCalls, 0); // never even asks for tier prices
     });
 
     testWidgets('hides the wholesale block with no MOQ and no tiers', (

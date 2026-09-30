@@ -9,6 +9,7 @@ import '../../../core/utils/money.dart';
 import '../../../shared/design_system.dart';
 import '../../authentication/providers/session_provider.dart';
 import '../../cart/providers/cart_providers.dart';
+import '../../profile/providers/profile_providers.dart';
 import '../../reviews/presentation/widgets/product_reviews_section.dart';
 import '../../seller/providers/seller_providers.dart';
 import '../../wholesale/presentation/wholesale_access.dart';
@@ -268,8 +269,10 @@ class _Specifications extends StatelessWidget {
 }
 
 /// Wholesale block: minimum order quantity and any tiered "buy N+ at X each"
-/// price breaks. Renders nothing when the product has neither. Tiers load
-/// lazily via [productPriceTiersProvider]; MOQ comes from the product itself.
+/// price breaks. Renders nothing when the product has neither. Tier prices are
+/// shown only to verified businesses (RLS enforces this too); everyone else
+/// sees a locked row pointing to the business account. Tiers load lazily via
+/// [productPriceTiersProvider]; MOQ comes from the product itself.
 class _WholesalePricing extends ConsumerWidget {
   const _WholesalePricing({required this.product});
 
@@ -279,18 +282,32 @@ class _WholesalePricing extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final moq = product.minOrderQuantity;
     final showMoq = moq != null && moq > 1;
-    final tiers =
-        ref.watch(productPriceTiersProvider(product.id)).valueOrNull ??
-        const <PriceTier>[];
+    final verified = ref.watch(isVerifiedBusinessProvider);
+    final tiers = verified
+        ? ref.watch(productPriceTiersProvider(product.id)).valueOrNull ??
+              const <PriceTier>[]
+        : const <PriceTier>[];
+    final lockedTiers =
+        !verified &&
+        (ref.watch(wholesaleProductIdsProvider).valueOrNull ?? const {})
+            .contains(product.id);
 
-    final rows = <(IconData, String, String)>[
+    final rows = <(IconData, String, String, VoidCallback?)>[
       if (showMoq)
-        (Icons.inventory_2_outlined, 'Minimum order', '$moq pieces'),
+        (Icons.inventory_2_outlined, 'Minimum order', '$moq pieces', null),
       for (final tier in tiers)
         (
           Icons.local_offer_outlined,
           '${tier.minQuantity}+ pieces',
           '${formatMoney(tier.unitPrice, currency: product.currency)} each',
+          null,
+        ),
+      if (lockedTiers)
+        (
+          Icons.lock_outline,
+          'Wholesale prices',
+          'Verified businesses only',
+          () => context.push(AppRoutes.businessAccount),
         ),
     ];
     if (rows.isEmpty) return const SizedBox.shrink();
@@ -307,7 +324,17 @@ class _WholesalePricing extends ConsumerWidget {
             children: [
               for (var i = 0; i < rows.length; i++) ...[
                 if (i > 0) const LuxuryDivider(height: 1),
-                _SpecRow(icon: rows[i].$1, label: rows[i].$2, value: rows[i].$3),
+                if (rows[i].$4 == null)
+                  _SpecRow(icon: rows[i].$1, label: rows[i].$2, value: rows[i].$3)
+                else
+                  InkWell(
+                    onTap: rows[i].$4,
+                    child: _SpecRow(
+                      icon: rows[i].$1,
+                      label: rows[i].$2,
+                      value: rows[i].$3,
+                    ),
+                  ),
               ],
             ],
           ),

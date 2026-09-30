@@ -101,6 +101,19 @@ class _StubDatabase extends SupabaseDatabaseService {
     queries.add(q);
     return onList?.call(table, q) ?? const [];
   }
+
+  dynamic Function(String functionName)? onRpc;
+  final List<String> rpcCalls = [];
+
+  @override
+  Future<dynamic> rpc({
+    required String functionName,
+    Map<String, dynamic> params = const {},
+  }) async {
+    if (throwError != null) throw throwError!;
+    rpcCalls.add(functionName);
+    return onRpc?.call(functionName);
+  }
 }
 
 /// Builds a deterministic, offline public URL from a storage path.
@@ -515,28 +528,26 @@ void main() {
     });
 
     test('wholesaleOnly filters products to those with price tiers', () async {
-      db.onList = (table, q) => table == 'product_price_tiers'
-          ? [
-              {'product_id': 'p1'},
-              {'product_id': 'p1'}, // duplicate is de-duped
-              {'product_id': 'p2'},
-            ]
-          : [productRow(id: 'p1')];
+      db.onRpc = (fn) => [
+        {'product_id': 'p1'},
+        {'product_id': 'p1'}, // duplicate is de-duped
+        {'product_id': 'p2'},
+      ];
+      db.onList = (table, q) => [productRow(id: 'p1')];
 
       final products = await repo.getProducts(wholesaleOnly: true);
 
       expect(products.map((p) => p.id), ['p1']);
-      final tierQuery = db.queries.firstWhere(
-        (q) => q.table == 'product_price_tiers',
-      );
-      expect(tierQuery.columns, 'product_id');
+      // Ids come from the price-free RPC, never the (gated) tiers table.
+      expect(db.rpcCalls, ['wholesale_product_ids']);
+      expect(db.queries.any((q) => q.table == 'product_price_tiers'), isFalse);
       final productsQuery = db.queries.firstWhere((q) => q.table == 'products');
       expect(productsQuery.whereIn['id'], containsAll(<Object>['p1', 'p2']));
     });
 
     test('wholesaleOnly returns empty (no product query) with no tiers', () async {
-      db.onList = (table, q) =>
-          table == 'product_price_tiers' ? const [] : [productRow()];
+      db.onRpc = (fn) => const [];
+      db.onList = (table, q) => [productRow()];
 
       expect(await repo.getProducts(wholesaleOnly: true), isEmpty);
       expect(db.queries.any((q) => q.table == 'products'), isFalse);

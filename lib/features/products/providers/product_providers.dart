@@ -136,6 +136,14 @@ final productPriceTiersProvider = FutureProvider.autoDispose
       return ref.watch(productRepositoryProvider).getProductPriceTiers(productId);
     });
 
+/// Ids of products offering wholesale tiers (no prices), so non-verified
+/// visitors can still be told a product has wholesale pricing.
+final wholesaleProductIdsProvider = FutureProvider.autoDispose<Set<String>>((
+  ref,
+) {
+  return ref.watch(productRepositoryProvider).getWholesaleProductIds();
+});
+
 // Brands ---------------------------------------------------------------------
 
 final brandsProvider =
