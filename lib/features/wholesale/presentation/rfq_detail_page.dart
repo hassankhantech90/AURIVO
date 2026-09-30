@@ -10,6 +10,7 @@ import '../domain/entities/rfq.dart';
 import '../domain/entities/rfq_detail.dart';
 import '../domain/entities/rfq_status.dart';
 import '../providers/rfq_providers.dart';
+import 'wholesale_access.dart';
 import 'widgets/address_picker_sheet.dart';
 import 'widgets/quote_tile.dart';
 
@@ -39,6 +40,10 @@ class _RfqDetailPageState extends ConsumerState<RfqDetailPage> {
       ref.read(rfqDetailProvider(widget.rfqId).notifier).load();
 
   Future<void> _accept(Quote quote) async {
+    // accept_quote re-checks this server-side (a business suspended after
+    // requesting can't convert the quote); fail fast before the picker.
+    if (!await ensureVerifiedBusiness(context, ref)) return;
+    if (!mounted) return;
     final addressId = await AddressPickerSheet.show(context);
     if (addressId == null || !mounted) return;
 
