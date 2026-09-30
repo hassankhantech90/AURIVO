@@ -61,6 +61,14 @@ class _FakeRepo implements SellerProductRepository {
     return _product(id: id, status: published ? 'approved' : 'draft');
   }
 
+  int setPausedCalls = 0;
+
+  @override
+  Future<SellerProduct> setPaused(String id, bool paused) async {
+    setPausedCalls++;
+    return _product(id: id, status: paused ? 'paused' : 'approved');
+  }
+
   @override
   Future<void> softDelete(String id) async {
     softDeleteCalls++;
@@ -137,6 +145,12 @@ void main() {
       isNull,
     );
     expect(repo.setPublishedCalls, 1);
+
+    expect(
+      await container.read(myProductsProvider.notifier).setPaused('prod-1', true),
+      isNull,
+    );
+    expect(repo.setPausedCalls, 1);
 
     expect(
       await container.read(myProductsProvider.notifier).softDelete('prod-1'),

@@ -92,6 +92,21 @@ class _MyProductsViewState extends ConsumerState<_MyProductsView> {
     }
   }
 
+  Future<void> _pause(SellerProduct p, bool pause) async {
+    final error = await ref
+        .read(myProductsProvider.notifier)
+        .setPaused(p.id, pause);
+    if (!mounted) return;
+    if (error != null) {
+      LuxurySnackBars.error(context, error);
+    } else {
+      LuxurySnackBars.success(
+        context,
+        pause ? 'Listing paused — hidden from buyers.' : 'Listing is live again.',
+      );
+    }
+  }
+
   Future<void> _delete(SellerProduct p) async {
     final confirmed = await LuxuryDialogs.showConfirmation(
       context: context,
@@ -160,8 +175,14 @@ class _MyProductsViewState extends ConsumerState<_MyProductsView> {
                         onEdit: () => context.push(
                           AppRoutes.sellerProductEditPath(product.id),
                         ),
-                        onTogglePublish: () =>
-                            _publish(product, !product.isPublished),
+                        // A paused product is still "published" for this
+                        // toggle: it unpublishes back to draft.
+                        onTogglePublish: () => _publish(
+                          product,
+                          !(product.isPublished || product.isPaused),
+                        ),
+                        onTogglePause: () =>
+                            _pause(product, !product.isPaused),
                         onDelete: () => _delete(product),
                       );
                     },
@@ -177,12 +198,14 @@ class _ProductTile extends StatelessWidget {
     required this.product,
     required this.onEdit,
     required this.onTogglePublish,
+    required this.onTogglePause,
     required this.onDelete,
   });
 
   final SellerProduct product;
   final VoidCallback onEdit;
   final VoidCallback onTogglePublish;
+  final VoidCallback onTogglePause;
   final VoidCallback onDelete;
 
   @override
@@ -233,16 +256,27 @@ class _ProductTile extends StatelessWidget {
                   onEdit();
                 case 'publish':
                   onTogglePublish();
+                case 'pause':
+                  onTogglePause();
                 case 'delete':
                   onDelete();
               }
             },
             itemBuilder: (context) => [
               const PopupMenuItem(value: 'edit', child: Text('Edit')),
+              if (product.isPublished || product.isPaused)
+                PopupMenuItem(
+                  value: 'pause',
+                  child: Text(
+                    product.isPaused ? 'Resume listing' : 'Pause listing',
+                  ),
+                ),
               PopupMenuItem(
                 value: 'publish',
                 child: Text(
-                  product.isPublished ? 'Unpublish' : 'Submit for review',
+                  product.isPublished || product.isPaused
+                      ? 'Unpublish'
+                      : 'Submit for review',
                 ),
               ),
               const PopupMenuItem(value: 'delete', child: Text('Delete')),

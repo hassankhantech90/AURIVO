@@ -78,6 +78,9 @@ class MyProductsNotifier
   Future<String?> setPublished(String id, bool published) =>
       _mutate(() => _repository.setPublished(id, published));
 
+  Future<String?> setPaused(String id, bool paused) =>
+      _mutate(() => _repository.setPaused(id, paused));
+
   Future<String?> softDelete(String id) =>
       _mutate(() => _repository.softDelete(id));
 

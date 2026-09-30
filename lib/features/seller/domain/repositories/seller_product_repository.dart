@@ -32,6 +32,10 @@ abstract class SellerProductRepository {
   /// Publishes (`approved`) or unpublishes (`draft`) an owned product.
   Future<SellerProduct> setPublished(String id, bool published);
 
+  /// Temporarily hides a published product (`approved` -> `paused`) or puts
+  /// it back on sale (`paused` -> `approved`, no re-review needed).
+  Future<SellerProduct> setPaused(String id, bool paused);
+
   /// Soft-deletes an owned product (sets `deleted_at`).
   Future<void> softDelete(String id);
 

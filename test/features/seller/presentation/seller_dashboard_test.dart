@@ -10,15 +10,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
-SellerProduct _product({String id = 'prod-1', String title = 'Emerald Ring'}) =>
-    SellerProduct(
-      id: id,
-      sellerId: 'sp-1',
-      title: title,
-      slug: 'emerald-ring',
-      jewelleryType: 'ring',
-      basePrice: 5000,
-    );
+SellerProduct _product({
+  String id = 'prod-1',
+  String title = 'Emerald Ring',
+  String status = ProductStatus.draft,
+}) => SellerProduct(
+  id: id,
+  sellerId: 'sp-1',
+  title: title,
+  slug: 'emerald-ring',
+  jewelleryType: 'ring',
+  basePrice: 5000,
+  status: status,
+);
 
 class _FakeRepo implements SellerProductRepository {
   _FakeRepo({this.sellerId = 'sp-1', this.products = const []});
@@ -48,6 +52,14 @@ class _FakeRepo implements SellerProductRepository {
   @override
   Future<SellerProduct> setPublished(String id, bool published) async =>
       _product(id: id);
+
+  final List<(String, bool)> pauseCalls = [];
+
+  @override
+  Future<SellerProduct> setPaused(String id, bool paused) async {
+    pauseCalls.add((id, paused));
+    return _product(id: id);
+  }
 
   @override
   Future<void> softDelete(String id) async {}
@@ -87,6 +99,41 @@ void main() {
     expect(find.text('Emerald Ring'), findsOneWidget);
     expect(find.text('Draft'), findsOneWidget);
     expect(find.text('New product'), findsOneWidget);
+  });
+
+  testWidgets('a published product can be paused from its menu', (
+    tester,
+  ) async {
+    final repo = _FakeRepo(
+      products: [_product(status: ProductStatus.approved)],
+    );
+    await tester.pumpWidget(_wrap(repo));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(PopupMenuButton<String>));
+    await tester.pumpAndSettle();
+    expect(find.text('Pause listing'), findsOneWidget);
+    expect(find.text('Unpublish'), findsOneWidget);
+    expect(find.text('Submit for review'), findsNothing);
+
+    await tester.tap(find.text('Pause listing'));
+    await tester.pumpAndSettle();
+    expect(repo.pauseCalls, [('prod-1', true)]);
+  });
+
+  testWidgets('a paused product shows Paused and can be resumed', (
+    tester,
+  ) async {
+    final repo = _FakeRepo(products: [_product(status: ProductStatus.paused)]);
+    await tester.pumpWidget(_wrap(repo));
+    await tester.pumpAndSettle();
+    expect(find.text('Paused'), findsOneWidget);
+
+    await tester.tap(find.byType(PopupMenuButton<String>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Resume listing'));
+    await tester.pumpAndSettle();
+    expect(repo.pauseCalls, [('prod-1', false)]);
   });
 
   testWidgets('sellers with no products see the empty state', (tester) async {

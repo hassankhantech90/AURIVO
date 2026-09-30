@@ -145,6 +145,24 @@ class SupabaseSellerProductRepository implements SellerProductRepository {
   }
 
   @override
+  Future<SellerProduct> setPaused(String id, bool paused) async {
+    try {
+      // products_moderation_guard allows a seller approved <-> paused only.
+      final row = await _database.update(
+        table: _productsTable,
+        values: {
+          'status': paused ? ProductStatus.paused : ProductStatus.approved,
+        },
+        matchColumn: 'id',
+        matchValue: id,
+      );
+      return SellerProduct.fromMap(row);
+    } catch (error) {
+      throw SellerProductFailureMapper.map(error);
+    }
+  }
+
+  @override
   Future<void> softDelete(String id) async {
     try {
       await _database.update(

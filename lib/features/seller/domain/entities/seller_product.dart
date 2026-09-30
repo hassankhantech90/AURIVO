@@ -10,6 +10,7 @@ class ProductStatus {
   static const pending = 'pending';
   static const approved = 'approved';
   static const rejected = 'rejected';
+  static const paused = 'paused';
   static const archived = 'archived';
 
   static bool isPublished(String status) => status == approved;
@@ -24,6 +25,8 @@ class ProductStatus {
         return 'Published';
       case rejected:
         return 'Rejected';
+      case paused:
+        return 'Paused';
       case archived:
         return 'Archived';
       default:
@@ -99,6 +102,7 @@ class SellerProduct {
   final DateTime? updatedAt;
 
   bool get isPublished => ProductStatus.isPublished(status);
+  bool get isPaused => status == ProductStatus.paused;
 
   factory SellerProduct.fromMap(Map<String, dynamic> map) {
     return SellerProduct(
