@@ -12,6 +12,7 @@ import '../../chat/providers/chat_providers.dart';
 import '../../products/domain/entities/product.dart';
 import '../../products/providers/catalog_state.dart';
 import '../../products/providers/product_providers.dart';
+import '../../products/providers/recently_viewed.dart';
 import '../../products/providers/shopping_mode.dart';
 import '../../notifications/providers/notification_providers.dart';
 import '../../wishlist/presentation/widgets/wishlist_product_card.dart';
@@ -154,6 +155,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             const SectionHeader(title: 'Shop by category'),
             const SizedBox(height: AppSpacing.md),
             SizedBox(height: 180, child: _categories(categories)),
+            const _RecentlyViewedRail(),
             const SizedBox(height: AppSpacing.xl),
             SectionHeader(
               title: mode == ShoppingMode.wholesale
@@ -250,6 +252,40 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   Widget _productCard(Product product) => WishlistProductCard(product: product);
+}
+
+/// Horizontal rail of products this device recently opened. Renders nothing
+/// until there is at least one (and while loading / on error) so Home never
+/// shows an empty section.
+class _RecentlyViewedRail extends ConsumerWidget {
+  const _RecentlyViewedRail();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final products =
+        ref.watch(recentlyViewedProductsProvider).valueOrNull ?? const [];
+    if (products.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: AppSpacing.xl),
+        const SectionHeader(title: 'Recently viewed'),
+        const SizedBox(height: AppSpacing.md),
+        SizedBox(
+          height: 270,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: products.length,
+            separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.md),
+            itemBuilder: (context, index) => SizedBox(
+              width: 165,
+              child: WishlistProductCard(product: products[index]),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 /// The AURIVO wordmark with the marketplace tagline, for the Home app bar.

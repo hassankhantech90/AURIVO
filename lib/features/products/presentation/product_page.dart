@@ -21,6 +21,7 @@ import '../domain/entities/product_detail.dart';
 import '../domain/entities/product_variant.dart';
 import '../providers/catalog_state.dart';
 import '../providers/product_providers.dart';
+import '../providers/recently_viewed.dart';
 
 /// Read-only product detail screen wired to [productDetailProvider].
 class ProductPage extends ConsumerStatefulWidget {
@@ -39,10 +40,16 @@ class _ProductPageState extends ConsumerState<ProductPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _load());
   }
 
-  void _load() {
-    ref.read(productDetailProvider(widget.productId).notifier).load();
+  Future<void> _load() async {
     if (ref.read(sessionProvider).isAuthenticated) {
       ref.read(wishlistProvider.notifier).load();
+    }
+    await ref.read(productDetailProvider(widget.productId).notifier).load();
+    if (!mounted) return;
+    // Remember only products that actually loaded (not broken links).
+    if (ref.read(productDetailProvider(widget.productId)).status ==
+        CatalogViewStatus.success) {
+      ref.read(recentlyViewedProvider.notifier).record(widget.productId);
     }
   }
 
