@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/router/app_routes.dart';
 import '../../../shared/design_system.dart';
 import '../../chat/presentation/widgets/message_seller_button.dart';
+import '../../returns/presentation/order_return_card.dart';
 import '../../reviews/presentation/widgets/review_form_sheet.dart';
 import '../../reviews/providers/review_providers.dart';
 import '../../seller/providers/seller_providers.dart';
@@ -131,6 +132,12 @@ class _OrderDetailBody extends StatelessWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         children: [
         _HeaderCard(order: order),
+        OrderReturnCard(
+          orderId: order.id,
+          orderStatus: order.status,
+          viewer: ReturnViewer.buyer,
+          onChanged: onRefresh,
+        ),
         const SizedBox(height: AppSpacing.md),
         _SectionCard(
           title: 'Items',

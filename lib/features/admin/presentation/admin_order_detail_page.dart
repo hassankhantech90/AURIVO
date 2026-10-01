@@ -6,6 +6,7 @@ import '../../orders/domain/entities/order_detail.dart';
 import '../../orders/domain/entities/order_item.dart';
 import '../../orders/domain/entities/order_status.dart';
 import '../../orders/presentation/order_formatting.dart';
+import '../../returns/presentation/order_return_card.dart';
 import '../providers/admin_order_providers.dart';
 
 /// Admin order detail + oversight controls: change status (audited history),
@@ -123,6 +124,12 @@ class _AdminOrderDetailPageState extends ConsumerState<AdminOrderDetailPage> {
               style: theme.textTheme.bodySmall,
             ),
           ],
+          OrderReturnCard(
+            orderId: order.id,
+            orderStatus: order.status,
+            viewer: ReturnViewer.admin,
+            onChanged: _load,
+          ),
           const SizedBox(height: AppSpacing.lg),
 
           _Section(
