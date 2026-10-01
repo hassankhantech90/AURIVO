@@ -58,6 +58,7 @@ import '../../features/seller/presentation/seller_onboarding_page.dart';
 import '../../features/seller/presentation/seller_order_detail_page.dart';
 import '../../features/seller/presentation/seller_insights_page.dart';
 import '../../features/seller/presentation/seller_orders_page.dart';
+import '../../features/seller/presentation/seller_team_page.dart';
 import '../../features/seller/presentation/seller_rfq_detail_page.dart';
 import '../../features/seller/presentation/seller_rfq_inbox_page.dart';
 import '../../features/seller/presentation/seller_tiers_page.dart';
@@ -285,6 +286,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.sellerInsights,
         name: 'sellerInsights',
         builder: (context, state) => const SellerInsightsPage(),
+      ),
+      _fadeRoute(
+        path: AppRoutes.sellerTeam,
+        name: 'sellerTeam',
+        builder: (context, state) => const SellerTeamPage(),
       ),
       _fadeRoute(
         path: AppRoutes.sellerOrders,

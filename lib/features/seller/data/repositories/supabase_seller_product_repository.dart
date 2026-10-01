@@ -36,8 +36,11 @@ class SupabaseSellerProductRepository implements SellerProductRepository {
       filters: {'profile_id': profileId},
       limit: 1,
     );
-    if (rows.isEmpty) return null;
-    return rows.first['id'] as String;
+    if (rows.isNotEmpty) return rows.first['id'] as String;
+    // Not an owner: the store this user works for as staff, if any. The
+    // server checks the catalogue permission on every write.
+    final store = await _database.rpc(functionName: 'my_seller_store');
+    return store is String && store.isNotEmpty ? store : null;
   }
 
   @override

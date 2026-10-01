@@ -88,7 +88,7 @@ class _StubDatabase extends SupabaseDatabaseService {
   Future<dynamic> rpc({
     required String functionName,
     Map<String, dynamic> params = const {},
-  }) async => 'profile-1';
+  }) async => functionName == 'my_seller_store' ? null : 'profile-1';
 }
 
 void _wireSeller(

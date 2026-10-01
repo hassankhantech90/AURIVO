@@ -110,7 +110,7 @@ void main() {
     await tester.pumpWidget(_wrap(repo));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byType(PopupMenuButton<String>));
+    await tester.tap(find.byType(PopupMenuButton<String>).first); // product menu (body precedes the app bar)
     await tester.pumpAndSettle();
     expect(find.text('Pause listing'), findsOneWidget);
     expect(find.text('Unpublish'), findsOneWidget);
@@ -129,7 +129,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Paused'), findsOneWidget);
 
-    await tester.tap(find.byType(PopupMenuButton<String>));
+    await tester.tap(find.byType(PopupMenuButton<String>).first); // product menu (body precedes the app bar)
     await tester.pumpAndSettle();
     await tester.tap(find.text('Resume listing'));
     await tester.pumpAndSettle();

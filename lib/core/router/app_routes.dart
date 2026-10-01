@@ -64,6 +64,7 @@ class AppRoutes {
   /// Builds a concrete seller RFQ-detail location for [id].
   static String sellerRfqDetailPath(String id) => '/seller-studio/rfqs/$id';
   static const sellerInsights = '/seller-studio/insights';
+  static const sellerTeam = '/seller-studio/team';
   static const sellerOrders = '/seller-studio/orders';
   static const sellerOrderDetail = '/seller-studio/orders/:id';
 

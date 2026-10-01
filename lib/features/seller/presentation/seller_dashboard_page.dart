@@ -36,6 +36,20 @@ class SellerDashboardPage extends ConsumerWidget {
             icon: const Icon(Icons.request_quote_outlined),
             onPressed: () => context.push(AppRoutes.sellerRfqInbox),
           ),
+          PopupMenuButton<String>(
+            tooltip: 'More',
+            onSelected: (route) => context.push(route),
+            itemBuilder: (_) => const [
+              PopupMenuItem(
+                value: AppRoutes.sellerTeam,
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(Icons.groups_outlined),
+                  title: Text('Team'),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
       body: sellerAsync.when(

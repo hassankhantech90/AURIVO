@@ -32,8 +32,13 @@ class SupabaseSellerRfqRepository implements SellerRfqRepository {
       filters: {'profile_id': profileId},
       limit: 1,
     );
-    if (rows.isEmpty) return null;
-    return rows.first['id'] as String;
+    if (rows.isNotEmpty) return rows.first['id'] as String;
+    // Not an owner: a store where this user is staff with orders access.
+    final store = await _database.rpc(
+      functionName: 'my_seller_store',
+      params: {'p_permission': 'orders'},
+    );
+    return store is String && store.isNotEmpty ? store : null;
   }
 
   @override

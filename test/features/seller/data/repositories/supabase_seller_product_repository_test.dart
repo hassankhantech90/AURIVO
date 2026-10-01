@@ -89,8 +89,12 @@ class _StubDatabase extends SupabaseDatabaseService {
     required String functionName,
     Map<String, dynamic> params = const {},
   }) async {
+    // Not a store owner and not staff anywhere unless a test says so.
+    if (functionName == 'my_seller_store') return staffStore;
     return rpcResult;
   }
+
+  String? staffStore;
 }
 
 // Convenience: make list() resolve the seller profile then the requested table.
@@ -125,6 +129,12 @@ void main() {
   test('mySellerProfileId resolves via current profile', () async {
     _wireSeller(db);
     expect(await repo.mySellerProfileId(), 'sp-1');
+  });
+
+  test('mySellerProfileId falls back to the store a staff member works for', () async {
+    db.onList = (table, filters) => const [];
+    db.staffStore = 'sp-employer';
+    expect(await repo.mySellerProfileId(), 'sp-employer');
   });
 
   test('mySellerProfileId is null for a non-seller', () async {
