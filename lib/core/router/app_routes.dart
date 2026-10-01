@@ -124,6 +124,12 @@ class AppRoutes {
   static String adminSupportDetailPath(String ticketId) =>
       '/admin/support/$ticketId';
   static const adminDisputes = '/admin/disputes';
+  static const adminContent = '/admin/content';
+
+  // Help centre & CMS pages (public).
+  static const help = '/help';
+  static const cmsPage = '/pages/:slug';
+  static String cmsPagePath(String slug) => '/pages/$slug';
 
   // Disputes (buyer, the order's sellers and admins share one thread).
   static const disputeDetail = '/disputes/:id';

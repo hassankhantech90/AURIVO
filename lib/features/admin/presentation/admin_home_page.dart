@@ -82,6 +82,17 @@ class _AdminMenu extends StatelessWidget {
         LuxuryCard(
           padding: EdgeInsets.zero,
           child: ListTile(
+            leading: const Icon(Icons.article_outlined),
+            title: const Text('Content'),
+            subtitle: const Text('Home banners, FAQs and policy pages'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.adminContent),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        LuxuryCard(
+          padding: EdgeInsets.zero,
+          child: ListTile(
             leading: const Icon(Icons.inventory_2_outlined),
             title: const Text('Product moderation'),
             subtitle: const Text('Approve or reject submitted products'),

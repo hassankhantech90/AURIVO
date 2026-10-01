@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/router/app_routes.dart';
 import '../../../../shared/design_system.dart';
+import '../../../cms/domain/entities/cms_entities.dart';
 import '../../../products/domain/entities/product.dart';
 
 /// Marketing headlines cycled across hero slides (mockup: "Crafted to be
@@ -14,14 +15,20 @@ const List<String> _headlines = [
 ];
 
 /// A swipeable hero carousel for Home: rounded image cards with a headline and
-/// a gold flourish over a light left scrim, plus page dots. Slides are built
-/// from featured [products] that have an image; with none it falls back to a
-/// single branded gradient slide. Tapping a product slide opens that product;
-/// the fallback opens Explore.
+/// a gold flourish over a light left scrim, plus page dots. Admin [banners]
+/// (CMS) come first, then featured [products] that have an image; with
+/// neither it falls back to a single branded gradient slide. Tapping a banner
+/// follows its link, a product slide opens that product, the fallback opens
+/// Explore.
 class HomeHeroCarousel extends StatefulWidget {
-  const HomeHeroCarousel({super.key, required this.products});
+  const HomeHeroCarousel({
+    super.key,
+    required this.products,
+    this.banners = const [],
+  });
 
   final List<Product> products;
+  final List<CmsBanner> banners;
 
   @override
   State<HomeHeroCarousel> createState() => _HomeHeroCarouselState();
@@ -42,24 +49,29 @@ class _HomeHeroCarouselState extends State<HomeHeroCarousel> {
         .where((p) => (p.primaryImageUrl ?? '').isNotEmpty)
         .take(5)
         .toList();
-    if (withImages.isEmpty) {
-      return [_HeroSlide(headline: _headlines.first)];
+    final banners = [
+      for (final b in widget.banners)
+        _HeroSlide(
+          headline: b.title,
+          imageUrl: b.imageUrl,
+          route: b.link ?? AppRoutes.explore,
+        ),
+    ];
+    if (withImages.isEmpty && banners.isEmpty) {
+      return [_HeroSlide(headline: _headlines.first, route: AppRoutes.explore)];
     }
     return [
+      ...banners,
       for (var i = 0; i < withImages.length; i++)
         _HeroSlide(
-          product: withImages[i],
           headline: _headlines[i % _headlines.length],
+          imageUrl: withImages[i].primaryImageUrl,
+          route: AppRoutes.productPath(withImages[i].id),
         ),
     ];
   }
 
-  void _openSlide(_HeroSlide slide) {
-    final product = slide.product;
-    context.push(
-      product == null ? AppRoutes.explore : AppRoutes.productPath(product.id),
-    );
-  }
+  void _openSlide(_HeroSlide slide) => context.push(slide.route);
 
   @override
   Widget build(BuildContext context) {
@@ -86,10 +98,15 @@ class _HomeHeroCarouselState extends State<HomeHeroCarousel> {
 }
 
 class _HeroSlide {
-  const _HeroSlide({this.product, required this.headline});
+  const _HeroSlide({
+    required this.headline,
+    required this.route,
+    this.imageUrl,
+  });
 
-  final Product? product;
   final String headline;
+  final String route;
+  final String? imageUrl;
 }
 
 class _HeroCard extends StatelessWidget {
@@ -100,7 +117,7 @@ class _HeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final product = slide.product;
+    final imageUrl = slide.imageUrl;
     return GestureDetector(
       onTap: onTap,
       child: ClipRRect(
@@ -108,8 +125,8 @@ class _HeroCard extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            if (product != null)
-              NetworkImageWidget(imageUrl: product.primaryImageUrl!)
+            if (imageUrl != null && imageUrl.isNotEmpty)
+              NetworkImageWidget(imageUrl: imageUrl)
             else
               const DecoratedBox(
                 decoration: BoxDecoration(

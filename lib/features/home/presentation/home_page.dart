@@ -9,6 +9,7 @@ import '../../cart/providers/cart_providers.dart';
 import '../../categories/domain/entities/category.dart';
 import '../../categories/providers/category_providers.dart';
 import '../../chat/providers/chat_providers.dart';
+import '../../cms/providers/cms_providers.dart';
 import '../../products/domain/entities/product.dart';
 import '../../products/providers/catalog_state.dart';
 import '../../products/providers/product_providers.dart';
@@ -150,7 +151,10 @@ class _HomePageState extends ConsumerState<HomePage> {
             const SizedBox(height: AppSpacing.md),
             const _MetalTabs(),
             const SizedBox(height: AppSpacing.xl),
-            HomeHeroCarousel(products: products.data ?? const []),
+            HomeHeroCarousel(
+              products: products.data ?? const [],
+              banners: ref.watch(homeBannersProvider).valueOrNull ?? const [],
+            ),
             const SizedBox(height: AppSpacing.xl),
             const SectionHeader(title: 'Shop by category'),
             const SizedBox(height: AppSpacing.md),

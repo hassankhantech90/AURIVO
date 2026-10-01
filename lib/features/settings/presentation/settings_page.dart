@@ -107,6 +107,13 @@ class SettingsPage extends ConsumerWidget {
                 onTap: () => context.push(AppRoutes.admin),
               ),
             ListTile(
+              leading: const Icon(Icons.help_outline),
+              title: const Text('Help centre'),
+              subtitle: const Text('FAQs, returns, delivery & policies'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push(AppRoutes.help),
+            ),
+            ListTile(
               leading: const Icon(Icons.support_agent_outlined),
               title: const Text('Help & support'),
               trailing: const Icon(Icons.chevron_right),

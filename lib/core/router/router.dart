@@ -32,6 +32,9 @@ import '../../features/authentication/presentation/verify_email_page.dart';
 import '../../features/cart/presentation/cart_page.dart';
 import '../../features/checkout/presentation/checkout_page.dart';
 import '../../features/checkout/providers/checkout_providers.dart';
+import '../../features/cms/presentation/admin_content_page.dart';
+import '../../features/cms/presentation/cms_page_view.dart';
+import '../../features/cms/presentation/help_centre_page.dart';
 import '../../features/disputes/presentation/admin_disputes_page.dart';
 import '../../features/disputes/presentation/dispute_thread_page.dart';
 import '../../features/explore/presentation/explore_page.dart';
@@ -356,6 +359,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.adminDisputes,
         name: 'adminDisputes',
         builder: (context, state) => const AdminDisputesPage(),
+      ),
+      _fadeRoute(
+        path: AppRoutes.adminContent,
+        name: 'adminContent',
+        builder: (context, state) => const AdminContentPage(),
+      ),
+      _fadeRoute(
+        path: AppRoutes.help,
+        name: 'help',
+        builder: (context, state) => const HelpCentrePage(),
+      ),
+      _fadeRoute(
+        path: AppRoutes.cmsPage,
+        name: 'cmsPage',
+        builder: (context, state) =>
+            CmsPageView(slug: state.pathParameters['slug'] ?? ''),
       ),
       _fadeRoute(
         path: AppRoutes.disputeDetail,
