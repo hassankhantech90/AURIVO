@@ -52,6 +52,7 @@ import '../../features/seller/presentation/seller_images_page.dart';
 import '../../features/seller/presentation/seller_product_edit_page.dart';
 import '../../features/seller/presentation/seller_onboarding_page.dart';
 import '../../features/seller/presentation/seller_order_detail_page.dart';
+import '../../features/seller/presentation/seller_insights_page.dart';
 import '../../features/seller/presentation/seller_orders_page.dart';
 import '../../features/seller/presentation/seller_rfq_detail_page.dart';
 import '../../features/seller/presentation/seller_rfq_inbox_page.dart';
@@ -275,6 +276,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: 'sellerProductTiers',
         builder: (context, state) =>
             SellerTiersPage(productId: state.pathParameters['id'] ?? ''),
+      ),
+      _fadeRoute(
+        path: AppRoutes.sellerInsights,
+        name: 'sellerInsights',
+        builder: (context, state) => const SellerInsightsPage(),
       ),
       _fadeRoute(
         path: AppRoutes.sellerOrders,

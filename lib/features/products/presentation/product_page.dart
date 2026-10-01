@@ -51,6 +51,7 @@ class _ProductPageState extends ConsumerState<ProductPage> {
     if (ref.read(productDetailProvider(widget.productId)).status ==
         CatalogViewStatus.success) {
       ref.read(recentlyViewedProvider.notifier).record(widget.productId);
+      ref.read(productViewRecorderProvider)(widget.productId);
     }
   }
 

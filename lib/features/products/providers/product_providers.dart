@@ -174,6 +174,22 @@ final wholesaleProductIdsProvider = FutureProvider.autoDispose<Set<String>>((
   return ref.watch(productRepositoryProvider).getWholesaleProductIds();
 });
 
+/// Counts a product-page view for seller insights. Fire-and-forget: failures
+/// are swallowed because analytics must never disturb the shopper.
+final productViewRecorderProvider = Provider<void Function(String productId)>((
+  ref,
+) {
+  const database = SupabaseDatabaseService(supabaseService: SupabaseService());
+  return (productId) {
+    database
+        .rpc(
+          functionName: 'record_product_view',
+          params: {'p_product_id': productId},
+        )
+        .then<void>((_) {}, onError: (_) {});
+  };
+});
+
 // Brands ---------------------------------------------------------------------
 
 final brandsProvider =
