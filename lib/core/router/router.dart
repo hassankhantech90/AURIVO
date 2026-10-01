@@ -13,6 +13,7 @@ import '../../features/authentication/presentation/password_updated_page.dart';
 import '../../features/authentication/presentation/reset_password_page.dart';
 import '../../features/authentication/presentation/signup_page.dart';
 import '../../features/admin/presentation/admin_attribute_values_page.dart';
+import '../../features/admin/presentation/admin_audit_log_page.dart';
 import '../../features/admin/presentation/admin_business_verifications_page.dart';
 import '../../features/admin/presentation/admin_attributes_page.dart';
 import '../../features/admin/presentation/admin_brands_page.dart';
@@ -364,6 +365,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.adminContent,
         name: 'adminContent',
         builder: (context, state) => const AdminContentPage(),
+      ),
+      _fadeRoute(
+        path: AppRoutes.adminAudit,
+        name: 'adminAudit',
+        builder: (context, state) => const AdminAuditLogPage(),
       ),
       _fadeRoute(
         path: AppRoutes.help,

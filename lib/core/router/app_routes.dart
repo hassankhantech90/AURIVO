@@ -125,6 +125,7 @@ class AppRoutes {
       '/admin/support/$ticketId';
   static const adminDisputes = '/admin/disputes';
   static const adminContent = '/admin/content';
+  static const adminAudit = '/admin/audit';
 
   // Help centre & CMS pages (public).
   static const help = '/help';
