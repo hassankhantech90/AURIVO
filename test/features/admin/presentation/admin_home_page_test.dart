@@ -41,4 +41,53 @@ void main() {
     expect(find.text('Product moderation'), findsOneWidget);
     expect(find.text('Dispute centre'), findsOneWidget);
   });
+
+  testWidgets('support staff see only their tools', (tester) async {
+    tester.view.physicalSize = const Size(1000, 3000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          staffAccessProvider.overrideWith(
+            (ref) async => const StaffAccess(isSupport: true),
+          ),
+        ],
+        child: const MaterialApp(home: AdminHomePage()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Staff console'), findsOneWidget);
+    expect(find.text('Support'), findsOneWidget);
+    expect(find.text('Dispute centre'), findsOneWidget);
+    expect(find.text('Dashboard'), findsNothing);
+    expect(find.text('Product moderation'), findsNothing);
+    expect(find.text('Audit log'), findsNothing);
+  });
+
+  testWidgets('finance staff see the dashboard and audit log', (tester) async {
+    tester.view.physicalSize = const Size(1000, 3000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          staffAccessProvider.overrideWith(
+            (ref) async => const StaffAccess(isFinance: true),
+          ),
+          adminStatsLoaderProvider.overrideWithValue(
+            (days) async => const AdminDashboardStats(),
+          ),
+        ],
+        child: const MaterialApp(home: AdminHomePage()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Dashboard'), findsOneWidget);
+    expect(find.text('Audit log'), findsOneWidget);
+    expect(find.text('Support'), findsNothing);
+    expect(find.text('Users & roles'), findsNothing);
+  });
 }

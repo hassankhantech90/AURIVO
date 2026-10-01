@@ -7,7 +7,19 @@ import '../providers/return_providers.dart';
 
 /// Who is looking at the order — decides which return actions are offered.
 /// The server enforces the same rules; this only hides impossible buttons.
-enum ReturnViewer { buyer, seller, admin }
+enum ReturnViewer {
+  buyer,
+  seller,
+  admin,
+  support,
+  finance;
+
+  /// May approve / decline / mark received (seller, admin, support).
+  bool get canDecide => this == seller || this == admin || this == support;
+
+  /// May record the refund (admin, finance).
+  bool get canRefund => this == admin || this == finance;
+}
 
 /// Return status + actions for one order, shared by the buyer, seller and
 /// admin order screens. [onChanged] lets the host reload the order after a
@@ -113,7 +125,7 @@ class OrderReturnCard extends ConsumerWidget {
     }
     if (request == null) return const [];
 
-    final isStaff = viewer != ReturnViewer.buyer;
+    final isStaff = viewer.canDecide;
     return [
       if (viewer == ReturnViewer.buyer && request.status == ReturnRequest.requested)
         button(
@@ -148,7 +160,7 @@ class OrderReturnCard extends ConsumerWidget {
           () => run(notifier.markReceived(request.id), 'Return received.'),
           primary: true,
         ),
-      if (viewer == ReturnViewer.admin && request.status == ReturnRequest.received)
+      if (viewer.canRefund && request.status == ReturnRequest.received)
         button('Record refund', () async {
           final note = await _NoteDialog.show(
             context,

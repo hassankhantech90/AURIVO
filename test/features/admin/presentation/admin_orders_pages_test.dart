@@ -2,6 +2,7 @@ import 'package:aurivo/features/admin/domain/repositories/admin_order_repository
 import 'package:aurivo/features/admin/presentation/admin_order_detail_page.dart';
 import 'package:aurivo/features/admin/presentation/admin_orders_page.dart';
 import 'package:aurivo/features/admin/providers/admin_order_providers.dart';
+import 'package:aurivo/features/admin/providers/admin_providers.dart';
 import 'package:aurivo/features/orders/domain/entities/order.dart';
 import 'package:aurivo/features/orders/domain/entities/order_detail.dart';
 import 'package:aurivo/features/orders/domain/entities/order_item.dart';
@@ -69,8 +70,15 @@ class _FakeRepo implements AdminOrderRepository {
   }
 }
 
-Widget _wrap(AdminOrderRepository repo, Widget page) => ProviderScope(
-  overrides: [adminOrderRepositoryProvider.overrideWithValue(repo)],
+Widget _wrap(
+  AdminOrderRepository repo,
+  Widget page, {
+  StaffAccess access = const StaffAccess(isAdmin: true),
+}) => ProviderScope(
+  overrides: [
+    adminOrderRepositoryProvider.overrideWithValue(repo),
+    staffAccessProvider.overrideWith((ref) async => access),
+  ],
   child: MaterialApp(home: page),
 );
 
@@ -106,6 +114,26 @@ void main() {
     expect(find.text('Aiman'), findsOneWidget);
     expect(find.widgetWithText(LuxuryOutlinedButton, 'Cancel order'),
         findsOneWidget);
+  });
+
+  testWidgets('support staff get a read-only order (no status/cancel)', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 3000);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      _wrap(
+        _FakeRepo(detailStatus: 'pending'),
+        const AdminOrderDetailPage(orderId: 'o1'),
+        access: const StaffAccess(isSupport: true),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Aiman'), findsOneWidget);
+    expect(find.text('Change status'), findsNothing);
+    expect(find.text('Cancel order'), findsNothing);
   });
 
   testWidgets('detail hides cancel once delivered', (tester) async {

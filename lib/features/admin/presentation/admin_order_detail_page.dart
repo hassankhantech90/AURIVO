@@ -8,6 +8,7 @@ import '../../orders/domain/entities/order_status.dart';
 import '../../orders/presentation/order_formatting.dart';
 import '../../returns/presentation/order_return_card.dart';
 import '../providers/admin_order_providers.dart';
+import '../providers/admin_providers.dart';
 
 /// Admin order detail + oversight controls: change status (audited history),
 /// set payment status, and cancel (via admin_cancel_order, releasing stock).
@@ -100,9 +101,20 @@ class _AdminOrderDetailPageState extends ConsumerState<AdminOrderDetailPage> {
   Widget _body(BuildContext context, OrderDetail detail) {
     final theme = Theme.of(context);
     final order = detail.order;
+    final access =
+        ref.watch(staffAccessProvider).valueOrNull ?? const StaffAccess();
+    // Status / payment / cancel changes are admin-only (RLS); support and
+    // finance staff get a read-only view plus their return/refund actions.
+    final canChange = access.canChangeOrders;
     final canCancel =
-        order.status == OrderStatus.pending ||
-        order.status == OrderStatus.confirmed;
+        canChange &&
+        (order.status == OrderStatus.pending ||
+            order.status == OrderStatus.confirmed);
+    final returnViewer = access.isAdmin
+        ? ReturnViewer.admin
+        : access.isFinance
+        ? ReturnViewer.finance
+        : ReturnViewer.support;
 
     return RefreshIndicator(
       onRefresh: _load,
@@ -112,7 +124,10 @@ class _AdminOrderDetailPageState extends ConsumerState<AdminOrderDetailPage> {
           Row(
             children: [
               Expanded(
-                child: Text(order.orderNumber, style: theme.textTheme.titleLarge),
+                child: Text(
+                  order.orderNumber,
+                  style: theme.textTheme.titleLarge,
+                ),
               ),
               LuxuryBadge(label: OrderStatus.label(order.status)),
             ],
@@ -127,7 +142,7 @@ class _AdminOrderDetailPageState extends ConsumerState<AdminOrderDetailPage> {
           OrderReturnCard(
             orderId: order.id,
             orderStatus: order.status,
-            viewer: ReturnViewer.admin,
+            viewer: returnViewer,
             onChanged: _load,
           ),
           const SizedBox(height: AppSpacing.lg),
@@ -170,7 +185,7 @@ class _AdminOrderDetailPageState extends ConsumerState<AdminOrderDetailPage> {
                       : PaymentStatus.label(detail.payment!.status),
                   style: theme.textTheme.bodyMedium,
                 ),
-                if (detail.payment != null)
+                if (detail.payment != null && canChange)
                   DropdownButton<String>(
                     value: detail.payment!.status,
                     underline: const SizedBox.shrink(),
@@ -235,28 +250,30 @@ class _AdminOrderDetailPageState extends ConsumerState<AdminOrderDetailPage> {
           ),
           const SizedBox(height: AppSpacing.lg),
 
-          Text('Change status', style: theme.textTheme.titleSmall),
-          const SizedBox(height: AppSpacing.sm),
-          DropdownButtonFormField<String>(
-            initialValue: _statusOptions.contains(order.status)
-                ? order.status
-                : null,
-            decoration: const InputDecoration(labelText: 'Set order status'),
-            items: [
-              for (final s in _statusOptions)
-                DropdownMenuItem(value: s, child: Text(OrderStatus.label(s))),
-            ],
-            onChanged: (v) {
-              if (v == null || v == order.status) return;
-              _report(
-                ref
-                    .read(adminOrderDetailProvider(widget.orderId).notifier)
-                    .advanceStatus(v),
-                'Status updated.',
-              );
-            },
-          ),
-          const SizedBox(height: AppSpacing.lg),
+          if (canChange) ...[
+            Text('Change status', style: theme.textTheme.titleSmall),
+            const SizedBox(height: AppSpacing.sm),
+            DropdownButtonFormField<String>(
+              initialValue: _statusOptions.contains(order.status)
+                  ? order.status
+                  : null,
+              decoration: const InputDecoration(labelText: 'Set order status'),
+              items: [
+                for (final s in _statusOptions)
+                  DropdownMenuItem(value: s, child: Text(OrderStatus.label(s))),
+              ],
+              onChanged: (v) {
+                if (v == null || v == order.status) return;
+                _report(
+                  ref
+                      .read(adminOrderDetailProvider(widget.orderId).notifier)
+                      .advanceStatus(v),
+                  'Status updated.',
+                );
+              },
+            ),
+            const SizedBox(height: AppSpacing.lg),
+          ],
 
           if (canCancel)
             SizedBox(
@@ -347,7 +364,10 @@ class _ItemRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item.productTitleSnapshot, style: theme.textTheme.bodyMedium),
+                Text(
+                  item.productTitleSnapshot,
+                  style: theme.textTheme.bodyMedium,
+                ),
                 Text('Qty ${item.quantity}', style: theme.textTheme.bodySmall),
               ],
             ),

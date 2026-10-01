@@ -29,6 +29,60 @@ final isAdminProvider = FutureProvider<bool>((ref) {
   return ref.watch(adminRepositoryProvider).isAdmin();
 });
 
+/// What the signed-in staff member may do (Requirements Doc §2 roles).
+/// Admins can do everything; support and finance get scoped tools. The
+/// server enforces the same rules — this only shapes the UI.
+class StaffAccess {
+  const StaffAccess({
+    this.isAdmin = false,
+    this.isSupport = false,
+    this.isFinance = false,
+  });
+
+  final bool isAdmin;
+  final bool isSupport;
+  final bool isFinance;
+
+  bool get isStaff => isAdmin || isSupport || isFinance;
+  bool get canModerate => isAdmin;
+  bool get canSeeDashboard => isAdmin || isFinance;
+  bool get canHandleTickets => isAdmin || isSupport;
+  bool get canDecideReturns => isAdmin || isSupport;
+  bool get canRecordRefunds => isAdmin || isFinance;
+  bool get canResolveDisputes => isAdmin || isFinance;
+  bool get canReadAudit => isAdmin || isFinance;
+  bool get canChangeOrders => isAdmin;
+}
+
+/// Checks one role via `has_role` (overridable in tests).
+final staffRoleCheckProvider = Provider<Future<bool> Function(String role)>((ref) {
+  const database = SupabaseDatabaseService(supabaseService: SupabaseService());
+  return (role) async =>
+      await database.rpc(functionName: 'has_role', params: {'role_name': role}) ==
+      true;
+});
+
+/// The current user's staff access. Built on [isAdminProvider] (so admin
+/// detection is unchanged); support/finance failures degrade to "no role".
+final staffAccessProvider = FutureProvider<StaffAccess>((ref) async {
+  final userId = ref.watch(sessionProvider.select((s) => s.user?.id));
+  final isAdmin = await ref.watch(isAdminProvider.future);
+  if (userId == null || isAdmin) return StaffAccess(isAdmin: isAdmin);
+  final check = ref.watch(staffRoleCheckProvider);
+  Future<bool> safe(String role) async {
+    try {
+      return await check(role);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  return StaffAccess(
+    isSupport: await safe('support'),
+    isFinance: await safe('finance'),
+  );
+});
+
 enum AdminStatus { initial, loading, success, failure }
 
 class AdminListState<T> {

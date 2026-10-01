@@ -105,7 +105,9 @@ class _DisputeThreadPageState extends ConsumerState<DisputeThreadPage> {
   @override
   Widget build(BuildContext context) {
     final async = ref.watch(disputeThreadProvider(widget.disputeId));
-    final isAdmin = ref.watch(isAdminProvider).valueOrNull ?? false;
+    final access = ref.watch(staffAccessProvider).valueOrNull;
+    final isStaff = access?.isStaff ?? false;
+    final canResolve = access?.canResolveDisputes ?? false;
 
     return Scaffold(
       appBar: const LuxuryAppBar(title: 'Dispute', showBackButton: true),
@@ -125,7 +127,7 @@ class _DisputeThreadPageState extends ConsumerState<DisputeThreadPage> {
                   children: [
                     _Summary(dispute: thread.dispute),
                     if (thread.dispute.isOpen &&
-                        (thread.openedByMe || isAdmin)) ...[
+                        (thread.openedByMe || canResolve)) ...[
                       const SizedBox(height: AppSpacing.sm),
                       Row(
                         children: [
@@ -136,9 +138,9 @@ class _DisputeThreadPageState extends ConsumerState<DisputeThreadPage> {
                                 onPressed: _withdraw,
                               ),
                             ),
-                          if (thread.openedByMe && isAdmin)
+                          if (thread.openedByMe && canResolve)
                             const SizedBox(width: AppSpacing.md),
-                          if (isAdmin)
+                          if (canResolve)
                             Expanded(
                               child: PrimaryButton(
                                 label: 'Resolve',
@@ -155,14 +157,14 @@ class _DisputeThreadPageState extends ConsumerState<DisputeThreadPage> {
                 ),
               ),
             ),
-            if (thread.dispute.isOpen) _composer(isAdmin),
+            if (thread.dispute.isOpen) _composer(isStaff),
           ],
         ),
       ),
     );
   }
 
-  Widget _composer(bool isAdmin) {
+  Widget _composer(bool isStaff) {
     return SafeArea(
       top: false,
       child: Padding(
@@ -206,13 +208,13 @@ class _DisputeThreadPageState extends ConsumerState<DisputeThreadPage> {
                   ),
                 ),
               ),
-            if (isAdmin)
+            if (isStaff)
               CheckboxListTile(
                 dense: true,
                 contentPadding: EdgeInsets.zero,
                 value: _internal,
                 onChanged: (v) => setState(() => _internal = v ?? false),
-                title: const Text('Internal note (admins only)'),
+                title: const Text('Internal note (staff only)'),
               ),
             Row(
               children: [

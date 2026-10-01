@@ -97,12 +97,16 @@ class SettingsPage extends ConsumerWidget {
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.push(AppRoutes.sellerDashboard),
               ),
-            // Admin console — shown only to admins (has_role('admin')).
-            if (ref.watch(isAdminProvider).valueOrNull ?? false)
+            // Staff console — admins, support and finance staff.
+            if (ref.watch(staffAccessProvider).valueOrNull?.isStaff ?? false)
               ListTile(
                 leading: const Icon(Icons.admin_panel_settings_outlined),
-                title: const Text('Admin console'),
-                subtitle: const Text('Verifications & moderation'),
+                title: Text(
+                  ref.watch(staffAccessProvider).valueOrNull?.isAdmin ?? false
+                      ? 'Admin console'
+                      : 'Staff console',
+                ),
+                subtitle: const Text('Moderation, orders, support & finance'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.push(AppRoutes.admin),
               ),
