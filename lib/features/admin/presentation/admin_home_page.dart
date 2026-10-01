@@ -6,6 +6,7 @@ import '../../../core/router/app_routes.dart';
 import '../../../shared/design_system.dart';
 import '../providers/admin_providers.dart';
 import 'widgets/admin_dashboard_section.dart';
+import 'widgets/staff_mfa_gate.dart';
 
 /// Admin console home, gated on [staffAccessProvider]. Admins see every tool;
 /// support and finance staff see only theirs (the server enforces the same
@@ -35,7 +36,7 @@ class AdminHomePage extends ConsumerWidget {
           },
         ),
         data: (a) => a.isStaff
-            ? _AdminMenu(access: a)
+            ? StaffMfaGate(child: _AdminMenu(access: a))
             : const EmptyStateWidget(
                 title: 'Not authorized',
                 message: 'This area is for administrators only.',

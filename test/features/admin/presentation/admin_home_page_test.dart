@@ -1,3 +1,4 @@
+import 'package:aurivo/features/admin/data/staff_mfa_service.dart';
 import 'package:aurivo/features/admin/domain/entities/admin_dashboard_stats.dart';
 import 'package:aurivo/features/admin/presentation/admin_home_page.dart';
 import 'package:aurivo/features/admin/providers/admin_dashboard_providers.dart';
@@ -8,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 Widget _wrap({required bool admin}) => ProviderScope(
   overrides: [
+    staffMfaStateProvider.overrideWith((ref) async => StaffMfaState.satisfied),
     isAdminProvider.overrideWith((ref) async => admin),
     adminStatsLoaderProvider.overrideWithValue(
       (days) async => const AdminDashboardStats(),
@@ -49,6 +51,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          staffMfaStateProvider.overrideWith(
+            (ref) async => StaffMfaState.satisfied,
+          ),
           staffAccessProvider.overrideWith(
             (ref) async => const StaffAccess(isSupport: true),
           ),
@@ -73,6 +78,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          staffMfaStateProvider.overrideWith(
+            (ref) async => StaffMfaState.satisfied,
+          ),
           staffAccessProvider.overrideWith(
             (ref) async => const StaffAccess(isFinance: true),
           ),
