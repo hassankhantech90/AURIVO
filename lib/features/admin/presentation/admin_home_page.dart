@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/router/app_routes.dart';
 import '../../../shared/design_system.dart';
 import '../providers/admin_providers.dart';
+import 'widgets/admin_dashboard_section.dart';
 
 /// Admin console home. The whole surface is gated on [isAdminProvider]; a
 /// non-admin who reaches the route sees an unauthorized state rather than any
@@ -43,6 +44,8 @@ class _AdminMenu extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.lg),
       children: [
+        const AdminDashboardSection(),
+        const SizedBox(height: AppSpacing.xl),
         LuxuryCard(
           padding: EdgeInsets.zero,
           child: ListTile(

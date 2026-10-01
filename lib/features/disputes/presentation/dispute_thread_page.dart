@@ -275,7 +275,7 @@ class _Summary extends StatelessWidget {
           Text(dispute.statusLabel, style: theme.textTheme.bodyMedium),
           if (dispute.refundAmount != null)
             Text(
-              'Refund: ${formatMoney(dispute.refundAmount!)}',
+              'Refund: ${formatMoney(dispute.refundAmount!, currency: 'PKR')}',
               style: theme.textTheme.bodyMedium,
             ),
           if (dispute.resolutionNote != null) ...[
