@@ -122,4 +122,9 @@ class AppRoutes {
   /// Builds a concrete admin ticket-detail location for [ticketId].
   static String adminSupportDetailPath(String ticketId) =>
       '/admin/support/$ticketId';
+  static const adminDisputes = '/admin/disputes';
+
+  // Disputes (buyer, the order's sellers and admins share one thread).
+  static const disputeDetail = '/disputes/:id';
+  static String disputeDetailPath(String disputeId) => '/disputes/$disputeId';
 }

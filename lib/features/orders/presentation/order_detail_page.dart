@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/router/app_routes.dart';
 import '../../../shared/design_system.dart';
 import '../../chat/presentation/widgets/message_seller_button.dart';
+import '../../disputes/presentation/order_dispute_entry.dart';
 import '../../returns/presentation/order_return_card.dart';
 import '../../reviews/presentation/widgets/review_form_sheet.dart';
 import '../../reviews/providers/review_providers.dart';
@@ -138,6 +139,7 @@ class _OrderDetailBody extends StatelessWidget {
           viewer: ReturnViewer.buyer,
           onChanged: onRefresh,
         ),
+        OrderDisputeEntry(orderId: order.id, orderStatus: order.status),
         const SizedBox(height: AppSpacing.md),
         _SectionCard(
           title: 'Items',

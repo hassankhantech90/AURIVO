@@ -43,6 +43,22 @@ class SupabaseStorageService {
     }
   }
 
+  /// Time-limited URL for a file in a PRIVATE bucket (storage RLS decides
+  /// whether the caller may read it).
+  Future<String> createSignedUrl({
+    required String bucket,
+    required String path,
+    int expiresInSeconds = 3600,
+  }) async {
+    try {
+      return await _supabaseService.client.storage
+          .from(bucket)
+          .createSignedUrl(path, expiresInSeconds);
+    } catch (error) {
+      throw SupabaseExceptionMapper.storage(error);
+    }
+  }
+
   String getPublicUrl({required String bucket, required String path}) {
     try {
       return _supabaseService.client.storage.from(bucket).getPublicUrl(path);

@@ -5,6 +5,7 @@ import '../../../shared/design_system.dart';
 import '../../orders/domain/entities/order_item.dart';
 import '../../orders/domain/entities/order_status.dart';
 import '../../orders/presentation/order_formatting.dart';
+import '../../disputes/presentation/order_dispute_entry.dart';
 import '../../returns/presentation/order_return_card.dart';
 import '../domain/entities/seller_order_detail.dart';
 import '../providers/seller_order_providers.dart';
@@ -133,6 +134,7 @@ class _SellerOrderDetailPageState extends ConsumerState<SellerOrderDetailPage> {
               ref.invalidate(sellerOrdersProvider);
             },
           ),
+          OrderDisputeEntry(orderId: widget.orderId, orderStatus: detail.status),
           const SizedBox(height: AppSpacing.lg),
 
           _SectionCard(
