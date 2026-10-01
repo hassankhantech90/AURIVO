@@ -14,6 +14,7 @@ import '../../reviews/presentation/widgets/product_reviews_section.dart';
 import '../../seller/providers/seller_providers.dart';
 import '../../wholesale/presentation/wholesale_access.dart';
 import '../../wholesale/presentation/widgets/rfq_form_sheet.dart';
+import '../../wishlist/presentation/widgets/wishlist_product_card.dart';
 import '../../wishlist/providers/wishlist_providers.dart';
 import '../domain/entities/product.dart';
 import '../domain/entities/price_tier.dart';
@@ -207,6 +208,7 @@ class _ProductDetailView extends StatelessWidget {
         _RequestQuoteButton(product: product),
         const SizedBox(height: AppSpacing.xl),
         ProductReviewsSection(productId: product.id),
+        _RelatedProducts(productId: product.id),
       ],
     );
   }
@@ -355,6 +357,40 @@ class _WholesalePricing extends ConsumerWidget {
                   ),
               ],
             ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// "You may also like" rail. Hidden while loading, on error, or when empty.
+class _RelatedProducts extends ConsumerWidget {
+  const _RelatedProducts({required this.productId});
+
+  final String productId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final related =
+        ref.watch(relatedProductsProvider(productId)).valueOrNull ?? const [];
+    if (related.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: AppSpacing.xl),
+        Text('You may also like', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: AppSpacing.sm),
+        SizedBox(
+          height: 270,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: related.length,
+            separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.md),
+            itemBuilder: (context, index) => SizedBox(
+              width: 165,
+              child: WishlistProductCard(product: related[index]),
+            ),
           ),
         ),
       ],

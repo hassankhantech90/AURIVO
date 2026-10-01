@@ -5,9 +5,11 @@ import 'package:aurivo/core/supabase/supabase_auth_service.dart';
 import 'package:aurivo/core/supabase/supabase_service.dart';
 import 'package:aurivo/core/utils/failure.dart';
 import 'package:aurivo/features/authentication/providers/session_provider.dart';
+import 'package:aurivo/features/products/domain/entities/catalog_filters.dart';
 import 'package:aurivo/features/products/domain/entities/price_tier.dart';
 import 'package:aurivo/features/products/domain/entities/product.dart';
 import 'package:aurivo/features/products/domain/entities/product_detail.dart';
+import 'package:aurivo/features/products/domain/entities/product_sort.dart';
 import 'package:aurivo/features/products/domain/entities/product_variant.dart';
 import 'package:aurivo/features/products/domain/repositories/product_repository.dart';
 import 'package:aurivo/features/products/presentation/product_page.dart';
@@ -72,6 +74,27 @@ class _DetailRepository implements ProductRepository {
 
   @override
   Future<Set<String>> getWholesaleProductIds() async => wholesaleIds;
+
+  List<Product> related = const [];
+  final List<CatalogFilters> relatedQueries = [];
+
+  @override
+  Future<List<Product>> getProducts({
+    int limit = 20,
+    int offset = 0,
+    String? brandId,
+    String? categoryId,
+    List<String>? categoryIds,
+    bool? featured,
+    String? material,
+    String? search,
+    bool wholesaleOnly = false,
+    ProductSort sort = ProductSort.newest,
+    CatalogFilters filters = const CatalogFilters(),
+  }) async {
+    relatedQueries.add(filters);
+    return related;
+  }
 
   @override
   Future<ProductDetail?> getProductDetail(String id) {
@@ -335,6 +358,36 @@ void main() {
       await tester.pump();
 
       expect(find.text('Wholesale'), findsNothing);
+    });
+  });
+
+  group('related products', () {
+    testWidgets('shows same-type pieces, excluding the product itself', (
+      tester,
+    ) async {
+      final repo = _DetailRepository(detail: _richDetail())
+        ..related = [
+          _richProduct(), // the product itself — must be excluded
+          _richProduct().copyWith(id: 'p2', title: 'Rose Gold Band'),
+          _richProduct().copyWith(id: 'p3', title: 'Pearl Ring'),
+          _richProduct().copyWith(id: 'p4', title: 'Opal Ring'),
+          _richProduct().copyWith(id: 'p5', title: 'Ruby Ring'),
+        ];
+      await _pump(tester, _app(overrides: _guestOverrides(repo)));
+      await tester.pump();
+
+      expect(find.text('You may also like'), findsOneWidget);
+      expect(find.text('Rose Gold Band'), findsOneWidget);
+      expect(repo.relatedQueries.first.jewelleryType, 'ring');
+    });
+
+    testWidgets('hidden when there is nothing related', (tester) async {
+      await _pump(
+        tester,
+        _app(overrides: _guestOverrides(_DetailRepository(detail: _richDetail()))),
+      );
+      await tester.pump();
+      expect(find.text('You may also like'), findsNothing);
     });
   });
 

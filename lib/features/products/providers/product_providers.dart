@@ -7,6 +7,7 @@ import '../../../core/utils/failure.dart';
 import '../data/primary_image_resolver.dart';
 import '../data/repositories/supabase_product_repository.dart';
 import '../domain/entities/brand.dart';
+import '../domain/entities/catalog_filters.dart';
 import '../domain/entities/price_tier.dart';
 import '../domain/entities/product.dart';
 import '../domain/entities/product_detail.dart';
@@ -134,6 +135,35 @@ class ProductDetailNotifier extends StateNotifier<CatalogState<ProductDetail>> {
 final productPriceTiersProvider = FutureProvider.autoDispose
     .family<List<PriceTier>, String>((ref, productId) {
       return ref.watch(productRepositoryProvider).getProductPriceTiers(productId);
+    });
+
+/// "You may also like" for a product page (Requirements Doc §4.1): other
+/// pieces of the same jewellery type, topped up with the same metal when there
+/// are fewer than 4, excluding the product itself. Empty until the product's
+/// detail has loaded.
+final relatedProductsProvider = FutureProvider.autoDispose
+    .family<List<Product>, String>((ref, productId) async {
+      final product = ref.watch(productDetailProvider(productId)).data?.product;
+      if (product == null) return const [];
+      final repo = ref.watch(productRepositoryProvider);
+      const cap = 8;
+
+      final related = <Product>[
+        ...(await repo.getProducts(
+          limit: cap + 1,
+          filters: CatalogFilters(jewelleryType: product.jewelleryType),
+        )).where((p) => p.id != productId),
+      ];
+      if (related.length < 4 && product.material != null) {
+        final seen = {productId, ...related.map((p) => p.id)};
+        related.addAll(
+          (await repo.getProducts(
+            limit: cap + 1,
+            material: product.material,
+          )).where((p) => !seen.contains(p.id)),
+        );
+      }
+      return related.take(cap).toList();
     });
 
 /// Ids of products offering wholesale tiers (no prices), so non-verified
