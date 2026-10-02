@@ -29,7 +29,8 @@ final homeBannersProvider = FutureProvider.autoDispose<List<CmsBanner>>((
 /// Published pages of a kind ('faq', 'policy', 'info').
 final cmsPagesProvider = FutureProvider.autoDispose
     .family<List<CmsPage>, String>(
-      (ref, kind) => ref.watch(cmsRepositoryProvider).publishedPages(kind: kind),
+      (ref, kind) =>
+          ref.watch(cmsRepositoryProvider).publishedPages(kind: kind),
     );
 
 final cmsPageProvider = FutureProvider.autoDispose.family<CmsPage?, String>(

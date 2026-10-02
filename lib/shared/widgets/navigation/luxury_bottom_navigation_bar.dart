@@ -44,40 +44,55 @@ class LuxuryBottomNavigationBar extends StatelessWidget {
             final item = items[index];
             final selected = index == currentIndex;
 
+            // Icon-only visually, so the label is exposed to screen readers
+            // (and as a long-press tooltip) for accessibility.
             return Expanded(
-              child: InkWell(
-                onTap: () => onTap(index),
-                borderRadius: BorderRadius.circular(AppRadius.xl),
-                child: AnimatedContainer(
-                  duration: AppDurations.normal,
-                  curve: AppAnimations.standard,
-                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                  decoration: BoxDecoration(
-                    color: selected
-                        ? AppColors.primaryGold.withValues(alpha: 0.16)
-                        : Colors.transparent,
+              child: Semantics(
+                button: true,
+                selected: selected,
+                label: item.label,
+                excludeSemantics: true,
+                child: Tooltip(
+                  message: item.label,
+                  child: InkWell(
+                    onTap: () => onTap(index),
                     borderRadius: BorderRadius.circular(AppRadius.xl),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        item.icon,
+                    child: AnimatedContainer(
+                      duration: AppDurations.normal,
+                      curve: AppAnimations.standard,
+                      padding: const EdgeInsets.symmetric(
+                        vertical: AppSpacing.sm,
+                      ),
+                      decoration: BoxDecoration(
                         color: selected
-                            ? AppColors.deepGold
-                            : AppColors.mediumGrey,
+                            ? AppColors.primaryGold.withValues(alpha: 0.16)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(AppRadius.xl),
                       ),
-                      const SizedBox(height: AppSpacing.xs),
-                      AnimatedContainer(
-                        duration: AppDurations.normal,
-                        width: selected ? 18 : 0,
-                        height: 3,
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryGold,
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                        ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            item.icon,
+                            color: selected
+                                ? AppColors.deepGold
+                                : AppColors.mediumGrey,
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          AnimatedContainer(
+                            duration: AppDurations.normal,
+                            width: selected ? 18 : 0,
+                            height: 3,
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryGold,
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),

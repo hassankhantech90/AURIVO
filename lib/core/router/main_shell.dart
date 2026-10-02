@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../shared/widgets/navigation/luxury_bottom_navigation_bar.dart';
+import '../localization/locale_provider.dart';
 import 'app_routes.dart';
 
 /// Persistent shell for the app's five primary destinations. Wraps the routed
@@ -34,14 +35,23 @@ class MainShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    // Same order as [tabs]; [tabs] keeps the English labels as identifiers.
+    final labels = [
+      l10n.navHome,
+      l10n.navExplore,
+      l10n.navWholesale,
+      l10n.navOrders,
+      l10n.navProfile,
+    ];
     return Scaffold(
       body: child,
       bottomNavigationBar: LuxuryBottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) => context.go(tabs[index].$1),
         items: [
-          for (final tab in tabs)
-            LuxuryBottomNavItem(icon: tab.$2, label: tab.$3),
+          for (var i = 0; i < tabs.length; i++)
+            LuxuryBottomNavItem(icon: tabs[i].$2, label: labels[i]),
         ],
       ),
     );

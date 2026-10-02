@@ -56,6 +56,7 @@ class CmsPage {
     this.sortOrder = 0,
     this.isPublished = true,
     this.updatedAt,
+    this.translations = const {},
   });
 
   final String id;
@@ -66,6 +67,15 @@ class CmsPage {
   final int sortOrder;
   final bool isPublished;
   final DateTime? updatedAt;
+
+  /// `{lang: {field: text}}` — e.g. `{'ur': {'title': …, 'body': …}}`.
+  final Map<String, Map<String, String>> translations;
+
+  /// [title] / [body] in [languageCode], falling back to English.
+  String titleIn(String languageCode) =>
+      translations[languageCode]?['title'] ?? title;
+  String bodyIn(String languageCode) =>
+      translations[languageCode]?['body'] ?? body;
 
   static const faq = 'faq';
   static const policy = 'policy';
@@ -81,5 +91,20 @@ class CmsPage {
     sortOrder: parseInt(map['sort_order']),
     isPublished: map['is_published'] as bool? ?? true,
     updatedAt: parseTimestamp(map['updated_at']),
+    translations: parseTranslations(map['translations']),
   );
+}
+
+/// Parses a `translations` jsonb column into `{lang: {field: text}}`,
+/// ignoring anything malformed.
+Map<String, Map<String, String>> parseTranslations(Object? raw) {
+  if (raw is! Map) return const {};
+  return {
+    for (final entry in raw.entries)
+      if (entry.value is Map)
+        '${entry.key}': {
+          for (final f in (entry.value as Map).entries)
+            if (f.value is String) '${f.key}': f.value as String,
+        },
+  };
 }

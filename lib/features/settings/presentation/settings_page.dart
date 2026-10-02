@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/localization/locale_provider.dart';
 import '../../../core/router/app_routes.dart';
 import '../../../shared/design_system.dart';
 import '../../admin/providers/admin_providers.dart';
@@ -49,11 +50,29 @@ class SettingsPage extends ConsumerWidget {
     final settings = ref.watch(settingsProvider);
     final session = ref.watch(sessionProvider);
 
+    final l10n = context.l10n;
+    final locale = ref.watch(appLocaleProvider);
+
     return Scaffold(
-      appBar: const LuxuryAppBar(title: 'Settings', showBackButton: true),
+      appBar: LuxuryAppBar(title: l10n.settingsTitle, showBackButton: true),
       body: ListView(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
         children: [
+          _SectionLabel(l10n.settingsLanguage),
+          for (final (code, label) in [
+            ('en', l10n.languageEnglish),
+            ('ur', l10n.languageUrdu),
+          ])
+            ListTile(
+              leading: const Icon(Icons.translate),
+              title: Text(label),
+              trailing: locale.languageCode == code
+                  ? const Icon(Icons.check, color: AppColors.primaryGold)
+                  : null,
+              onTap: () =>
+                  ref.read(appLocaleProvider.notifier).set(Locale(code)),
+            ),
+
           const _SectionLabel('Appearance'),
           for (final mode in AppThemeMode.values)
             ListTile(
@@ -112,7 +131,7 @@ class SettingsPage extends ConsumerWidget {
               ),
             ListTile(
               leading: const Icon(Icons.help_outline),
-              title: const Text('Help centre'),
+              title: Text(l10n.helpCentre),
               subtitle: const Text('FAQs, returns, delivery & policies'),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => context.push(AppRoutes.help),

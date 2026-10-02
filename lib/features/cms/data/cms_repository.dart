@@ -56,7 +56,10 @@ class SupabaseCmsRepository implements CmsRepository {
   @override
   Future<List<CmsBanner>> liveBanners() => _guard(() async {
     // RLS returns only active banners inside their schedule.
-    final rows = await _database.list(table: 'cms_banners', orderBy: 'sort_order');
+    final rows = await _database.list(
+      table: 'cms_banners',
+      orderBy: 'sort_order',
+    );
     return rows.map(_banner).toList();
   }, 'Could not load banners.');
 
@@ -101,7 +104,11 @@ class SupabaseCmsRepository implements CmsRepository {
 
   @override
   Future<void> deleteBanner(String id) => _guard(
-    () => _database.delete(table: 'cms_banners', matchColumn: 'id', matchValue: id),
+    () => _database.delete(
+      table: 'cms_banners',
+      matchColumn: 'id',
+      matchValue: id,
+    ),
     'Could not delete the banner.',
   );
 
@@ -120,7 +127,8 @@ class SupabaseCmsRepository implements CmsRepository {
 
   @override
   Future<void> deletePage(String id) => _guard(
-    () => _database.delete(table: 'cms_pages', matchColumn: 'id', matchValue: id),
+    () =>
+        _database.delete(table: 'cms_pages', matchColumn: 'id', matchValue: id),
     'Could not delete the page.',
   );
 

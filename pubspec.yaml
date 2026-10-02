@@ -16,6 +16,8 @@ dependencies:
   firebase_messaging: ^15.1.0
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   flutter_local_notifications: ^18.0.1
   flutter_riverpod: ^2.6.1
   flutter_secure_storage: ^9.2.4
@@ -26,6 +28,7 @@ dependencies:
   hive_flutter: ^1.1.0
   image_picker: ^1.1.2
   internet_connection_checker: ^3.0.1
+  intl: any
   json_annotation: ^4.9.0
   logger: ^2.5.0
   shared_preferences: ^2.5.5
@@ -40,4 +43,5 @@ dev_dependencies:
   json_serializable: ^6.9.4
 
 flutter:
+  generate: true
   uses-material-design: true

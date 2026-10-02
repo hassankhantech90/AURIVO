@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/localization/locale_provider.dart';
 import '../../../core/router/app_routes.dart';
 import '../../../shared/design_system.dart';
 import '../../authentication/providers/session_provider.dart';
@@ -82,7 +83,7 @@ class _HomePageState extends ConsumerState<HomePage> {
               AppSpacing.sm,
             ),
             child: SegmentedTabs(
-              labels: const ['Retail', 'Wholesale'],
+              labels: [context.l10n.modeRetail, context.l10n.modeWholesale],
               selectedIndex: mode.index,
               onSelected: (index) => ref
                   .read(shoppingModeProvider.notifier)
@@ -147,7 +148,7 @@ class _HomePageState extends ConsumerState<HomePage> {
           children: [
             const _HomeSearchBar(),
             const SizedBox(height: AppSpacing.xl),
-            const SectionHeader(title: 'Shop by metal'),
+            SectionHeader(title: context.l10n.homeShopByMetal),
             const SizedBox(height: AppSpacing.md),
             const _MetalTabs(),
             const SizedBox(height: AppSpacing.xl),
@@ -156,15 +157,15 @@ class _HomePageState extends ConsumerState<HomePage> {
               banners: ref.watch(homeBannersProvider).valueOrNull ?? const [],
             ),
             const SizedBox(height: AppSpacing.xl),
-            const SectionHeader(title: 'Shop by category'),
+            SectionHeader(title: context.l10n.homeShopByCategory),
             const SizedBox(height: AppSpacing.md),
             SizedBox(height: 180, child: _categories(categories)),
             const _RecentlyViewedRail(),
             const SizedBox(height: AppSpacing.xl),
             SectionHeader(
               title: mode == ShoppingMode.wholesale
-                  ? 'Wholesale picks'
-                  : 'Featured',
+                  ? context.l10n.homeWholesalePicks
+                  : context.l10n.homeFeatured,
             ),
             const SizedBox(height: AppSpacing.md),
             _featured(products),
@@ -273,7 +274,7 @@ class _RecentlyViewedRail extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: AppSpacing.xl),
-        const SectionHeader(title: 'Recently viewed'),
+        SectionHeader(title: context.l10n.homeRecentlyViewed),
         const SizedBox(height: AppSpacing.md),
         SizedBox(
           height: 270,
@@ -346,10 +347,7 @@ class _HomeSearchBarState extends State<_HomeSearchBar> {
     final query = value.trim();
     if (query.isEmpty) return;
     context.push(
-      Uri(
-        path: AppRoutes.explore,
-        queryParameters: {'q': query},
-      ).toString(),
+      Uri(path: AppRoutes.explore, queryParameters: {'q': query}).toString(),
     );
   }
 
@@ -361,7 +359,7 @@ class _HomeSearchBarState extends State<_HomeSearchBar> {
       valueListenable: _controller,
       builder: (context, value, _) => CustomSearchBar(
         controller: _controller,
-        hintText: 'Search jewellery, brands & makers',
+        hintText: context.l10n.searchHint,
         onSubmitted: _submit,
         onClear: value.text.isEmpty ? null : _controller.clear,
       ),

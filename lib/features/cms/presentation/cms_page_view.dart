@@ -14,7 +14,8 @@ class CmsPageView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(cmsPageProvider(slug));
-    final title = async.valueOrNull?.title ?? '';
+    final lang = Localizations.localeOf(context).languageCode;
+    final title = async.valueOrNull?.titleIn(lang) ?? '';
     return Scaffold(
       appBar: LuxuryAppBar(title: title, showBackButton: true),
       body: async.when(
@@ -32,8 +33,10 @@ class CmsPageView extends ConsumerWidget {
                 padding: const EdgeInsets.all(AppSpacing.lg),
                 children: [
                   SelectableText(
-                    page.body,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.5),
+                    page.bodyIn(lang),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyLarge?.copyWith(height: 1.5),
                   ),
                 ],
               ),

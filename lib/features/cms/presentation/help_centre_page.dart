@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/localization/locale_provider.dart';
 import '../../../core/router/app_routes.dart';
 import '../../../shared/design_system.dart';
 import '../domain/entities/cms_entities.dart';
@@ -15,12 +16,16 @@ class HelpCentrePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final lang = Localizations.localeOf(context).languageCode;
     final faqs = ref.watch(cmsPagesProvider(CmsPage.faq));
     final policies = ref.watch(cmsPagesProvider(CmsPage.policy));
     final info = ref.watch(cmsPagesProvider(CmsPage.info));
 
     return Scaffold(
-      appBar: const LuxuryAppBar(title: 'Help centre', showBackButton: true),
+      appBar: LuxuryAppBar(
+        title: context.l10n.helpCentre,
+        showBackButton: true,
+      ),
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(cmsPagesProvider(CmsPage.faq));
@@ -30,7 +35,10 @@ class HelpCentrePage extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.lg),
           children: [
-            Text('Frequently asked questions', style: theme.textTheme.titleMedium),
+            Text(
+              'Frequently asked questions',
+              style: theme.textTheme.titleMedium,
+            ),
             const SizedBox(height: AppSpacing.sm),
             faqs.when(
               loading: () => const LinearProgressIndicator(),
@@ -41,7 +49,7 @@ class HelpCentrePage extends ConsumerWidget {
                   children: [
                     for (final q in list)
                       ExpansionTile(
-                        title: Text(q.title),
+                        title: Text(q.titleIn(lang)),
                         childrenPadding: const EdgeInsets.fromLTRB(
                           AppSpacing.md,
                           0,
@@ -49,7 +57,12 @@ class HelpCentrePage extends ConsumerWidget {
                           AppSpacing.md,
                         ),
                         expandedCrossAxisAlignment: CrossAxisAlignment.start,
-                        children: [Text(q.body, style: theme.textTheme.bodyMedium)],
+                        children: [
+                          Text(
+                            q.bodyIn(lang),
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                        ],
                       ),
                   ],
                 ),
@@ -97,7 +110,9 @@ class _PageLinks extends StatelessWidget {
                 children: [
                   for (final p in list)
                     ListTile(
-                      title: Text(p.title),
+                      title: Text(
+                        p.titleIn(Localizations.localeOf(context).languageCode),
+                      ),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () => context.push(AppRoutes.cmsPagePath(p.slug)),
                     ),

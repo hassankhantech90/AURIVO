@@ -1,0 +1,21 @@
+{
+  "@@locale": "en",
+  "navHome": "Home",
+  "navExplore": "Explore",
+  "navWholesale": "Wholesale",
+  "navOrders": "Orders",
+  "navProfile": "Profile",
+  "modeRetail": "Retail",
+  "modeWholesale": "Wholesale",
+  "homeShopByMetal": "Shop by metal",
+  "homeShopByCategory": "Shop by category",
+  "homeFeatured": "Featured",
+  "homeWholesalePicks": "Wholesale picks",
+  "homeRecentlyViewed": "Recently viewed",
+  "searchHint": "Search jewellery, brands & makers",
+  "settingsTitle": "Settings",
+  "settingsLanguage": "Language",
+  "languageEnglish": "English",
+  "languageUrdu": "اردو (Urdu)",
+  "helpCentre": "Help centre"
+}

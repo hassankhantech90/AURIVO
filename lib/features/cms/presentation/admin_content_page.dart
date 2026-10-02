@@ -21,7 +21,10 @@ class AdminContentPage extends ConsumerWidget {
         appBar: AppBar(
           title: const Text('Content'),
           bottom: const TabBar(
-            tabs: [Tab(text: 'Banners'), Tab(text: 'Pages & FAQs')],
+            tabs: [
+              Tab(text: 'Banners'),
+              Tab(text: 'Pages & FAQs'),
+            ],
           ),
         ),
         body: const TabBarView(children: [_BannersTab(), _PagesTab()]),
@@ -87,7 +90,8 @@ class _BannersTab extends ConsumerWidget {
                   96,
                 ),
                 itemCount: banners.length,
-                separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
+                separatorBuilder: (_, _) =>
+                    const SizedBox(height: AppSpacing.sm),
                 itemBuilder: (context, i) {
                   final b = banners[i];
                   return LuxuryCard(
@@ -129,7 +133,9 @@ class _BannersTab extends ConsumerWidget {
                           if (ok != true || !context.mounted) return;
                           await _report(
                             context,
-                            () => ref.read(cmsRepositoryProvider).deleteBanner(b.id),
+                            () => ref
+                                .read(cmsRepositoryProvider)
+                                .deleteBanner(b.id),
                             'Banner deleted.',
                           );
                           ref.invalidate(adminBannersProvider);
@@ -157,7 +163,9 @@ class _BannerForm extends ConsumerStatefulWidget {
 class _BannerFormState extends ConsumerState<_BannerForm> {
   late final _title = TextEditingController(text: widget.initial?.title);
   late final _subtitle = TextEditingController(text: widget.initial?.subtitle);
-  late final _link = TextEditingController(text: widget.initial?.link ?? '/explore');
+  late final _link = TextEditingController(
+    text: widget.initial?.link ?? '/explore',
+  );
   late final _order = TextEditingController(
     text: '${widget.initial?.sortOrder ?? 0}',
   );
@@ -185,7 +193,9 @@ class _BannerFormState extends ConsumerState<_BannerForm> {
     final bytes = await file.readAsBytes();
     final ext = file.name.contains('.') ? file.name.split('.').last : 'jpg';
     try {
-      final path = await ref.read(cmsRepositoryProvider).uploadBannerImage(bytes, ext);
+      final path = await ref
+          .read(cmsRepositoryProvider)
+          .uploadBannerImage(bytes, ext);
       if (mounted) {
         setState(() {
           _imagePath = path;
@@ -215,7 +225,9 @@ class _BannerFormState extends ConsumerState<_BannerForm> {
     try {
       await ref.read(cmsRepositoryProvider).saveBanner({
         'title': title,
-        'subtitle': _subtitle.text.trim().isEmpty ? null : _subtitle.text.trim(),
+        'subtitle': _subtitle.text.trim().isEmpty
+            ? null
+            : _subtitle.text.trim(),
         'link': link.isEmpty ? null : link,
         'image_path': _imagePath,
         'sort_order': int.tryParse(_order.text.trim()) ?? 0,
@@ -261,8 +273,12 @@ class _BannerFormState extends ConsumerState<_BannerForm> {
                   ),
                   child: _preview != null
                       ? Image.memory(_preview!, fit: BoxFit.cover)
-                      : widget.initial?.imageUrl != null && _imagePath == widget.initial?.imagePath
-                      ? Image.network(widget.initial!.imageUrl!, fit: BoxFit.cover)
+                      : widget.initial?.imageUrl != null &&
+                            _imagePath == widget.initial?.imagePath
+                      ? Image.network(
+                          widget.initial!.imageUrl!,
+                          fit: BoxFit.cover,
+                        )
                       : const Center(child: Text('Tap to choose an image')),
                 ),
               ),
@@ -270,7 +286,10 @@ class _BannerFormState extends ConsumerState<_BannerForm> {
             const SizedBox(height: AppSpacing.md),
             CustomTextField(controller: _title, labelText: 'Headline'),
             const SizedBox(height: AppSpacing.md),
-            CustomTextField(controller: _subtitle, labelText: 'Subtitle (optional)'),
+            CustomTextField(
+              controller: _subtitle,
+              labelText: 'Subtitle (optional)',
+            ),
             const SizedBox(height: AppSpacing.md),
             CustomTextField(
               controller: _link,
@@ -292,7 +311,11 @@ class _BannerFormState extends ConsumerState<_BannerForm> {
             if (_error != null)
               Text(_error!, style: const TextStyle(color: AppColors.error)),
             const SizedBox(height: AppSpacing.md),
-            LoadingButton(label: 'Save', isLoading: _saving, onPressed: _saving ? null : _save),
+            LoadingButton(
+              label: 'Save',
+              isLoading: _saving,
+              onPressed: _saving ? null : _save,
+            ),
           ],
         ),
       ),
@@ -509,7 +532,11 @@ class _PageFormState extends ConsumerState<_PageForm> {
             if (_error != null)
               Text(_error!, style: const TextStyle(color: AppColors.error)),
             const SizedBox(height: AppSpacing.md),
-            LoadingButton(label: 'Save', isLoading: _saving, onPressed: _saving ? null : _save),
+            LoadingButton(
+              label: 'Save',
+              isLoading: _saving,
+              onPressed: _saving ? null : _save,
+            ),
           ],
         ),
       ),

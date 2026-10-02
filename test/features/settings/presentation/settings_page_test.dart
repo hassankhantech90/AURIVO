@@ -78,7 +78,19 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(find.byIcon(Icons.check), findsOneWidget); // exactly one selected
+    // Exactly one selected theme (the language section has its own check).
+    expect(
+      find.descendant(
+        of: find.byWidgetPredicate(
+          (w) =>
+              w is ListTile &&
+              w.leading is Icon &&
+              (w.leading! as Icon).icon == Icons.brightness_6_outlined,
+        ),
+        matching: find.byIcon(Icons.check),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('toggling notifications persists the new value', (tester) async {

@@ -1,0 +1,21 @@
+{
+  "@@locale": "ur",
+  "navHome": "ہوم",
+  "navExplore": "تلاش",
+  "navWholesale": "ہول سیل",
+  "navOrders": "آرڈرز",
+  "navProfile": "پروفائل",
+  "modeRetail": "ریٹیل",
+  "modeWholesale": "ہول سیل",
+  "homeShopByMetal": "دھات کے لحاظ سے خریدیں",
+  "homeShopByCategory": "زمرہ کے لحاظ سے خریدیں",
+  "homeFeatured": "نمایاں",
+  "homeWholesalePicks": "ہول سیل انتخاب",
+  "homeRecentlyViewed": "حال ہی میں دیکھے گئے",
+  "searchHint": "زیورات، برانڈز اور کاریگر تلاش کریں",
+  "settingsTitle": "ترتیبات",
+  "settingsLanguage": "زبان",
+  "languageEnglish": "English",
+  "languageUrdu": "اردو",
+  "helpCentre": "مدد مرکز"
+}
