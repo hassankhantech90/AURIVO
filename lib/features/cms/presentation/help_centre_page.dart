@@ -80,7 +80,7 @@ class HelpCentrePage extends ConsumerWidget {
               child: ListTile(
                 leading: const Icon(Icons.support_agent_outlined),
                 title: const Text('Still need help?'),
-                subtitle: const Text('Contact AURIVO support'),
+                subtitle: const Text('Contact Pareezay.Hub support'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.push(AppRoutes.support),
               ),

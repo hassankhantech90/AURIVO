@@ -293,7 +293,7 @@ class _RecentlyViewedRail extends ConsumerWidget {
   }
 }
 
-/// The AURIVO wordmark with the marketplace tagline, for the Home app bar.
+/// The Pareezay.Hub wordmark with the marketplace tagline, for the Home app bar.
 class _BrandTitle extends StatelessWidget {
   const _BrandTitle();
 
@@ -304,7 +304,13 @@ class _BrandTitle extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('AURIVO', style: theme.textTheme.headlineSmall),
+        // Scale down rather than overflow next to the app-bar actions.
+        const FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: BrandWordmark(height: 20),
+        ),
+        const SizedBox(height: 4),
         // Scale-down guard so the letter-spaced tagline never overflows next to
         // the app-bar actions on narrow phones / large text scales.
         FittedBox(

@@ -1,4 +1,4 @@
-export 'aurivo_logo.dart';
+export 'app_logo.dart';
 export 'auth_helpers.dart';
 export 'auth_otp_field.dart';
 export 'auth_scaffold.dart';

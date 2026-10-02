@@ -44,7 +44,7 @@ void main() {
     expect(find.text('ACCOUNT'), findsOneWidget);
     expect(find.text('PREFERENCES'), findsOneWidget);
     expect(find.text('ABOUT'), findsOneWidget);
-    expect(find.text('AURIVO 1.0.0'), findsOneWidget);
+    expect(find.text('Pareezay.Hub 1.0.0'), findsOneWidget);
     // Session is unauthenticated in tests → sign-in shown, not sign-out.
     expect(find.text('Sign in'), findsOneWidget);
     expect(find.text('Sign out'), findsNothing);

@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:aurivo/core/router/app_routes.dart';
-import 'package:aurivo/core/theme/theme.dart';
 import 'package:aurivo/core/supabase/supabase_auth_service.dart';
 import 'package:aurivo/core/supabase/supabase_service.dart';
 import 'package:aurivo/features/authentication/providers/session_provider.dart';
@@ -27,7 +26,7 @@ import 'package:aurivo/features/products/domain/repositories/product_repository.
 import 'package:aurivo/features/products/providers/product_providers.dart';
 import 'package:aurivo/features/wishlist/domain/repositories/wishlist_repository.dart';
 import 'package:aurivo/features/wishlist/providers/wishlist_providers.dart';
-import 'package:aurivo/shared/widgets/loading/loading_indicator.dart';
+import 'package:aurivo/shared/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -324,7 +323,7 @@ void main() {
       );
       await _settle(tester);
 
-      expect(find.text('AURIVO'), findsOneWidget);
+      expect(find.byType(BrandWordmark), findsOneWidget);
       expect(find.text('Shop by category'), findsOneWidget);
       expect(find.text('Featured'), findsOneWidget);
       expect(find.text('Rings'), findsOneWidget); // category card
@@ -805,7 +804,7 @@ void main() {
       );
       await _settle(tester);
 
-      expect(find.text('AURIVO'), findsOneWidget);
+      expect(find.byType(BrandWordmark), findsOneWidget);
       expect(find.text('Shop by category'), findsOneWidget);
       expect(find.text('Featured'), findsOneWidget);
     });

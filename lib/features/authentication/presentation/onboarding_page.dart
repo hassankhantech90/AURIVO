@@ -108,7 +108,7 @@ class _OnboardingContent extends ConsumerWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const AurivoLogo(compact: true),
+                  const AppLogo(compact: true),
                   AnimatedOpacity(
                     opacity: isLastPage ? 0 : 1,
                     duration: AppDurations.normal,

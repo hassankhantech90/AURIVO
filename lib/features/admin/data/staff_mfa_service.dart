@@ -61,8 +61,8 @@ class StaffMfaService {
     }
     final res = await _mfa.enroll(
       factorType: FactorType.totp,
-      issuer: 'AURIVO',
-      friendlyName: 'AURIVO staff',
+      issuer: 'Pareezay.Hub',
+      friendlyName: 'Pareezay.Hub staff',
     );
     final totp = res.totp!;
     return TotpSetup(factorId: res.id, secret: totp.secret, uri: totp.uri);

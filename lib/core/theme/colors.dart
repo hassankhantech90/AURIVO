@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Central luxury color palette for the AURIVO design system.
+/// Central luxury color palette for the Pareezay.Hub design system.
 class AppColors {
   const AppColors._();
 

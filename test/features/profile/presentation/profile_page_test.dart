@@ -15,7 +15,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Sign in to AURIVO'), findsOneWidget);
+    expect(find.text('Sign in to Pareezay.Hub'), findsOneWidget);
     expect(find.text('Sign in'), findsOneWidget);
   });
 }

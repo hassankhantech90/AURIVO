@@ -2,7 +2,7 @@
     <!-- Android 13+ runtime notification permission (requested at register time). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <application
-        android:label="aurivo"
+        android:label="Pareezay.Hub"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

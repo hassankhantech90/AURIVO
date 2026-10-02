@@ -30,7 +30,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('Reset Password'), findsOneWidget);
-    expect(find.textContaining('contact AURIVO support'), findsOneWidget);
+    expect(find.textContaining('contact Pareezay.Hub support'), findsOneWidget);
     expect(find.text('Back to sign in'), findsOneWidget);
     // The old broken send-code -> OTP flow is gone.
     expect(find.text('Send Code'), findsNothing);

@@ -31,7 +31,7 @@ class FakeAuthRepository implements AuthRepository {
   }) async {
     _recoveryVerified = false;
     await Future<void>.delayed(delay);
-    return const AuthResult(message: 'Welcome back to AURIVO');
+    return const AuthResult(message: 'Welcome back to Pareezay.Hub');
   }
 
   @override

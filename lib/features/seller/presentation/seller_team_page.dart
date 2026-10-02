@@ -89,7 +89,7 @@ final sellerTeamProvider = FutureProvider.autoDispose<List<StaffMember>>(
 );
 
 /// Seller Studio → Team (Requirements Doc §2 seller staff): the owner adds
-/// existing AURIVO accounts by email with catalogue and/or orders access, and
+/// existing Pareezay.Hub accounts by email with catalogue and/or orders access, and
 /// can change or revoke it. Store settings, bank and payout details always
 /// stay owner-only.
 class SellerTeamPage extends ConsumerWidget {
@@ -110,7 +110,7 @@ class SellerTeamPage extends ConsumerWidget {
     }
   }
 
-  // The team RPCs raise buyer-readable messages (e.g. "No AURIVO account uses
+  // The team RPCs raise buyer-readable messages (e.g. "No Pareezay.Hub account uses
   // that email"); surface them as-is.
   static String _message(Object error) =>
       error is ex.AppSupabaseException ? error.message : 'Something went wrong.';
@@ -158,7 +158,7 @@ class SellerTeamPage extends ConsumerWidget {
             if (team.isEmpty)
               const EmptyStateWidget(
                 title: 'No staff yet',
-                message: 'Add a team member by the email they use on AURIVO.',
+                message: 'Add a team member by the email they use on Pareezay.Hub.',
               ),
             for (final m in team)
               Padding(
@@ -270,7 +270,7 @@ class _AddStaffDialogState extends State<_AddStaffDialog> {
             controller: _email,
             keyboardType: TextInputType.emailAddress,
             decoration: const InputDecoration(
-              labelText: 'Their AURIVO account email',
+              labelText: 'Their Pareezay.Hub account email',
             ),
             onChanged: (_) => setState(() {}),
           ),

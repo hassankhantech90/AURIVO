@@ -68,7 +68,7 @@ void main() {
 
     expect(find.text('Create New Password'), findsOneWidget);
     expect(
-      find.text('Choose a strong password to protect your AURIVO account.'),
+      find.text('Choose a strong password to protect your Pareezay.Hub account.'),
       findsOneWidget,
     );
     expect(find.text('New Password'), findsOneWidget);

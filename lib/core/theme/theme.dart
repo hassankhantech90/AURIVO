@@ -6,7 +6,7 @@ import 'radius.dart';
 import 'spacing.dart';
 import 'typography.dart';
 
-/// Material 3 theme configuration for the AURIVO luxury visual language.
+/// Material 3 theme configuration for the Pareezay.Hub luxury visual language.
 class AppTheme {
   const AppTheme._();
 

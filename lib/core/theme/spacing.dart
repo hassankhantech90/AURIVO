@@ -1,4 +1,4 @@
-/// Spacing scale used throughout the AURIVO design system.
+/// Spacing scale used throughout the Pareezay.Hub design system.
 class AppSpacing {
   const AppSpacing._();
 

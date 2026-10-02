@@ -151,7 +151,7 @@ class _EnrolViewState extends ConsumerState<_EnrolView> {
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            'In the app choose "Enter a setup key", name it AURIVO, and paste '
+            'In the app choose "Enter a setup key", name it Pareezay.Hub, and paste '
             'this key (time-based).',
             style: theme.textTheme.bodySmall,
           ),
@@ -232,7 +232,7 @@ class _CodeViewState extends ConsumerState<_CodeView> {
         ),
         const SizedBox(height: AppSpacing.sm),
         Text(
-          'Open your authenticator app and enter the 6-digit code for AURIVO.',
+          'Open your authenticator app and enter the 6-digit code for Pareezay.Hub.',
           style: theme.textTheme.bodyMedium,
         ),
         const SizedBox(height: AppSpacing.lg),

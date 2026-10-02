@@ -79,7 +79,7 @@ class _SplashPageState extends ConsumerState<SplashPage>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const AurivoLogo(),
+                  const AppLogo(),
                   const SizedBox(height: AppSpacing.sm),
                   Text(
                     'The Jewellery Marketplace',

@@ -1,11 +1,11 @@
 {
-    "name": "aurivo",
-    "short_name": "aurivo",
+    "name": "Pareezay.Hub",
+    "short_name": "Pareezay.Hub",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Pareezay.Hub — the jewellery marketplace for Pakistan.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

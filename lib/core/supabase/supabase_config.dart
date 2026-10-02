@@ -1,4 +1,4 @@
-/// Supported runtime environments for AURIVO infrastructure configuration.
+/// Supported runtime environments for Pareezay.Hub infrastructure configuration.
 enum AppEnvironment {
   development,
   staging,

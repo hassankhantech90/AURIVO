@@ -1,5 +1,5 @@
 class AppConstants {
   const AppConstants._();
 
-  static const appName = 'AURIVO';
+  static const appName = 'Pareezay.Hub';
 }

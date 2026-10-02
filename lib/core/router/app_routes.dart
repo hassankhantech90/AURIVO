@@ -32,7 +32,7 @@ class AppRoutes {
 
   /// Builds a concrete seller-storefront location for [slug].
   static String sellerDetailPath(String slug) => '/seller/$slug';
-  // "Sell on AURIVO" onboarding — creates the current user's seller store.
+  // "Sell on Pareezay.Hub" onboarding — creates the current user's seller store.
   static const sellerOnboarding = '/sell';
   // Seller Studio (seller-side management). A distinct prefix so it never
   // collides with the buyer storefront route `/seller/:slug`.

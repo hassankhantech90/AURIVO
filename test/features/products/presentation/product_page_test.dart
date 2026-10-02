@@ -414,7 +414,7 @@ void main() {
       expect(find.text('PKR 12,500'), findsOneWidget);
       expect(find.text('18 mm × 12 mm'), findsOneWidget);
       expect(find.text('Delivery & returns'), findsOneWidget);
-      expect(find.text('Returnable under AURIVO policy'), findsOneWidget);
+      expect(find.text('Returnable under Pareezay.Hub policy'), findsOneWidget);
       expect(find.text('Made to order'), findsNothing);
     });
 

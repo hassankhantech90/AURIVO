@@ -40,7 +40,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
 
     return AuthScaffold(
       title: 'Create Account',
-      subtitle: 'Join AURIVO to buy, sell and discover refined jewellery.',
+      subtitle: 'Join Pareezay.Hub to buy, sell and discover refined jewellery.',
       child: Form(
         key: _formKey,
         child: Column(

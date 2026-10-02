@@ -29,7 +29,7 @@ class ForgotPasswordPage extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.lg),
           Text(
-            'To reset your password, please contact AURIVO support and we '
+            'To reset your password, please contact Pareezay.Hub support and we '
             'will help you regain access to your account.',
             textAlign: TextAlign.center,
             // Explicit on-light colour: inline Text built above the

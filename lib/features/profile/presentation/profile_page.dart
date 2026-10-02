@@ -82,7 +82,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       return Scaffold(
         appBar: const LuxuryAppBar(title: 'Account'),
         body: EmptyStateWidget(
-          title: 'Sign in to AURIVO',
+          title: 'Sign in to Pareezay.Hub',
           message: 'Manage your profile, addresses and orders.',
           icon: Icons.person_outline,
           action: PrimaryButton(
@@ -244,7 +244,7 @@ class _ProfileBody extends StatelessWidget {
   }
 }
 
-/// Seller entry point. Discoverable as "Sell on AURIVO" until a store exists,
+/// Seller entry point. Discoverable as "Sell on Pareezay.Hub" until a store exists,
 /// then flips to "Store settings". Gated on [mySellerProfileIdProvider] so
 /// Seller Studio only surfaces once the user actually has a seller profile.
 class _SellerTile extends ConsumerWidget {
@@ -264,7 +264,7 @@ class _SellerTile extends ConsumerWidget {
             leading: Icon(
               hasStore ? Icons.storefront_outlined : Icons.store_outlined,
             ),
-            title: Text(hasStore ? 'Store settings' : 'Sell on AURIVO'),
+            title: Text(hasStore ? 'Store settings' : 'Sell on Pareezay.Hub'),
             subtitle: Text(
               hasStore
                   ? 'Manage your store details'

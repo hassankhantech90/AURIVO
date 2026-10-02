@@ -6,7 +6,7 @@ import '../../domain/entities/seller_review.dart';
 
 /// A single seller-review row. Reviewer identity is intentionally anonymous
 /// (`profiles` are not readable cross-user), so verified purchasers show as
-/// "Verified Buyer" and everyone else as an AURIVO customer. When [isMine] is
+/// "Verified Buyer" and everyone else as an Pareezay.Hub customer. When [isMine] is
 /// true and the review is not yet approved, a moderation-status chip is shown.
 class SellerReviewTile extends StatelessWidget {
   const SellerReviewTile({
@@ -23,7 +23,7 @@ class SellerReviewTile extends StatelessWidget {
     final theme = Theme.of(context);
     final author = review.verifiedPurchase
         ? 'Verified Buyer'
-        : 'AURIVO Customer';
+        : 'Pareezay.Hub customer';
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),

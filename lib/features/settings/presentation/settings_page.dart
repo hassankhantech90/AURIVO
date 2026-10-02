@@ -14,7 +14,7 @@ import '../providers/settings_providers.dart';
 
 /// App name/version shown in the About section. Kept as a constant to avoid an
 /// extra platform plugin; update alongside `pubspec.yaml`.
-const String _appName = 'AURIVO';
+const String _appName = 'Pareezay.Hub';
 const String _appVersion = '1.0.0';
 
 /// Buyer-facing settings: appearance (theme), account (email + sign out),

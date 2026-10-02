@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../inputs/custom_search_bar.dart';
 
-/// Reusable AURIVO app bar supporting large, small, search, back, and action variants.
+/// Reusable Pareezay.Hub app bar supporting large, small, search, back, and action variants.
 class LuxuryAppBar extends StatelessWidget implements PreferredSizeWidget {
   const LuxuryAppBar({
     super.key,

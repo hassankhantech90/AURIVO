@@ -425,7 +425,7 @@ class _PurchaseTerms extends StatelessWidget {
         Icons.assignment_return_outlined,
         'Returns',
         product.isReturnable
-            ? 'Returnable under AURIVO policy'
+            ? 'Returnable under Pareezay.Hub policy'
             : product.isMadeToOrder
             ? 'Custom piece — no cancellation or returns'
             : 'Not returnable',

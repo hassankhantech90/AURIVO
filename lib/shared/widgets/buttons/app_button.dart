@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/theme_exports.dart';
 import '../animations/pressable_scale.dart';
 
-/// Available sizes for reusable AURIVO buttons.
+/// Available sizes for reusable Pareezay.Hub buttons.
 enum AppButtonSize { small, medium, large }
 
-/// Shared luxury button foundation used by all AURIVO button variants.
+/// Shared luxury button foundation used by all Pareezay.Hub button variants.
 class AppButton extends StatelessWidget {
   const AppButton({
     super.key,

@@ -39,7 +39,7 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage> {
 
     return AuthScaffold(
       title: 'Create New Password',
-      subtitle: 'Choose a strong password to protect your AURIVO account.',
+      subtitle: 'Choose a strong password to protect your Pareezay.Hub account.',
       child: Form(
         key: _formKey,
         autovalidateMode: _autovalidateMode,

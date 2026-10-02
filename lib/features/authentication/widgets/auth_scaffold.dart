@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../shared/design_system.dart';
-import 'aurivo_logo.dart';
+import 'app_logo.dart';
 
 /// Keyboard-aware responsive authentication page shell.
 class AuthScaffold extends StatelessWidget {
@@ -54,7 +54,7 @@ class AuthScaffold extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         if (showLogo) ...[
-                          const AurivoLogo(compact: true),
+                          const AppLogo(compact: true),
                           const SizedBox(height: AppSpacing.xl),
                         ],
                         Text(

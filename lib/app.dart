@@ -23,7 +23,7 @@ class AurivoApp extends ConsumerWidget {
     final locale = ref.watch(appLocaleProvider);
 
     return MaterialApp.router(
-      title: 'AURIVO',
+      title: 'Pareezay.Hub',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,

@@ -42,7 +42,7 @@ class SupabaseAuthRepository implements AuthRepository {
     _recoveryVerified = false;
     try {
       await _authService.signIn(email: identifier.trim(), password: password);
-      return const AuthResult(message: 'Welcome back to AURIVO');
+      return const AuthResult(message: 'Welcome back to Pareezay.Hub');
     } catch (error) {
       AuthDiagnostics.report(error, stage: 'login');
       throw AuthFailureMapper.map(error);

@@ -262,7 +262,7 @@ class _SellerProductEditPageState extends ConsumerState<SellerProductEditPage> {
       SwitchListTile(
         contentPadding: EdgeInsets.zero,
         title: const Text('Returnable'),
-        subtitle: const Text('Buyers may return it under the AURIVO policy'),
+        subtitle: const Text('Buyers may return it under the Pareezay.Hub policy'),
         value: _returnable,
         onChanged: (v) => setState(() => _returnable = v),
       ),

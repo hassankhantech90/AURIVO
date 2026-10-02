@@ -7,7 +7,7 @@ import '../../../shared/design_system.dart';
 import '../../profile/providers/profile_providers.dart';
 import '../providers/seller_product_providers.dart' show mySellerProfileIdProvider;
 
-/// "Sell on AURIVO" — creates the current user's seller store via the existing
+/// "Sell on Pareezay.Hub" — creates the current user's seller store via the existing
 /// `createSellerProfile` (profile_id resolved server-side). On success, Seller
 /// Studio becomes discoverable.
 class SellerOnboardingPage extends ConsumerStatefulWidget {
@@ -87,7 +87,7 @@ class _SellerOnboardingPageState extends ConsumerState<SellerOnboardingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const LuxuryAppBar(title: 'Sell on AURIVO', showBackButton: true),
+      appBar: const LuxuryAppBar(title: 'Sell on Pareezay.Hub', showBackButton: true),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         children: [

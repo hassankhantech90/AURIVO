@@ -31,7 +31,7 @@ class _PushBootstrapState extends ConsumerState<PushBootstrap> {
       FlutterLocalNotificationsPlugin();
   static const AndroidNotificationChannel _channel = AndroidNotificationChannel(
     'aurivo_default',
-    'AURIVO notifications',
+    'Pareezay.Hub notifications',
     importance: Importance.high,
   );
 
