@@ -1,0 +1,6 @@
+{
+  "APP_ENV": "development",
+  "SUPABASE_URL": "https://hbstqyelfhihiibkfuzi.supabase.co",
+  "SUPABASE_ANON_KEY": "<dev anon / publishable key from Supabase > Project Settings > API>",
+  "EMAIL_OTP": "false"
+}

@@ -22,9 +22,12 @@ class SupabaseConfig {
     defaultValue: 'development',
   );
 
+  /// The development project; only a fallback for non-production builds.
+  static const developmentUrl = 'https://hbstqyelfhihiibkfuzi.supabase.co';
+
   static const url = String.fromEnvironment(
     'SUPABASE_URL',
-    defaultValue: 'https://hbstqyelfhihiibkfuzi.supabase.co',
+    defaultValue: developmentUrl,
   );
 
   static const anonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
@@ -38,4 +41,9 @@ class SupabaseConfig {
 
   static bool get shouldRequireCredentials =>
       environment == AppEnvironment.production;
+
+  /// A production build must name its own project explicitly, so it can never
+  /// silently fall back to the development database.
+  static bool get pointsAtDevelopmentInProduction =>
+      environment == AppEnvironment.production && url.trim() == developmentUrl;
 }

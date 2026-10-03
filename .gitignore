@@ -63,3 +63,8 @@ supabase/.env.*
 
 # Supabase CLI local temp
 supabase/.temp/
+
+# Per-environment build config (holds keys). Only the *.example.json templates
+# are committed; copy one to env/dev.json / env/prod.json and fill it in.
+env/*.json
+!env/*.example.json

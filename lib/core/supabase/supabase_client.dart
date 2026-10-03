@@ -9,6 +9,12 @@ class AppSupabaseClient {
   const AppSupabaseClient._();
 
   static Future<void> initialize({LoggerService? logger}) async {
+    if (SupabaseConfig.pointsAtDevelopmentInProduction) {
+      throw const SupabaseConfigurationException(
+        'Production build is pointing at the development Supabase project. '
+        'Set SUPABASE_URL (see env/prod.example.json).',
+      );
+    }
     if (!SupabaseConfig.isConfigured) {
       final message =
           'Supabase anon key is missing. Provide SUPABASE_ANON_KEY with --dart-define.';

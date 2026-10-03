@@ -1,0 +1,6 @@
+{
+  "APP_ENV": "production",
+  "SUPABASE_URL": "https://<production-project-ref>.supabase.co",
+  "SUPABASE_ANON_KEY": "<production anon / publishable key>",
+  "EMAIL_OTP": "true"
+}

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/config/email_config.dart';
 import '../../../core/router/app_routes.dart';
 import '../../../shared/design_system.dart';
 import '../domain/validators/auth_validators.dart';
@@ -145,9 +146,15 @@ class _SignupPageState extends ConsumerState<SignupPage> {
   void _handleAuthState(AuthState? previous, AuthState next) {
     if (next.status == AuthStatus.success && next.message != null) {
       LuxurySnackBars.success(context, next.message!);
-      // Email confirmation is a link (not a code): send the user to the
-      // "check your email" screen, then they sign in once confirmed.
-      context.go(AppRoutes.verifyEmail);
+      if (EmailConfig.otpCodes) {
+        // Custom SMTP live: the email carries a 6-digit code.
+        ref.read(authProvider.notifier).startOtpCountdown();
+        context.go('${AppRoutes.otp}?flow=signup');
+      } else {
+        // Built-in mailer sends a confirmation link: "check your email",
+        // then sign in once confirmed.
+        context.go(AppRoutes.verifyEmail);
+      }
       ref.read(authProvider.notifier).clearStatus();
     }
 

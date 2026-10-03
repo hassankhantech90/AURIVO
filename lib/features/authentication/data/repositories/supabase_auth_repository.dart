@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
+import '../../../../core/config/email_config.dart';
 import '../../../../core/supabase/supabase_auth_service.dart';
 import '../../domain/auth_repository.dart';
 import '../../domain/entities/auth_flow.dart';
@@ -80,7 +81,9 @@ class SupabaseAuthRepository implements AuthRepository {
       _pendingEmail = normalizedEmail;
       _pendingFlow = AuthFlow.signup;
       return const AuthResult(
-        message: 'Account created. Check your email to verify, then sign in.',
+        message: EmailConfig.otpCodes
+            ? 'Account created. Enter the 6-digit code we emailed you.'
+            : 'Account created. Check your email to verify, then sign in.',
       );
     } catch (error) {
       AuthDiagnostics.report(error, stage: 'signup');
